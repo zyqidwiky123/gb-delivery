@@ -10,7 +10,7 @@
   },
   "hosting": [
     {
-      "target": "landing",
+      "site": "gb-delivery-41bf6",
       "public": "aro-landing-page",
       "ignore": [
         "firebase.json",
@@ -19,7 +19,7 @@
       ]
     },
     {
-      "target": "user-app",
+      "site": "aro-drive-user",
       "public": "aro-drive-vite/dist",
       "ignore": [
         "firebase.json",
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "target": "driver-app",
+      "site": "aro-drive-driver",
       "public": "aro-drive-driver-vite/dist",
       "ignore": [
         "firebase.json",
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "target": "admin-app",
+      "site": "aro-admin",
       "public": "aro-admin-vite/dist",
       "ignore": [
         "firebase.json",
