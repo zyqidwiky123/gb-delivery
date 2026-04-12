@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,700;0,800;1,800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container": "#1a1919",
+            "on-secondary-fixed-variant": "#605e00",
+            "surface-tint": "#f3ffca",
+            "on-surface-variant": "#adaaaa",
+            "primary-container": "#cafd00",
+            "surface-bright": "#2c2c2c",
+            "on-primary-fixed": "#3a4a00",
+            "surface-dim": "#0e0e0e",
+            "on-primary-container": "#4a5e00",
+            "surface-container-low": "#131313",
+            "inverse-on-surface": "#565554",
+            "tertiary": "#ffeea5",
+            "secondary-fixed-dim": "#ddda49",
+            "error-container": "#b92902",
+            "on-primary": "#516700",
+            "surface-container-highest": "#262626",
+            "primary-fixed-dim": "#beee00",
+            "secondary": "#ece856",
+            "secondary-container": "#636100",
+            "on-tertiary": "#665800",
+            "primary-dim": "#beee00",
+            "surface-container-lowest": "#000000",
+            "primary": "#f3ffca",
+            "on-tertiary-fixed-variant": "#685900",
+            "outline-variant": "#494847",
+            "surface-container-high": "#201f1f",
+            "on-secondary-container": "#fffca4",
+            "inverse-primary": "#516700",
+            "outline": "#777575",
+            "tertiary-fixed-dim": "#edd13a",
+            "surface": "#0e0e0e",
+            "inverse-surface": "#fcf8f8",
+            "background": "#0e0e0e",
+            "on-error": "#450900",
+            "on-secondary": "#565400",
+            "on-tertiary-container": "#5d5000",
+            "on-secondary-fixed": "#434100",
+            "on-surface": "#ffffff",
+            "surface-variant": "#262626",
+            "error-dim": "#d53d18",
+            "on-tertiary-fixed": "#483d00",
+            "tertiary-fixed": "#fce047",
+            "on-primary-fixed-variant": "#526900",
+            "error": "#ff7351",
+            "primary-fixed": "#cafd00",
+            "on-error-container": "#ffd2c8",
+            "tertiary-dim": "#edd13a",
+            "tertiary-container": "#fce047",
+            "secondary-fixed": "#ece856",
+            "secondary-dim": "#ddda49",
+            "on-background": "#ffffff"
+          },
+          fontFamily: {
+            "headline": ["Plus Jakarta Sans"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      background-color: #0e0e0e;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#0e0e0e] fixed top-0 w-full z-50">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-[#f3ffca] hover:opacity-80 transition-opacity active:scale-95 duration-100">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-xl italic text-[#f3ffca]">GB DELIVERY</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#f3ffca] hover:opacity-80 cursor-pointer">help</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional man with a friendly expression in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAktapuJ-caxIJQbJitJhRfvc5J841WU6WhGOvQ_E43X-r5hq2XHbKmbu2cz3HTUWzv1cSbavZ_8d2KmNfSZyI6J08McxFxEzaSn3m4NTd1UOhrnr2hZctHajFAZ6Cai6vCLWCcOPplgf606BHERem6nhfrUWEVD_BRILYrbUaGTdHEHBN5yRHMo4nQimnt7i1xvnDjepjrIPKFYp5lRmSUHqMc9fmg0oEB-fZLimtyKFIlQzBGt2qFcwVDlipP13peD9jeNZ5Jgjo"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow pt-24 pb-40 px-6 max-w-2xl mx-auto w-full">
+<!-- Screen Title -->
+<div class="mb-8">
+<h2 class="font-headline font-extrabold text-3xl tracking-tight text-on-surface">Belanja Bulanan (Jastip)</h2>
+<p class="text-on-surface-variant text-sm mt-2 font-body">Input manual daftar belanjaan Anda.</p>
+</div>
+<!-- Main Input Section -->
+<div class="space-y-6">
+<div class="relative group">
+<label class="block font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant mb-3">Daftar Belanjaan</label>
+<div class="bg-surface-container-low rounded-xl p-1 transition-all focus-within:ring-1 ring-primary/30">
+<textarea class="w-full h-64 bg-surface-container-highest border-none rounded-lg p-5 text-on-surface placeholder:text-outline font-body focus:ring-0 resize-none leading-relaxed" placeholder="Tulis daftar belanjaan Anda di sini (misal: Susu, Roti, Kopi)..."></textarea>
+</div>
+<div class="absolute bottom-4 right-4 text-[10px] font-bold text-primary bg-background/80 backdrop-blur px-2 py-1 rounded">
+          LIVE INPUT
+        </div>
+</div>
+<!-- Pricing Estimation Section -->
+<section class="bg-surface-container-low rounded-xl p-6 border-l-4 border-primary/20">
+<div class="flex justify-between items-end mb-4">
+<div>
+<span class="block font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant mb-1">Estimasi Harga Barang</span>
+<div class="flex items-baseline gap-2">
+<span class="text-on-surface-variant text-lg">Rp</span>
+<span class="text-4xl font-headline font-black text-primary italic tracking-tighter">0</span>
+</div>
+</div>
+<div class="text-right">
+<span class="block font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant mb-1">Item Terdeteksi</span>
+<span class="text-xl font-headline font-bold text-on-surface">0</span>
+</div>
+</div>
+<div class="flex items-start gap-3 p-3 bg-surface-container-highest/40 rounded-lg">
+<span class="material-symbols-outlined text-tertiary-fixed text-sm mt-0.5">info</span>
+<p class="text-[11px] text-on-surface-variant leading-relaxed italic">
+            Disclaimer: Estimasi harga bersifat perkiraan berdasarkan harga rata-rata pasar. Total akhir akan disesuaikan dengan nota asli dari toko.
+          </p>
+</div>
+</section>
+<!-- Quick Tips -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-highest p-4 rounded-xl flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm">bolt</span>
+</div>
+<span class="text-xs font-medium text-on-surface">Fast Response</span>
+</div>
+<div class="bg-surface-container-highest p-4 rounded-xl flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-sm">verified</span>
+</div>
+<span class="text-xs font-medium text-on-surface">Verified Shopper</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Bottom Sheet (Checkout Action) -->
+<div class="fixed bottom-0 left-0 w-full z-50">
+<!-- Gradient Overlay for smooth transition -->
+<div class="h-12 bg-gradient-to-t from-background to-transparent w-full"></div>
+<div class="bg-surface-container-highest/60 backdrop-blur-2xl px-6 pb-8 pt-6 rounded-t-[32px] shadow-[0_-8px_40px_rgba(0,0,0,0.4)] max-w-7xl mx-auto border-t border-white/5">
+<div class="max-w-2xl mx-auto flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">moped</span>
+</div>
+<div>
+<span class="block font-label text-[10px] font-bold tracking-[0.05em] uppercase text-on-surface-variant">Biaya Antar (Flat)</span>
+<span class="font-headline font-extrabold text-on-surface">Rp 15.000</span>
+</div>
+</div>
+<div class="text-right">
+<span class="block font-label text-[10px] font-bold tracking-[0.05em] uppercase text-primary">Saldo Tersedia</span>
+<span class="font-headline font-bold text-on-surface">Rp 250.000</span>
+</div>
+</div>
+<button class="w-full py-5 rounded-full bg-gradient-to-br from-[#cafd00] to-[#f3ffca] text-black font-headline font-extrabold text-lg flex items-center justify-center gap-3 shadow-[0_8px_32px_rgba(202,253,0,0.3)] hover:opacity-90 active:scale-95 transition-all">
+<span>Checkout List</span>
+<span class="material-symbols-outlined font-bold">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- BottomNavBar (Hidden on desktop, shown here as mobile reference) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-6 pb-6 pt-3 bg-[#262626]/60 backdrop-blur-xl z-[60] rounded-t-[24px] pointer-events-none opacity-0">
+<div class="flex flex-col items-center justify-center bg-gradient-to-br from-[#cafd00] to-[#f3ffca] text-black rounded-full px-5 py-1.5 shadow-[0_0_15px_rgba(243,255,202,0.4)]">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-[0.05em] uppercase">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 p-2">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-[0.05em] uppercase">Activity</span>
+</div>
+<div class="flex flex-col items-center justify-center text-gray-400 p-2">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-[0.05em] uppercase">Profile</span>
+</div>
+</nav>
+</body></html>

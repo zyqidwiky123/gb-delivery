@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GB SEND - Kirim Paket Satset</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,700;0,800;1,800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container": "#1a1919",
+                        "on-secondary-fixed-variant": "#605e00",
+                        "surface-tint": "#f3ffca",
+                        "on-surface-variant": "#adaaaa",
+                        "primary-container": "#cafd00",
+                        "surface-bright": "#2c2c2c",
+                        "on-primary-fixed": "#3a4a00",
+                        "surface-dim": "#0e0e0e",
+                        "on-primary-container": "#4a5e00",
+                        "surface-container-low": "#131313",
+                        "inverse-on-surface": "#565554",
+                        "tertiary": "#ffeea5",
+                        "secondary-fixed-dim": "#ddda49",
+                        "error-container": "#b92902",
+                        "on-primary": "#516700",
+                        "surface-container-highest": "#262626",
+                        "primary-fixed-dim": "#beee00",
+                        "secondary": "#ece856",
+                        "secondary-container": "#636100",
+                        "on-tertiary": "#665800",
+                        "primary-dim": "#beee00",
+                        "surface-container-lowest": "#000000",
+                        "primary": "#f3ffca",
+                        "on-tertiary-fixed-variant": "#685900",
+                        "outline-variant": "#494847",
+                        "surface-container-high": "#201f1f",
+                        "on-secondary-container": "#fffca4",
+                        "inverse-primary": "#516700",
+                        "outline": "#777575",
+                        "tertiary-fixed-dim": "#edd13a",
+                        "surface": "#0e0e0e",
+                        "inverse-surface": "#fcf8f8",
+                        "background": "#0e0e0e",
+                        "on-error": "#450900",
+                        "on-secondary": "#565400",
+                        "on-tertiary-container": "#5d5000",
+                        "on-secondary-fixed": "#434100",
+                        "on-surface": "#ffffff",
+                        "surface-variant": "#262626",
+                        "error-dim": "#d53d18",
+                        "on-tertiary-fixed": "#483d00",
+                        "tertiary-fixed": "#fce047",
+                        "on-primary-fixed-variant": "#526900",
+                        "error": "#ff7351",
+                        "primary-fixed": "#cafd00",
+                        "on-error-container": "#ffd2c8",
+                        "tertiary-dim": "#edd13a",
+                        "tertiary-container": "#fce047",
+                        "secondary-fixed": "#ece856",
+                        "secondary-dim": "#ddda49",
+                        "on-background": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen pb-40">
+<!-- Top Navigation Bar -->
+<header class="bg-[#0e0e0e] sticky top-0 z-50 transition-opacity">
+<div class="flex justify-between items-center w-full px-6 py-6 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-100">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-xl text-primary">Kirim Paket Satset</h1>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="User" data-alt="Portrait of a trendy young man with a cool haircut and glasses, minimalist vector style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBizTxhZ65SPFCJ6oNfHzTSHxah_fH8ilGSNko5Lv7ENhbzc7VL9ZeT9uVh8szHGdQyH3-msBJm_jwsQ4AE_VCi_-SsjcRIzjOFQtwrSxgHrve3ZgbFTL6gVDqYr6aMfqES7-chmXA1l3XM-2ZoVlWfjlM8mQjLjAOIVTiVq6rp6zMwjCD0I_qwLY3FIhe7TV37-aUO4_jV1iOfr7HZpB1IeWr_P-8HcF5-yfXWVjNPddlvwGtQhnvnaBv0eSx42o2pgfLx5w_HgJk"/>
+</div>
+</div>
+</header>
+<main class="max-w-3xl mx-auto px-6 space-y-8 mt-4">
+<!-- Sender Details Section -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary" data-icon="outbox">outbox</span>
+<h2 class="font-headline font-bold text-lg uppercase tracking-wider text-on-surface-variant">Sender Details</h2>
+</div>
+<div class="bg-[#131313] p-6 rounded-2xl space-y-5">
+<div class="space-y-1">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant ml-1">Full Name</label>
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all" placeholder="Enter sender name" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant ml-1">Phone Number</label>
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all" placeholder="+62 812..." type="tel"/>
+</div>
+<div class="space-y-1">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant ml-1">Pickup Address</label>
+<div class="relative group">
+<textarea class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all resize-none" placeholder="Jl. Kemang Timur No. 12..." rows="3"></textarea>
+<button class="absolute bottom-4 right-4 flex items-center gap-2 bg-primary-container text-on-primary-container px-3 py-1.5 rounded-full text-xs font-bold hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="map">map</span>
+                            Pin point on map
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Receiver Details Section -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary" data-icon="move_to_inbox">move_to_inbox</span>
+<h2 class="font-headline font-bold text-lg uppercase tracking-wider text-on-surface-variant">Receiver Details</h2>
+</div>
+<div class="bg-[#131313] p-6 rounded-2xl space-y-5">
+<div class="space-y-1">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant ml-1">Recipient Name</label>
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all" placeholder="Enter recipient name" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant ml-1">Phone Number</label>
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all" placeholder="+62 821..." type="tel"/>
+</div>
+<div class="space-y-1">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant ml-1">Delivery Address</label>
+<div class="relative group">
+<textarea class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all resize-none" placeholder="Sudirman Central Business District..." rows="3"></textarea>
+<button class="absolute bottom-4 right-4 flex items-center gap-2 bg-primary-container text-on-primary-container px-3 py-1.5 rounded-full text-xs font-bold hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+                            Pin point on map
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Item Info Section -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary" data-icon="package_2">package_2</span>
+<h2 class="font-headline font-bold text-lg uppercase tracking-wider text-on-surface-variant">Item Info</h2>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-[#131313] p-5 rounded-2xl space-y-2">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant">Category</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest border-none rounded-xl py-3 px-4 text-on-surface appearance-none focus:ring-1 focus:ring-primary transition-all">
+<option>Documents</option>
+<option>Food</option>
+<option>Electronics</option>
+<option>Clothing</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<div class="bg-[#131313] p-5 rounded-2xl space-y-2">
+<label class="font-label text-[10px] font-medium tracking-[0.05em] uppercase text-on-surface-variant">Weight (kg)</label>
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-3 px-4 text-on-surface focus:ring-1 focus:ring-primary transition-all" min="1" type="number" value="1"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-outline font-bold">KG</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Dynamic Summary Card (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="md:col-span-2 bg-surface-container-highest/40 border border-outline-variant/15 p-6 rounded-2xl flex flex-col justify-center gap-2">
+<p class="text-on-surface-variant text-sm font-medium">Estimated Pickup Time</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-extrabold text-primary italic">15-20</span>
+<span class="text-primary font-bold">MINS</span>
+</div>
+</div>
+<div class="bg-primary/5 p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-2 border border-primary/10">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<p class="text-[10px] uppercase font-bold tracking-widest text-primary">Priority</p>
+</div>
+</section>
+</main>
+<!-- Bottom Sheet / Sticky Footer -->
+<div class="fixed bottom-0 left-0 w-full z-50">
+<div class="bg-[#262626]/80 backdrop-blur-2xl rounded-t-[32px] px-8 pt-6 pb-10 shadow-[0_-8px_48px_rgba(0,0,0,0.4)] border-t border-white/5 max-w-7xl mx-auto">
+<div class="flex items-center justify-between mb-6">
+<div class="space-y-0.5">
+<p class="font-label text-[10px] font-medium tracking-[0.1em] uppercase text-on-surface-variant">Total Payment</p>
+<div class="flex items-baseline gap-1">
+<span class="text-xs font-bold text-primary italic">IDR</span>
+<span class="text-3xl font-headline font-black text-on-surface">24.500</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-2 text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="account_balance_wallet">account_balance_wallet</span>
+                        GB Pay
+                    </div>
+<p class="text-[10px] text-primary mt-0.5 font-bold">Balance: 142.000</p>
+</div>
+</div>
+<button class="w-full bg-gradient-to-br from-[#cafd00] to-[#f3ffca] text-on-primary-fixed py-5 rounded-full font-headline font-extrabold text-lg flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(202,253,0,0.3)] hover:scale-[1.02] active:scale-95 transition-all">
+                Pesan Sekarang
+                <span class="material-symbols-outlined font-bold" data-icon="rocket_launch">rocket_launch</span>
+</button>
+</div>
+</div>
+</body></html>

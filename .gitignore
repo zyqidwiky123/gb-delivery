@@ -1,0 +1,10 @@
+**/node_modules/
+**/dist/
+.env
+.env.local
+.firebase/
+.firebaserc
+firestore.rules
+firestore.indexes.json
+*.log
+.DS_Store
