@@ -18,10 +18,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Clean Cache and Audit
-        run: |
-          npm cache clean --force
-
       - name: Build User App
         run: |
           cd aro-drive-vite
