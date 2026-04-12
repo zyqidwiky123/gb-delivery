@@ -21,19 +21,19 @@ jobs:
       - name: Build User App
         run: |
           cd aro-drive-vite
-          npm ci
+          npm install
           npm run build
 
       - name: Build Driver App
         run: |
           cd aro-drive-driver-vite
-          npm ci
+          npm install
           npm run build
 
       - name: Build Admin App
         run: |
           cd aro-admin-vite
-          npm ci
+          npm install
           npm run build
 
       - name: Install Functions Deps
