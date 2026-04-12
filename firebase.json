@@ -49,7 +49,7 @@
       ]
     },
     {
-      "site": "aro-admin",
+      "site": "aro-drive-admin",
       "public": "aro-admin-vite/dist",
       "ignore": [
         "firebase.json",
