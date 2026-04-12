@@ -18,28 +18,24 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install All Dependencies (Monorepo)
+        run: |
+          npm install --no-audit --legacy-peer-deps
+
       - name: Build User App
         run: |
           cd aro-drive-vite
-          npm install --no-audit --legacy-peer-deps
           npm run build
 
       - name: Build Driver App
         run: |
           cd aro-drive-driver-vite
-          npm install --no-audit --legacy-peer-deps
           npm run build
 
       - name: Build Admin App
         run: |
           cd aro-admin-vite
-          npm install --no-audit --legacy-peer-deps
           npm run build
-
-      - name: Install Functions Deps
-        run: |
-          cd functions
-          npm install --no-audit --legacy-peer-deps
 
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
