@@ -1,0 +1,32 @@
+# Node dependencies
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Environment variables
+.env
+.env.*
+
+# Prototypes (Abaikan/Ignore)
+PWA\ CUSTOMER\ GUEST/
+PWA\ CUSTOMER\ MEMBER/
+files.txt
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Large files
+*.mp3
+*.mp4
+*.zip
+*.tar.gz
+.vercel
+.env*.local
