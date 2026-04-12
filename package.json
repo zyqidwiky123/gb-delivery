@@ -1,0 +1,10 @@
+{
+  "name": "aro-drive-monorepo",
+  "private": true,
+  "workspaces": [
+    "aro-drive-vite",
+    "aro-drive-driver-vite",
+    "aro-admin-vite",
+    "functions"
+  ]
+}
