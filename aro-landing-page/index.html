@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ARO DRIVE - Semua Kebutuhan Kota, Dalam Satu Genggaman. Pesan makanan, ojek online, kirim barang, dan jas-tip dengan mudah.">
+    <title>ARO DRIVE | Semua Kebutuhan Kota</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-content">
+            <a href="#" class="logo">
+                <span class="logo-accent">ARO</span> DRIVE
+            </a>
+            
+            <!-- Mobile Menu Button -->
+            <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle Menu">
+                <i data-lucide="menu"></i>
+            </button>
+
+            <!-- Desktop Menu -->
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#layanan">Layanan</a></li>
+                <li><a href="#keunggulan">Keunggulan</a></li>
+                <li><a href="#mitra">Mitra UMKM</a></li>
+                <li><a href="#gabung">Gabung Mitra</a></li>
+            </ul>
+            
+            <a href="#" class="btn-primary desktop-cta">Buka Aplikasi</a>
+        </div>
+    </nav>
+
+    <!-- Mobile Sidebar Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <a href="#" class="logo text-white"><span class="logo-accent">ARO</span> DRIVE</a>
+            <button class="menu-close" id="menu-close"><i data-lucide="x"></i></button>
+        </div>
+        <ul class="mobile-nav-links">
+            <li><a href="#layanan" class="mobile-link">Layanan</a></li>
+            <li><a href="#keunggulan" class="mobile-link">Keunggulan</a></li>
+            <li><a href="#mitra" class="mobile-link">Mitra UMKM</a></li>
+            <li><a href="#gabung" class="mobile-link">Gabung Mitra</a></li>
+        </ul>
+        <a href="#" class="btn-primary mobile-cta">Buka Aplikasi</a>
+    </div>
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="beranda">
+        <div class="hero-bg-glow"></div>
+        <div class="container hero-content">
+            <div class="hero-text">
+                <div class="badge">🚀 Ekosistem Lokal #1</div>
+                <h1>Semua Kebutuhan Kota, <br><span class="text-accent text-glow">Dalam Satu Genggaman.</span></h1>
+                <p class="hero-subtitle">Mulai dari pesan makan, antar paket, ojek online, sampai titip belanja. ARO DRIVE bikin aktivitas harianmu makin gampang dan sat-set!</p>
+                <div class="hero-buttons">
+                    <a href="#" class="btn-primary btn-large">
+                        Pesan Sekarang <i data-lucide="arrow-right"></i>
+                    </a>
+                    <a href="#gabung" class="btn-secondary btn-large">
+                        Jadi Mitra Driver
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Pengguna Aktif</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">5K+</span>
+                        <span class="stat-label">Mitra Terpercaya</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <!-- Placeholder for generated 3D illustration -->
+                <img src="assets/hero-illustration.png" alt="ARO DRIVE App Illustration" id="hero-img">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features / Layanan Section -->
+    <section class="features" id="layanan">
+        <div class="container">
+            <div class="section-header">
+                <h2>Lebih Dari Sekadar <span class="text-accent">Transportasi</span></h2>
+                <p>Empat layanan andalan yang siap temani aktivitasmu dari pagi sampai malam.</p>
+            </div>
+            
+            <div class="features-grid">
+                <!-- Aro Food -->
+                <div class="feature-card">
+                    <div class="feature-icon bg-food">
+                        <i data-lucide="utensils"></i>
+                    </div>
+                    <h3>ARO FOOD</h3>
+                    <p>Laper tapi mager? Pesan menu favoritmu dari ribuan mitra kuliner lokal. Langsung diantar ke depan pintu.</p>
+                </div>
+
+                <!-- Aro Ride -->
+                <div class="feature-card">
+                    <div class="feature-icon bg-ride">
+                        <i data-lucide="bike"></i>
+                    </div>
+                    <h3>ARO RIDE</h3>
+                    <p>Driver aman, ramah, dan cepat. Solusi menembus macet kota untuk sampai tujuan lebih on-time.</p>
+                </div>
+
+                <!-- Aro Send -->
+                <div class="feature-card">
+                    <div class="feature-icon bg-send">
+                        <i data-lucide="package"></i>
+                    </div>
+                    <h3>ARO SEND</h3>
+                    <p>Kirim dokumen, kado, atau barang dagangan instan. Lacak posisi kurir secara real-time.</p>
+                </div>
+
+                <!-- Aro Shop -->
+                <div class="feature-card">
+                    <div class="feature-icon bg-shop">
+                        <i data-lucide="shopping-cart"></i>
+                    </div>
+                    <h3>ARO SHOP</h3>
+                    <p>Jastip suka-suka! Dari obat di apotek sampai alat tulis di minimarket, titipin aja ke driver kami.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Keunggulan Section -->
+    <section class="why-us" id="keunggulan">
+        <div class="container why-us-wrapper">
+            <div class="why-us-content">
+                <h2>Kenapa Harus <span class="text-accent">ARO DRIVE?</span></h2>
+                <ul class="why-list">
+                    <li>
+                        <div class="why-icon"><i data-lucide="zap"></i></div>
+                        <div class="why-text">
+                            <h4>Transaksi Sat-Set</h4>
+                            <p>Desain aplikasi minimalis yang bikin orderanmu selesai cuma dalam beberapa kali tap.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="why-icon"><i data-lucide="map-pin"></i></div>
+                        <div class="why-text">
+                            <h4>Real-time Tracking</h4>
+                            <p>Pantau posisi pesanan dan rute driver-mu setiap detiknya di atas peta akurat.</p>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="why-icon"><i data-lucide="qr-code"></i></div>
+                        <div class="why-text">
+                            <h4>Pembayaran Pintar D2D</h4>
+                            <p>Bisa COD atau bayar pakai QRIS langsung (Driver-to-Door) tanpa repot sediakan uang pas.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="why-us-visual">
+                <div class="glass-mockup">
+                    <div class="mockup-header">
+                        <div class="mockup-avatar"></div>
+                        <div class="mockup-info">
+                            <span class="mockup-name">Budi (Mitra Driver)</span>
+                            <span class="mockup-status">Menuju Lokasi Kamu...</span>
+                        </div>
+                    </div>
+                    <div class="mockup-map">
+                        <div class="route-line-svg">
+                            <svg width="100%" height="100%" viewBox="0 0 200 150">
+                                <path class="pathing" d="M 30,120 C 50,110 80,120 100,80 C 120,40 150,30 170,20" fill="transparent" stroke="#CCFF00" stroke-width="4" stroke-dasharray="8,8"/>
+                            </svg>
+                        </div>
+                        <div class="marker-user"><i data-lucide="map-pin"></i></div>
+                        <div class="marker-driver"><i data-lucide="bike"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mitra UMKM Banner -->
+    <section class="mitra-banner" id="mitra">
+        <div class="container container-mitra">
+            <div class="mitra-content">
+                <h2>Punya Usaha Kuliner atau Toko? <br>Jangkau Lebih Banyak Pelanggan!</h2>
+                <p>Gabung jadi Mitra UMKM ARO DRIVE dan nikmati proses pendaftaran yang cepat, sistem komisi transparan, dan bantuan promosi memukau. Kembangkan omset harianmu bersama kami.</p>
+                <a href="#" class="btn-primary mt-4">Daftar Warungmu <i data-lucide="arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer / Gabung -->
+    <footer class="footer" id="gabung">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a href="#" class="logo logo-footer">
+                    <span class="logo-accent">ARO</span> DRIVE
+                </a>
+                <p class="footer-desc">Solusi mobilitas dan pengiriman tercepat, langsung dari tangan anak bangsa. Mendukung kemajuan ekonomi UMKM lokal.</p>
+                <div class="social-links">
+                    <a href="#"><i data-lucide="instagram"></i></a>
+                    <a href="#"><i data-lucide="facebook"></i></a>
+                    <a href="#"><i data-lucide="twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Layanan KAMI</h4>
+                <ul>
+                    <li><a href="#layanan">ARO FOOD</a></li>
+                    <li><a href="#layanan">ARO RIDE</a></li>
+                    <li><a href="#layanan">ARO SEND</a></li>
+                    <li><a href="#layanan">ARO SHOP</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Gabung Mitra</h4>
+                <ul>
+                    <li><a href="#">Daftar Mitra Driver</a></li>
+                    <li><a href="#mitra">Daftar Merchant UMKM</a></li>
+                </ul>
+            </div>
+            <div class="footer-care">
+                <h4>Care Center</h4>
+                <p>Butuh bantuan masalah aplikasi atau kendala pesanan?</p>
+                <a href="#" class="btn-secondary btn-outline mt-2"><i data-lucide="message-circle"></i> Hubungi CS ARO</a>
+            </div>
+        </div>
+        <div class="footer-bottom text-center">
+            <p>&copy; <span id="year"></span> ARO DRIVE. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

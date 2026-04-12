@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container": "#1a1919",
+            "on-secondary-fixed-variant": "#605e00",
+            "surface-tint": "#f3ffca",
+            "on-surface-variant": "#adaaaa",
+            "primary-container": "#cafd00",
+            "surface-bright": "#2c2c2c",
+            "on-primary-fixed": "#3a4a00",
+            "surface-dim": "#0e0e0e",
+            "on-primary-container": "#4a5e00",
+            "surface-container-low": "#131313",
+            "inverse-on-surface": "#565554",
+            "tertiary": "#ffeea5",
+            "secondary-fixed-dim": "#ddda49",
+            "error-container": "#b92902",
+            "on-primary": "#516700",
+            "surface-container-highest": "#262626",
+            "primary-fixed-dim": "#beee00",
+            "secondary": "#ece856",
+            "secondary-container": "#636100",
+            "on-tertiary": "#665800",
+            "primary-dim": "#beee00",
+            "surface-container-lowest": "#000000",
+            "primary": "#f3ffca",
+            "on-tertiary-fixed-variant": "#685900",
+            "outline-variant": "#494847",
+            "surface-container-high": "#201f1f",
+            "on-secondary-container": "#fffca4",
+            "inverse-primary": "#516700",
+            "outline": "#777575",
+            "tertiary-fixed-dim": "#edd13a",
+            "surface": "#0e0e0e",
+            "inverse-surface": "#fcf8f8",
+            "background": "#0e0e0e",
+            "on-error": "#450900",
+            "on-secondary": "#565400",
+            "on-tertiary-container": "#5d5000",
+            "on-secondary-fixed": "#434100",
+            "on-surface": "#ffffff",
+            "surface-variant": "#262626",
+            "error-dim": "#d53d18",
+            "on-tertiary-fixed": "#483d00",
+            "tertiary-fixed": "#fce047",
+            "on-primary-fixed-variant": "#526900",
+            "error": "#ff7351",
+            "primary-fixed": "#cafd00",
+            "on-error-container": "#ffd2c8",
+            "tertiary-dim": "#edd13a",
+            "tertiary-container": "#fce047",
+            "secondary-fixed": "#ece856",
+            "secondary-dim": "#ddda49",
+            "on-background": "#ffffff"
+          },
+          fontFamily: {
+            "headline": ["Plus Jakarta Sans"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .neon-route-glow {
+      filter: drop-shadow(0 0 8px #cafd00);
+    }
+    .map-mask {
+      mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#0e0e0e]">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-[#f3ffca] hover:opacity-80 transition-opacity active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-xl font-black text-[#f3ffca] italic">GB DELIVERY</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="portrait of a stylish young man with a modern haircut in a dark urban setting with neon lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhvGbfQcTBTs-MwFKtiEIuopYsrYOKdIZotGJdI1XPg3h0oV9b6K_YWqpZjJJYLPoOx0jejmCAmTxI2qczzP1w3iqb0W2iTwfrCuQTqAHR5Fxau8NsrM6-qfQjYTuG_odvVFaDehyVV14nBKRj88SgI1Y8UbtY6DRnQv6CZWdVvE12f2gvWNU-iNMmKDUWU1Uo4q64b0u3EJhhXCa8Y2_TBOgXHJJplOr-XlwwiFGHSODrHfwIYqVrOdGLjXo5whDwSzUJg5XZfzk"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Interaction Canvas -->
+<main class="relative flex-grow pt-16 h-full w-full">
+<!-- Map Background Section -->
+<div class="absolute inset-0 z-0">
+<div class="relative w-full h-full map-mask">
+<img class="w-full h-full object-cover opacity-40 grayscale contrast-125" data-alt="high contrast dark satellite view of city streets with glowing orange lights and deep shadows" data-location="Jakarta" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDShbKKSY5H8qyKDj3WwwrtG41msq3nMrL6qXPR0U95kz6IIKUOGQbfciS7XrKrH8BvO6DlrIP45H2-Ig1JSa6NZq3O8rvTvoo1wND9734deKe9trtTJTMo2JCcK9hz4rymh8USQZVCJDF9CW2mt5__zlbGJqF1u61gFBYpscjbbEqrJSC7bmxduq1r9ieoRCB7-0DIe2JP0eJbNLVIrQwj2cIJ-o17SMqSbBLwG8d2U3LqANixS-jYaUj8ZOu9bO14oXXtvWpftkg"/>
+<!-- Neon Route Overlay (Simulated with SVG) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" viewbox="0 0 400 800">
+<path class="neon-route-glow" d="M 150 200 L 150 350 L 300 450 L 300 600" fill="none" stroke="#cafd00" stroke-linecap="round" stroke-width="4"></path>
+<!-- Pickup Pin -->
+<circle cx="150" cy="200" fill="#f3ffca" r="8"></circle>
+<circle class="animate-pulse" cx="150" cy="200" fill="none" r="14" stroke="#f3ffca" stroke-width="2"></circle>
+<!-- Destination Pin -->
+<g transform="translate(285, 585)">
+<path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 45 15 45C15 45 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#ff7351"></path>
+<circle cx="15" cy="15" fill="white" r="6"></circle>
+</g>
+</svg>
+</div>
+</div>
+<!-- Floating Input Overlay -->
+<div class="absolute top-20 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-20">
+<div class="bg-surface-container-high/80 backdrop-blur-xl p-4 rounded-[2rem] shadow-2xl space-y-3">
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-center gap-1 w-6">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<div class="w-0.5 h-8 bg-outline-variant/50"></div>
+<span class="w-2 h-2 rounded-full bg-error"></span>
+</div>
+<div class="flex-grow space-y-2">
+<div class="h-10 px-4 flex items-center bg-surface-container-low rounded-xl text-on-surface/60 text-sm">
+              Current Location...
+            </div>
+<div class="h-10 px-4 flex items-center bg-surface-container-highest rounded-xl text-on-surface font-semibold text-sm border-b border-primary/30">
+              Mau kemana hari ini?
+            </div>
+</div>
+<button class="p-2 bg-surface-container-lowest rounded-full text-primary">
+<span class="material-symbols-outlined" data-icon="swap_vert">swap_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Sheet Ride Selection -->
+<div class="fixed bottom-0 left-0 right-0 z-40">
+<!-- Handle -->
+<div class="flex justify-center mb-2">
+<div class="w-12 h-1.5 bg-on-surface-variant/40 rounded-full"></div>
+</div>
+<!-- Content Container -->
+<div class="bg-[#262626]/60 backdrop-blur-2xl rounded-t-[2.5rem] px-6 pt-8 pb-10 shadow-[0_-4px_48px_rgba(0,0,0,0.4)]">
+<div class="max-w-7xl mx-auto">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-headline text-2xl font-extrabold tracking-tight text-on-surface">Pilih Perjalanan</h2>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-low rounded-full text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">25 MIN</span>
+</div>
+</div>
+<!-- Ride Options: Asymmetric Bento Style -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+<!-- Ride Option 1: GB RIDE (Active) -->
+<div class="relative group cursor-pointer">
+<div class="bg-primary-container p-5 rounded-3xl flex items-center justify-between shadow-[0_0_30px_rgba(243,255,202,0.15)] ring-2 ring-primary">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center p-2">
+<img alt="Ride" class="w-full h-full object-contain" data-alt="studio product photo of a sleek black electric motorcycle on a dark background with neon lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDN3gDyAv4w9mgfrGFIQbDEEVY4eoX2-QUQw7L_CQ0zZqvshsLMmvIzKd3c7USMDp7y-Hq2t7t3SLFRUd5WMj4YjfsOkG0x3NTWU3MxhSvPFHytlwhV_2caj76Wwj91Chs1Anjh72u-SOgRNpusN-oCtUCGSmi7WESxXST0cL3PcInX8LBczwx-4rTjmTQrU0dm9sPGUGCyJydsuW61RV_CtvtbN7BB8UOFX1_9p-nY66tatr39q-guaeYbmJFajZE8II1_QKKVjc"/>
+</div>
+<div>
+<h3 class="font-bold text-on-primary-container text-lg">GB RIDE</h3>
+<p class="text-on-primary-container/70 text-xs">Standard Speed</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline font-black text-on-primary-container text-xl italic">Rp 15.000</p>
+<span class="text-[10px] font-bold uppercase text-on-primary-container/60">BEST VALUE</span>
+</div>
+<!-- Selection Indicator -->
+<div class="absolute -top-2 -right-2 bg-on-surface text-background rounded-full p-1 shadow-lg">
+<span class="material-symbols-outlined text-sm" data-icon="check" data-weight="fill">check</span>
+</div>
+</div>
+</div>
+<!-- Ride Option 2: GB RIDE PLUS -->
+<div class="relative group cursor-pointer">
+<div class="bg-surface-container-highest p-5 rounded-3xl flex items-center justify-between hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-surface-container-low rounded-2xl flex items-center justify-center p-2 opacity-80">
+<img alt="Ride Plus" class="w-full h-full object-contain" data-alt="luxury dark grey electric scooter for premium delivery service isolated on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD43jJohiSxOwCEry2AbXNT90VGOfUEXIO79JFBTLbjF0XdYijnv6hMp4zcf1SipQfWAqMjqZYXSRaWzEU5aOznkt_RSz02fiSFmDR-lvV8Kusk4EEDvQDPb2nnMKOzHqizL9UNfv20mfVllciV0lW0f67Q_52U48UgH4jXkvx8mhQNdSaWr18c4TO8C9mDzOuwb7DPoMZoT4IiyS94i4luH_45nFz9Khvx_MumkcXpg7wC6PVjKwMCpyGt-UHCwbwUCr4y8-PIG28"/>
+</div>
+<div>
+<h3 class="font-bold text-on-surface text-lg">GB RIDE PLUS</h3>
+<p class="text-on-surface-variant text-xs">Premium Comfort</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline font-black text-primary text-xl italic">Rp 25.000</p>
+<span class="text-[10px] font-bold uppercase text-on-surface-variant">VIP PRIORITY</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Actions -->
+<div class="flex flex-col sm:flex-row items-center gap-4">
+<div class="flex-grow w-full">
+<div class="flex items-center gap-4 px-4 py-3 bg-surface-container-low rounded-2xl border border-outline-variant/10">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+<div class="flex-grow">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Payment Method</p>
+<p class="text-sm font-semibold text-on-surface">GB WALLET (Rp 120.400)</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<button class="w-full sm:w-auto flex-none px-12 py-5 bg-gradient-to-br from-[#cafd00] to-[#f3ffca] text-black font-headline font-black text-lg rounded-full shadow-[0_0_25px_rgba(243,255,202,0.5)] active:scale-95 transition-all duration-200 uppercase italic">
+              Pesan Sekarang
+            </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Navigation Bar Shell -->
+<nav class="md:hidden">
+<div class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-6 pb-6 pt-3 bg-[#262626]/60 backdrop-blur-xl rounded-t-[24px] shadow-[0_-4px_48px_rgba(0,0,0,0.06)]">
+<!-- Activity Tab (Active because we are in a ride flow) -->
+<a class="flex flex-col items-center justify-center text-gray-400 p-2 hover:text-[#f3ffca] transition-colors active:scale-90 duration-200 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-[0.05em] uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#cafd00] to-[#f3ffca] text-black rounded-full px-5 py-1.5 shadow-[0_0_15px_rgba(243,255,202,0.4)] active:scale-90 duration-200 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-[0.05em] uppercase">Activity</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 p-2 hover:text-[#f3ffca] transition-colors active:scale-90 duration-200 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-[0.05em] uppercase">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

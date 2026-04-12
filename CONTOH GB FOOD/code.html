@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GB FOOD - Discovery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,700;0,800;1,800&amp;family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-fixed-dim": "#edd13a",
+              "surface-tint": "#f3ffca",
+              "surface": "#0e0e0e",
+              "on-background": "#ffffff",
+              "tertiary-dim": "#edd13a",
+              "surface-dim": "#0e0e0e",
+              "secondary-dim": "#ddda49",
+              "surface-container-lowest": "#000000",
+              "primary": "#f3ffca",
+              "outline-variant": "#494847",
+              "inverse-on-surface": "#565554",
+              "primary-container": "#cafd00",
+              "primary-fixed": "#cafd00",
+              "on-secondary-container": "#fffca4",
+              "inverse-surface": "#fcf8f8",
+              "on-surface": "#ffffff",
+              "primary-dim": "#beee00",
+              "on-tertiary": "#665800",
+              "on-tertiary-fixed-variant": "#685900",
+              "on-primary-container": "#4a5e00",
+              "on-primary": "#516700",
+              "secondary-container": "#636100",
+              "on-error-container": "#ffd2c8",
+              "error-dim": "#d53d18",
+              "surface-container": "#1a1919",
+              "primary-fixed-dim": "#beee00",
+              "on-tertiary-container": "#5d5000",
+              "surface-container-highest": "#262626",
+              "surface-container-low": "#131313",
+              "outline": "#777575",
+              "on-primary-fixed": "#3a4a00",
+              "tertiary-fixed": "#fce047",
+              "on-surface-variant": "#adaaaa",
+              "surface-bright": "#2c2c2c",
+              "on-tertiary-fixed": "#483d00",
+              "on-primary-fixed-variant": "#526900",
+              "secondary-fixed": "#ece856",
+              "error-container": "#b92902",
+              "tertiary-container": "#fce047",
+              "on-secondary-fixed-variant": "#605e00",
+              "tertiary": "#ffeea5",
+              "background": "#0e0e0e",
+              "secondary": "#ece856",
+              "on-secondary": "#565400",
+              "on-secondary-fixed": "#434100",
+              "error": "#ff7351",
+              "on-error": "#450900",
+              "secondary-fixed-dim": "#ddda49",
+              "surface-variant": "#262626",
+              "surface-container-high": "#201f1f",
+              "inverse-primary": "#516700"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-panel {
+            background: rgba(38, 38, 38, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .kinetic-gradient {
+            background: linear-gradient(135deg, #cafd00 0%, #f3ffca 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary-fixed">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-[60] bg-[#0e0e0e] shadow-none flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/20">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a stylish young person with neon lighting reflecting on their face, modern urban aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr5XAajWHWnCVcEoi2VhomU2RRi1oJj14RBhltVEwmTbfEKW_i84dn2BDkUz9qAQj07nsW1VB0znDXOW5qiwlc18aHqhw7Gb53jOgqu22HqidGCHExwD202ID9AIWBaNt6MkzajfHVnmrUTACMJknmlViLwxT-oUuNyAm-gWNyh8y73S-6_JDv5sLo-ZwmgEHwjPyTeaqbJyqf_UDWD4h30dkfYwiVwaVX5dP2bncVn6yn1IfcqPjFpKBz4VY49nkar4KuReEa7jY"/>
+</div>
+<h1 class="text-2xl font-extrabold text-[#f3ffca] italic font-headline tracking-tight">GB FOOD</h1>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#262626] transition-colors text-[#f3ffca] active:scale-95 duration-200">
+<span class="material-symbols-outlined">search</span>
+</button>
+</header>
+<main class="pb-40">
+<!-- Category Tabs -->
+<section class="mt-4 px-6 overflow-x-auto no-scrollbar flex items-center gap-4 py-2">
+<button class="flex-none px-6 py-2 rounded-full bg-primary text-on-primary-fixed font-bold text-sm tracking-wide transition-all active:scale-95">
+                Burger
+            </button>
+<button class="flex-none px-6 py-2 rounded-full bg-surface-container-highest text-on-surface-variant font-medium text-sm tracking-wide transition-all hover:text-on-surface active:scale-95">
+                Pizza
+            </button>
+<button class="flex-none px-6 py-2 rounded-full bg-surface-container-highest text-on-surface-variant font-medium text-sm tracking-wide transition-all hover:text-on-surface active:scale-95">
+                Sushi
+            </button>
+<button class="flex-none px-6 py-2 rounded-full bg-surface-container-highest text-on-surface-variant font-medium text-sm tracking-wide transition-all hover:text-on-surface active:scale-95">
+                Salad
+            </button>
+<button class="flex-none px-6 py-2 rounded-full bg-surface-container-highest text-on-surface-variant font-medium text-sm tracking-wide transition-all hover:text-on-surface active:scale-95">
+                Wings
+            </button>
+</section>
+<!-- Featured Bento Grid Section -->
+<section class="mt-8 px-6">
+<div class="grid grid-cols-2 gap-4">
+<!-- Large Featured Card -->
+<div class="col-span-2 relative h-64 rounded-xl overflow-hidden group bg-surface-container-highest">
+<img alt="Double Smash Burger" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Gourmet double smash burger with melting cheese and vibrant toppings on a dark rustic background, high contrast lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAycsYkThA1vCFz2tUkyW96TqiV32AtzRW3ZNSA7tSrPWtVsdi4vayQ_fuN_39zI5jF3wWHeHXHXg1h5g9W42UNkEA9cVlgnCIZPSX6IFBlY0gJiRI7IpL5zmKiZu2FovYUTdvqTWybq_f5jdpNVo_U52eCfxZEItzbbn2IpD83nNeReSWmo4IUoiXJi4fnLFDfdYFG7G7jBLUZi66n86zmfPkPaBP74CzMVEy5rtSJxDt8MS9e292vZwvXBbdVEbS6A4RN08GMd7U"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+<div>
+<span class="bg-primary text-on-primary-fixed text-[10px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-sm">Trending Now</span>
+<h3 class="text-xl font-headline font-extrabold text-white mt-2">The Titan Burger</h3>
+<p class="text-sm text-primary font-bold">Rp 65.000</p>
+</div>
+<button class="w-12 h-12 rounded-full kinetic-gradient text-on-primary-fixed flex items-center justify-center active:scale-90 transition-all shadow-xl">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+</div>
+<!-- Secondary Bento Cards -->
+<div class="relative h-48 rounded-xl overflow-hidden bg-surface-container-highest">
+<img alt="Pepperoni Pizza" class="w-full h-full object-cover opacity-80" data-alt="Freshly baked pepperoni pizza with glowing oily cheese and crispy crust on a dark stone background, moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCA7XV72EFHMgB6PyVwrezxmFR3NxnkHQ7CCuTZUzzXoM6yJDV__okcrWKC6KiskOpyZnvXKU-8dwa1GiWWAmhiqC7GPOTyPF140bwY7tOosgNgIBdVlnbOq1HMlGsk4fBQRm4goM__fsEWcw9E875xDdPNWtgpwWLCp4_LqKDx_vY9KASOLOwB7JU6HLfOxKr6TsUwV1VzXbeAoSF9gZBpVeBLOJemxRCO2Uf5jhX9O1Bn0a4Yu0c-Ty69SEmivLRK1-MltQf5kPM"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute top-3 right-3">
+<span class="bg-black/60 backdrop-blur-md text-[10px] text-white px-2 py-1 rounded-full font-bold">15-20 MIN</span>
+</div>
+<div class="absolute bottom-3 left-3">
+<h4 class="text-sm font-bold text-white">Neon Pizza</h4>
+<p class="text-xs text-primary font-bold">Rp 48.000</p>
+</div>
+</div>
+<div class="relative h-48 rounded-xl overflow-hidden bg-surface-container-highest">
+<img alt="Sushi Platter" class="w-full h-full object-cover opacity-80" data-alt="Exotic sushi rolls with bright orange roe and green wasabi arranged artfully on a black ceramic plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpD4xckmjUVcuI9MRhAM3ZFDP1GRdbxKuPJsApb_OyMNdQI87EL_Z8Aza_ho4SgfK_uomVDFE9unJV0tSDypp5t0JTGdi2ywPtNTogtPjhM-TplJGvOCX3HOU3nrgVbsRzi8XUJCTTv_qzgL3FjOmjwIDGQbSmN0kKaTNn_NULytepbr-JaQomMf9GY5CQTMqXNlyIk0VDbx_5I4aWNN6npeXfqut7POZnSKS4gDUw5_aAKcqT19QL3K2LIJ8cq7fOYnFK_J3MCcM"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute top-3 right-3">
+<span class="bg-black/60 backdrop-blur-md text-[10px] text-white px-2 py-1 rounded-full font-bold">25-30 MIN</span>
+</div>
+<div class="absolute bottom-3 left-3">
+<h4 class="text-sm font-bold text-white">Zen Sushi</h4>
+<p class="text-xs text-primary font-bold">Rp 92.000</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Vertical Feed Items -->
+<section class="mt-8 px-6 space-y-6">
+<h2 class="text-sm font-label font-bold uppercase tracking-[0.2em] text-on-surface-variant">Recommended for you</h2>
+<!-- Item 1 -->
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl group hover:bg-surface-container-high transition-colors">
+<div class="w-24 h-24 flex-none rounded-lg overflow-hidden relative">
+<img alt="Tacos" class="w-full h-full object-cover" data-alt="Three street tacos with lime and cilantro on a dark background, vibrant colors and sharp focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYPu2jeP7rU5Dx4Wo2dbh-vHCYtXSZxL8JUtsodghs6MWkiIxQ9sofn381wlo3_R5Qv8N8mF1L_oOJ8Ma7wtdql98GM4A1eo29jy3OoSSv9ryvWIMFW7Gy79W2Xniss_ZKlnyKBbya-O-Wn8xLG4P7D9TVTMPbmLpgOz-V5zyRQKmpEY3S4J9HyPLzBAVzi01lDCLbwm8KxihobxRgWyu6T1JFccWoarYL9BzspM1hnkVvBWwm6Apd_UM5eJw49s5wxo_xjSMOp5k"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-bold text-lg text-white group-hover:text-primary transition-colors">Cyber Tacos (3pcs)</h3>
+<p class="text-xs text-on-surface-variant line-clamp-1">Steak, Lime, Onion, Cyber Sauce</p>
+<div class="flex items-center justify-between mt-2">
+<span class="font-black text-primary">Rp 42.000</span>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest text-primary flex items-center justify-center active:scale-90 transition-all">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl group hover:bg-surface-container-high transition-colors">
+<div class="w-24 h-24 flex-none rounded-lg overflow-hidden relative">
+<img alt="Acai Bowl" class="w-full h-full object-cover" data-alt="Healthy acai bowl with berries, granola and honey drizzle on dark surface, editorial food photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD624IR0H1Z27uoIdJbYualiHkzqr3imh5lXBJ3wUCRhAdeE66DCG5Qhup-YZp2YFfsswOFzGj8WcowhNqroTAtAA68mLUHQ8G8ErYIhYR94wmJ7IXLWQOB4a02eIT7qJ-9dCqwwdSS9Jg_XgkQR4UnbVRezyHlstbI6jPfDdpJ53EHvKKTOqdClJdznHFfYZVKodAncmfbZJY5XXc0nG8XivlDwgO0dyoxPeIdp1fRW_cNmzRX0FUP3NT5aCxgWkGbCa5KIOLWQzY"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-bold text-lg text-white group-hover:text-primary transition-colors">Midnight Bowl</h3>
+<p class="text-xs text-on-surface-variant line-clamp-1">Acai, Blueberry, Granola, Honey</p>
+<div class="flex items-center justify-between mt-2">
+<span class="font-black text-primary">Rp 55.000</span>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest text-primary flex items-center justify-center active:scale-90 transition-all">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl group hover:bg-surface-container-high transition-colors">
+<div class="w-24 h-24 flex-none rounded-lg overflow-hidden relative">
+<img alt="Korean Fried Chicken" class="w-full h-full object-cover" data-alt="Golden crispy korean fried chicken with spicy glaze and sesame seeds on a black plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsBauTNfEWE-CjNxGsUssZEz-vu3Orh__CyM1mklhwlN2_Ij0qsMdcbCjpNb-Ne4vhQJkJE_eSIIen9ynu4GUtRVB22OIws_ApkmJP-f-m0mZbEWfwoS1OR-I0-i_CchW-kK7ZEeISNYnf7yUozMLuyGV5RG6MIGNhwgtZuZTOeRpAY0pIY36rDfipf_bFEL6cC-QlTOGGY-DijgMg6VbPqnJjpKCUBa-bVC7cPTCvF6cmjf5MdTDYkszqE-Z67TquOKq8vKPjik4"/>
+</div>
+<div class="flex-grow">
+<h3 class="font-bold text-lg text-white group-hover:text-primary transition-colors">Seoul Fire Wings</h3>
+<p class="text-xs text-on-surface-variant line-clamp-1">Gochujang Glaze, Sesame, 6pcs</p>
+<div class="flex items-center justify-between mt-2">
+<span class="font-black text-primary">Rp 45.000</span>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest text-primary flex items-center justify-center active:scale-90 transition-all">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Bottom Action Bar (Cart Summary) -->
+<div class="fixed bottom-24 left-6 right-6 z-50">
+<div class="glass-panel px-6 py-4 rounded-2xl flex items-center justify-between shadow-2xl border border-white/5">
+<div class="flex flex-col">
+<span class="text-[10px] font-black uppercase tracking-widest text-primary/80">1 ITEM IN CART</span>
+<span class="text-lg font-bold text-white">Rp 45.000</span>
+</div>
+<button class="kinetic-gradient px-6 py-3 rounded-xl text-on-primary-fixed font-black text-sm uppercase tracking-wider flex items-center gap-2 active:scale-95 transition-all">
+                Checkout
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full rounded-t-[24px] z-50 bg-[#262626]/60 backdrop-blur-xl shadow-[0_-4px_48px_rgba(0,0,0,0.06)] flex justify-around items-center h-20 pb-safe px-4">
+<a class="flex flex-col items-center justify-center text-[#f3ffca] bg-[#cafd00]/10 rounded-xl px-4 py-2 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 opacity-60 hover:text-[#f3ffca] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">Activity</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 opacity-60 hover:text-[#f3ffca] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
