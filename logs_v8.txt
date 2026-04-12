@@ -1,0 +1,318 @@
+build_and_deploy	Set up job	﻿2026-04-12T07:36:39.2646483Z Current runner version: '2.333.1'
+build_and_deploy	Set up job	2026-04-12T07:36:39.2669940Z ##[group]Runner Image Provisioner
+build_and_deploy	Set up job	2026-04-12T07:36:39.2670677Z Hosted Compute Agent
+build_and_deploy	Set up job	2026-04-12T07:36:39.2671243Z Version: 20260213.493
+build_and_deploy	Set up job	2026-04-12T07:36:39.2671836Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+build_and_deploy	Set up job	2026-04-12T07:36:39.2672435Z Build Date: 2026-02-13T00:28:41Z
+build_and_deploy	Set up job	2026-04-12T07:36:39.2673047Z Worker ID: {af644e28-22ca-4149-85c8-712c4503e9c8}
+build_and_deploy	Set up job	2026-04-12T07:36:39.2673703Z Azure Region: northcentralus
+build_and_deploy	Set up job	2026-04-12T07:36:39.2674195Z ##[endgroup]
+build_and_deploy	Set up job	2026-04-12T07:36:39.2675506Z ##[group]Operating System
+build_and_deploy	Set up job	2026-04-12T07:36:39.2676032Z Ubuntu
+build_and_deploy	Set up job	2026-04-12T07:36:39.2676436Z 24.04.4
+build_and_deploy	Set up job	2026-04-12T07:36:39.2676814Z LTS
+build_and_deploy	Set up job	2026-04-12T07:36:39.2677240Z ##[endgroup]
+build_and_deploy	Set up job	2026-04-12T07:36:39.2677639Z ##[group]Runner Image
+build_and_deploy	Set up job	2026-04-12T07:36:39.2678110Z Image: ubuntu-24.04
+build_and_deploy	Set up job	2026-04-12T07:36:39.2678588Z Version: 20260406.80.1
+build_and_deploy	Set up job	2026-04-12T07:36:39.2679534Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260406.80/images/ubuntu/Ubuntu2404-Readme.md
+build_and_deploy	Set up job	2026-04-12T07:36:39.2680986Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260406.80
+build_and_deploy	Set up job	2026-04-12T07:36:39.2681752Z ##[endgroup]
+build_and_deploy	Set up job	2026-04-12T07:36:39.2682743Z ##[group]GITHUB_TOKEN Permissions
+build_and_deploy	Set up job	2026-04-12T07:36:39.2684812Z Contents: read
+build_and_deploy	Set up job	2026-04-12T07:36:39.2685252Z Metadata: read
+build_and_deploy	Set up job	2026-04-12T07:36:39.2685753Z Packages: read
+build_and_deploy	Set up job	2026-04-12T07:36:39.2686146Z ##[endgroup]
+build_and_deploy	Set up job	2026-04-12T07:36:39.2688023Z Secret source: Actions
+build_and_deploy	Set up job	2026-04-12T07:36:39.2689017Z Prepare workflow directory
+build_and_deploy	Set up job	2026-04-12T07:36:39.3003910Z Prepare all required actions
+build_and_deploy	Set up job	2026-04-12T07:36:39.3043577Z Getting action download info
+build_and_deploy	Set up job	2026-04-12T07:36:39.6793825Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+build_and_deploy	Set up job	2026-04-12T07:36:39.8068137Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+build_and_deploy	Set up job	2026-04-12T07:36:39.8749505Z Download action repository 'w9jds/firebase-action@master' (SHA:46a04d83eb19539c893cc86fce57ecbd82ba3111)
+build_and_deploy	Set up job	2026-04-12T07:36:40.2464325Z Complete job name: build_and_deploy
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	﻿2026-04-12T07:36:40.2838254Z ##[group]Pull down action image 'w9jds/firebase-action:v15.14.0'
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.2872067Z ##[command]/usr/bin/docker pull w9jds/firebase-action:v15.14.0
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7368116Z v15.14.0: Pulling from w9jds/firebase-action
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7376470Z 689b91d88a0f: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7377492Z dbf73cd8edfc: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7378553Z b8ebd613102d: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7379688Z 31ac16b7718c: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7380707Z cdcb0733792d: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7381605Z cee7559a7c01: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7382538Z 776684600a85: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7383419Z e500a71df2ca: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7384395Z 649aac5ce78b: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7385370Z d94c9cccff53: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7386270Z 50a6f93f638f: Pulling fs layer
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7387202Z 776684600a85: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7388086Z e500a71df2ca: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7389252Z 649aac5ce78b: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7390267Z d94c9cccff53: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7391167Z 50a6f93f638f: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7392125Z 31ac16b7718c: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7393017Z cdcb0733792d: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.7393824Z cee7559a7c01: Waiting
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.9320143Z dbf73cd8edfc: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:40.9321834Z dbf73cd8edfc: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.0344409Z 31ac16b7718c: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.0345834Z 31ac16b7718c: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.1459072Z cdcb0733792d: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.1459768Z cdcb0733792d: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.1601768Z 689b91d88a0f: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.1603567Z 689b91d88a0f: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.3071354Z b8ebd613102d: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.3072805Z b8ebd613102d: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.3396932Z 776684600a85: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.3400801Z 776684600a85: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.4372847Z e500a71df2ca: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.4373714Z e500a71df2ca: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.5343632Z d94c9cccff53: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.6349151Z 50a6f93f638f: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.6350847Z 50a6f93f638f: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.6651425Z 649aac5ce78b: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.6652659Z 649aac5ce78b: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.7687722Z cee7559a7c01: Verifying Checksum
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:41.7688704Z cee7559a7c01: Download complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:42.1307887Z 689b91d88a0f: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:46.1957800Z dbf73cd8edfc: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:47.9299290Z b8ebd613102d: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:47.9401921Z 31ac16b7718c: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:47.9483272Z cdcb0733792d: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:51.0365384Z cee7559a7c01: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:51.0897542Z 776684600a85: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:51.9565620Z e500a71df2ca: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:56.9036982Z 649aac5ce78b: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:56.9141990Z d94c9cccff53: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:56.9209835Z 50a6f93f638f: Pull complete
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:56.9240076Z Digest: sha256:0efe91b07d644272e43e9e864061fbcb074d67669599e8a721ada80806ae66bc
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:56.9267927Z Status: Downloaded newer image for w9jds/firebase-action:v15.14.0
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:56.9278925Z docker.io/w9jds/firebase-action:v15.14.0
+build_and_deploy	Pull w9jds/firebase-action:v15.14.0	2026-04-12T07:36:56.9294695Z ##[endgroup]
+build_and_deploy	Checkout Repo	﻿2026-04-12T07:36:56.9671053Z ##[group]Run actions/checkout@v4
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9671539Z with:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9671737Z   repository: zyqidwiky123/gb-delivery
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9672201Z   token: ***
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9672378Z   ssh-strict: true
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9672561Z   ssh-user: git
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9672745Z   persist-credentials: true
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9672957Z   clean: true
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9673137Z   sparse-checkout-cone-mode: true
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9673387Z   fetch-depth: 1
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9673567Z   fetch-tags: false
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9673736Z   show-progress: true
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9673916Z   lfs: false
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9674074Z   submodules: false
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9674277Z   set-safe-directory: true
+build_and_deploy	Checkout Repo	2026-04-12T07:36:56.9674652Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0684770Z Syncing repository: zyqidwiky123/gb-delivery
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0686328Z ##[group]Getting Git version info
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0686720Z Working directory is '/home/runner/work/gb-delivery/gb-delivery'
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0687333Z [command]/usr/bin/git version
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0715413Z git version 2.53.0
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0737753Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0750986Z Temporarily overriding HOME='/home/runner/work/_temp/207c54a5-bf85-493c-bbee-b6f86a3e2324' before making global git config changes
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0751901Z Adding repository directory to the temporary git global config as a safe directory
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0764412Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/gb-delivery/gb-delivery
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0792497Z Deleting the contents of '/home/runner/work/gb-delivery/gb-delivery'
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0795674Z ##[group]Initializing the repository
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0799852Z [command]/usr/bin/git init /home/runner/work/gb-delivery/gb-delivery
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0886433Z hint: Using 'master' as the name for the initial branch. This default branch name
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0887023Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0887522Z hint: to use in all of your new repositories, which will suppress this warning,
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0887858Z hint: call:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0888018Z hint:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0888287Z hint: 	git config --global init.defaultBranch <name>
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0888548Z hint:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0889056Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0889856Z hint: 'development'. The just-created branch can be renamed via this command:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0890456Z hint:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0890635Z hint: 	git branch -m <name>
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0890824Z hint:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0891095Z hint: Disable this message with "git config set advice.defaultBranchName false"
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0891582Z Initialized empty Git repository in /home/runner/work/gb-delivery/gb-delivery/.git/
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0898050Z [command]/usr/bin/git remote add origin https://github.com/zyqidwiky123/gb-delivery
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0923279Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0923975Z ##[group]Disabling automatic garbage collection
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0928280Z [command]/usr/bin/git config --local gc.auto 0
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0951345Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0951889Z ##[group]Setting up auth
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0959006Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.0983926Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1220649Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1244946Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1412469Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1437011Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1610870Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1638132Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1638592Z ##[group]Fetching the repository
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.1646300Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +576552ca9068ff6dc9cc6edb449fc4b547465da0:refs/remotes/origin/main
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5664876Z From https://github.com/zyqidwiky123/gb-delivery
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5665748Z  * [new ref]         576552ca9068ff6dc9cc6edb449fc4b547465da0 -> origin/main
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5686871Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5687229Z ##[group]Determining the checkout info
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5689091Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5694114Z [command]/usr/bin/git sparse-checkout disable
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5723047Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5742000Z ##[group]Checking out the ref
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5745687Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5974657Z Switched to a new branch 'main'
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5975069Z branch 'main' set up to track 'origin/main'.
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.5981844Z ##[endgroup]
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.6012699Z [command]/usr/bin/git log -1 --format=%H
+build_and_deploy	Checkout Repo	2026-04-12T07:36:57.6030131Z 576552ca9068ff6dc9cc6edb449fc4b547465da0
+build_and_deploy	Setup Node.js	﻿2026-04-12T07:36:57.6228191Z ##[group]Run actions/setup-node@v4
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.6228450Z with:
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.6228632Z   node-version: 22
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.6228951Z   always-auth: false
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.6229139Z   check-latest: false
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.6229470Z   token: ***
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.6229642Z ##[endgroup]
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.7859247Z Found in cache @ /opt/hostedtoolcache/node/22.22.2/x64
+build_and_deploy	Setup Node.js	2026-04-12T07:36:57.7865631Z ##[group]Environment details
+build_and_deploy	Setup Node.js	2026-04-12T07:37:04.9641963Z node: v22.22.2
+build_and_deploy	Setup Node.js	2026-04-12T07:37:04.9642353Z npm: 10.9.7
+build_and_deploy	Setup Node.js	2026-04-12T07:37:04.9642606Z yarn: 1.22.22
+build_and_deploy	Setup Node.js	2026-04-12T07:37:04.9643635Z ##[endgroup]
+build_and_deploy	Install All Dependencies (Monorepo)	﻿2026-04-12T07:37:04.9727731Z ##[group]Run npm install --no-audit --legacy-peer-deps
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:04.9728210Z [36;1mnpm install --no-audit --legacy-peer-deps[0m
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:04.9754085Z shell: /usr/bin/bash -e {0}
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:04.9754515Z ##[endgroup]
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1771216Z npm warn EBADENGINE Unsupported engine {
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1771750Z npm warn EBADENGINE   package: undefined,
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1772112Z npm warn EBADENGINE   required: { node: '20' },
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1772517Z npm warn EBADENGINE   current: { node: 'v22.22.2', npm: '10.9.7' }
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1772854Z npm warn EBADENGINE }
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1773121Z npm warn EBADENGINE Unsupported engine {
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1773450Z npm warn EBADENGINE   package: undefined,
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1773773Z npm warn EBADENGINE   required: { node: '20' },
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1774159Z npm warn EBADENGINE   current: { node: 'v22.22.2', npm: '10.9.7' }
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:22.1774475Z npm warn EBADENGINE }
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:23.3533530Z npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:24.5970799Z npm warn deprecated source-map@0.8.0-beta.0: The work that was done in this beta branch won't be included in future versions
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:26.1376865Z npm warn deprecated glob@11.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:30.4745520Z 
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:30.4746128Z added 726 packages in 25s
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:30.4746443Z 
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:30.4746720Z 131 packages are looking for funding
+build_and_deploy	Install All Dependencies (Monorepo)	2026-04-12T07:37:30.4747203Z   run `npm fund` for details
+build_and_deploy	Build User App	﻿2026-04-12T07:37:30.5098441Z ##[group]Run cd aro-drive-vite
+build_and_deploy	Build User App	2026-04-12T07:37:30.5098942Z [36;1mcd aro-drive-vite[0m
+build_and_deploy	Build User App	2026-04-12T07:37:30.5099173Z [36;1mnpm run build[0m
+build_and_deploy	Build User App	2026-04-12T07:37:30.5112884Z shell: /usr/bin/bash -e {0}
+build_and_deploy	Build User App	2026-04-12T07:37:30.5113115Z ##[endgroup]
+build_and_deploy	Build User App	2026-04-12T07:37:30.6182782Z 
+build_and_deploy	Build User App	2026-04-12T07:37:30.6183396Z > aro-drive@2.0.0 build
+build_and_deploy	Build User App	2026-04-12T07:37:30.6183801Z > vite build
+build_and_deploy	Build User App	2026-04-12T07:37:30.6183969Z 
+build_and_deploy	Build User App	2026-04-12T07:37:30.8171812Z [36mvite v6.4.2 [32mbuilding for production...[36m[39m
+build_and_deploy	Build User App	2026-04-12T07:37:31.0909986Z transforming...
+build_and_deploy	Build User App	2026-04-12T07:37:35.2306598Z [32m✓[39m 2107 modules transformed.
+build_and_deploy	Build User App	2026-04-12T07:37:35.4482941Z rendering chunks...
+build_and_deploy	Build User App	2026-04-12T07:37:35.7619156Z computing gzip size...
+build_and_deploy	Build User App	2026-04-12T07:37:35.7925188Z [2mdist/[22m[32mmanifest.webmanifest                        [39m[1m[2m    0.46 kB[22m[1m[22m
+build_and_deploy	Build User App	2026-04-12T07:37:35.7926611Z [2mdist/[22m[32mindex.html                                  [39m[1m[2m    1.48 kB[22m[1m[22m[2m │ gzip:   0.65 kB[22m
+build_and_deploy	Build User App	2026-04-12T07:37:35.7927997Z [2mdist/[22m[2massets/[22m[35mindex-CtAu1Ay-.css                   [39m[1m[2m   66.59 kB[22m[1m[22m[2m │ gzip:  10.44 kB[22m
+build_and_deploy	Build User App	2026-04-12T07:37:35.7929901Z [2mdist/[22m[2massets/[22m[36mworkbox-window.prod.es5-BIl4cyR9.js  [39m[1m[2m    5.76 kB[22m[1m[22m[2m │ gzip:   2.37 kB[22m
+build_and_deploy	Build User App	2026-04-12T07:37:35.7931487Z [2mdist/[22m[2massets/[22m[36mindex-BVKrYtK4.js                    [39m[1m[33m1,364.27 kB[39m[22m[2m │ gzip: 348.54 kB[22m
+build_and_deploy	Build User App	2026-04-12T07:37:35.7932396Z [33m
+build_and_deploy	Build User App	2026-04-12T07:37:35.7933025Z (!) Some chunks are larger than 500 kB after minification. Consider:
+build_and_deploy	Build User App	2026-04-12T07:37:35.7933650Z - Using dynamic import() to code-split the application
+build_and_deploy	Build User App	2026-04-12T07:37:35.7934894Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+build_and_deploy	Build User App	2026-04-12T07:37:35.7936195Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+build_and_deploy	Build User App	2026-04-12T07:37:35.7936924Z [32m✓ built in 4.95s[39m
+build_and_deploy	Build User App	2026-04-12T07:37:37.7080503Z 
+build_and_deploy	Build User App	2026-04-12T07:37:37.7081575Z [36mPWA v0.21.2[39m
+build_and_deploy	Build User App	2026-04-12T07:37:37.7082271Z mode      [35mgenerateSW[39m
+build_and_deploy	Build User App	2026-04-12T07:37:37.7083125Z precache  [32m14 entries[39m [2m(1961.38 KiB)[22m
+build_and_deploy	Build User App	2026-04-12T07:37:37.7083580Z files generated
+build_and_deploy	Build User App	2026-04-12T07:37:37.7084046Z   [2mdist/sw.js[22m
+build_and_deploy	Build User App	2026-04-12T07:37:37.7084579Z   [2mdist/workbox-cc85cf5a.js[22m
+build_and_deploy	Build Driver App	﻿2026-04-12T07:37:37.8096846Z ##[group]Run cd aro-drive-driver-vite
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.8097280Z [36;1mcd aro-drive-driver-vite[0m
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.8097512Z [36;1mnpm run build[0m
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.8111351Z shell: /usr/bin/bash -e {0}
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.8111586Z ##[endgroup]
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.9147137Z 
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.9147730Z > aro-drive-partner@2.0.0 build
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.9148132Z > vite build
+build_and_deploy	Build Driver App	2026-04-12T07:37:37.9148272Z 
+build_and_deploy	Build Driver App	2026-04-12T07:37:38.0859878Z [36mvite v6.4.2 [32mbuilding for production...[36m[39m
+build_and_deploy	Build Driver App	2026-04-12T07:37:38.2639827Z transforming...
+build_and_deploy	Build Driver App	2026-04-12T07:37:40.8214328Z [32m✓[39m 84 modules transformed.
+build_and_deploy	Build Driver App	2026-04-12T07:37:40.9852154Z rendering chunks...
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2226305Z computing gzip size...
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2455704Z [2mdist/[22m[32mmanifest.webmanifest                        [39m[1m[2m    0.49 kB[22m[1m[22m
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2457112Z [2mdist/[22m[32mindex.html                                  [39m[1m[2m    1.50 kB[22m[1m[22m[2m │ gzip:   0.63 kB[22m
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2458625Z [2mdist/[22m[2massets/[22m[35mindex-gbWtneSw.css                   [39m[1m[2m   44.99 kB[22m[1m[22m[2m │ gzip:   7.96 kB[22m
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2460604Z [2mdist/[22m[2massets/[22m[36mworkbox-window.prod.es5-BIl4cyR9.js  [39m[1m[2m    5.76 kB[22m[1m[22m[2m │ gzip:   2.37 kB[22m
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2462221Z [2mdist/[22m[2massets/[22m[36mindex-saGAAnVe.js                    [39m[1m[33m1,019.61 kB[39m[22m[2m │ gzip: 253.69 kB[22m
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2463087Z [33m
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2463581Z (!) Some chunks are larger than 500 kB after minification. Consider:
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2464196Z - Using dynamic import() to code-split the application
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2465380Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2466748Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+build_and_deploy	Build Driver App	2026-04-12T07:37:41.2467519Z [32m✓ built in 3.15s[39m
+build_and_deploy	Build Driver App	2026-04-12T07:37:42.9844230Z 
+build_and_deploy	Build Driver App	2026-04-12T07:37:42.9846229Z [36mPWA v0.21.2[39m
+build_and_deploy	Build Driver App	2026-04-12T07:37:42.9846718Z mode      [35mgenerateSW[39m
+build_and_deploy	Build Driver App	2026-04-12T07:37:42.9847252Z precache  [32m12 entries[39m [2m(1464.73 KiB)[22m
+build_and_deploy	Build Driver App	2026-04-12T07:37:42.9847568Z files generated
+build_and_deploy	Build Driver App	2026-04-12T07:37:42.9847913Z   [2mdist/sw.js[22m
+build_and_deploy	Build Driver App	2026-04-12T07:37:42.9848251Z   [2mdist/workbox-cc85cf5a.js[22m
+build_and_deploy	Build Admin App	﻿2026-04-12T07:37:43.0325887Z ##[group]Run cd aro-admin-vite
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.0326206Z [36;1mcd aro-admin-vite[0m
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.0326411Z [36;1mnpm run build[0m
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.0339693Z shell: /usr/bin/bash -e {0}
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.0339917Z ##[endgroup]
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.1501823Z 
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.1502810Z > aro-admin@2.0.0 build
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.1503283Z > vite build
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.1503460Z 
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.3175212Z [36mvite v6.4.2 [32mbuilding for production...[36m[39m
+build_and_deploy	Build Admin App	2026-04-12T07:37:43.5009795Z transforming...
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.6414088Z [32m✓[39m 70 modules transformed.
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.7857968Z rendering chunks...
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9796412Z computing gzip size...
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9986196Z [2mdist/[22m[32mmanifest.webmanifest                        [39m[1m[2m  0.34 kB[22m[1m[22m
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9987310Z [2mdist/[22m[32mindex.html                                  [39m[1m[2m  1.42 kB[22m[1m[22m[2m │ gzip:   0.60 kB[22m
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9988224Z [2mdist/[22m[2massets/[22m[35mindex-wo1GiJfz.css                   [39m[1m[2m 33.66 kB[22m[1m[22m[2m │ gzip:   6.62 kB[22m
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9989510Z [2mdist/[22m[2massets/[22m[36mworkbox-window.prod.es5-BIl4cyR9.js  [39m[1m[2m  5.76 kB[22m[1m[22m[2m │ gzip:   2.37 kB[22m
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9990405Z [2mdist/[22m[2massets/[22m[36mindex-DA5hHtuM.js                    [39m[1m[33m804.87 kB[39m[22m[2m │ gzip: 206.08 kB[22m
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9990909Z [33m
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9991250Z (!) Some chunks are larger than 500 kB after minification. Consider:
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9991782Z - Using dynamic import() to code-split the application
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9992801Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9993592Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+build_and_deploy	Build Admin App	2026-04-12T07:37:45.9994055Z [32m✓ built in 2.67s[39m
+build_and_deploy	Build Admin App	2026-04-12T07:37:47.3101938Z 
+build_and_deploy	Build Admin App	2026-04-12T07:37:47.3103061Z [36mPWA v0.21.2[39m
+build_and_deploy	Build Admin App	2026-04-12T07:37:47.3103722Z mode      [35mgenerateSW[39m
+build_and_deploy	Build Admin App	2026-04-12T07:37:47.3104448Z precache  [32m7 entries[39m [2m(825.88 KiB)[22m
+build_and_deploy	Build Admin App	2026-04-12T07:37:47.3105023Z files generated
+build_and_deploy	Build Admin App	2026-04-12T07:37:47.3105604Z   [2mdist/sw.js[22m
+build_and_deploy	Build Admin App	2026-04-12T07:37:47.3106249Z   [2mdist/workbox-7fc22fbe.js[22m
+build_and_deploy	Deploy to Firebase	﻿2026-04-12T07:37:47.3626191Z ##[group]Run w9jds/firebase-action@master
+build_and_deploy	Deploy to Firebase	2026-04-12T07:37:47.3626479Z with:
+build_and_deploy	Deploy to Firebase	2026-04-12T07:37:47.3626746Z   args: deploy --only hosting,functions --project gb-delivery-41bf6
+build_and_deploy	Deploy to Firebase	2026-04-12T07:37:47.3627067Z env:
+build_and_deploy	Deploy to Firebase	2026-04-12T07:37:47.3627218Z   FIREBASE_TOKEN: 
+build_and_deploy	Deploy to Firebase	2026-04-12T07:37:47.3627386Z ##[endgroup]
+build_and_deploy	Deploy to Firebase	2026-04-12T07:37:47.3726875Z ##[command]/usr/bin/docker run --name w9jdsfirebaseactionv15140_235885 --label 8be219 --workdir /github/workspace --rm -e "FIREBASE_TOKEN" -e "INPUT_ARGS" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/gb-delivery/gb-delivery":"/github/workspace" w9jds/firebase-action:v15.14.0 deploy --only hosting,functions --project gb-delivery-41bf6
+build_and_deploy	Deploy to Firebase	2026-04-12T07:37:49.0428802Z Either FIREBASE_TOKEN or GCP_SA_KEY or GOOGLE_APPLICATION_CREDENTIALS is required to run commands with the firebase cli
+build_and_deploy	Post Checkout Repo	﻿2026-04-12T07:37:49.1075410Z Post job cleanup.
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.1947616Z [command]/usr/bin/git version
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.1980018Z git version 2.53.0
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2017726Z Temporarily overriding HOME='/home/runner/work/_temp/6988166e-08de-448d-a3a8-3babda488332' before making global git config changes
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2018488Z Adding repository directory to the temporary git global config as a safe directory
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2031059Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/gb-delivery/gb-delivery
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2060534Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2087645Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2262280Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2279546Z http.https://github.com/.extraheader
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2291014Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2315126Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2485049Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+build_and_deploy	Post Checkout Repo	2026-04-12T07:37:49.2511454Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+build_and_deploy	Complete job	﻿2026-04-12T07:37:49.2771608Z Cleaning up orphan processes
+build_and_deploy	Complete job	2026-04-12T07:37:49.3187526Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
