@@ -18,93 +18,74 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-const FOOD_IMAGES = {
-    'Nasi Goreng': [
+// POOLS (Same as smart-populate-menu)
+const POOLS = {
+    DRINK: [
+        'https://images.unsplash.com/photo-1544145945-f904253d0c7e?w=800&fm=webp&q=80',
+        'https://images.unsplash.com/photo-1497515114629-f71d768fd07c?w=800&fm=webp&q=80',
+        'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=800&fm=webp&q=80'
+    ],
+    POULTRY: [
+        'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=800&fm=webp&q=80',
+        'https://images.unsplash.com/photo-1606755962773-d324e0a13ea0?w=800&fm=webp&q=80'
+    ],
+    SOUP: [
+        'https://images.unsplash.com/photo-1593443320739-77f74939d0da?w=800&fm=webp&q=80',
+        'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&fm=webp&q=80'
+    ],
+    MAIN: [
         'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&fm=webp&q=80',
         'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&fm=webp&q=80',
         'https://images.unsplash.com/photo-1621213233857-4560700d6477?w=800&fm=webp&q=80'
     ],
-    'Ayam': [
-        'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=800&fm=webp&q=80',
-        'https://images.unsplash.com/photo-1606755962773-d324e0a13ea0?w=800&fm=webp&q=80'
-    ],
-    'Bakso': [
-        'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&fm=webp&q=80'
-    ],
-    'Cafe': [
-        'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&fm=webp&q=80',
+    SNACK: [
+        'https://images.unsplash.com/photo-1528975604071-b4dc52a2d18c?w=800&fm=webp&q=80',
         'https://images.unsplash.com/photo-1559925393-8be0ec41b44d?w=800&fm=webp&q=80'
-    ],
-    'Seblak': [
-        'https://images.unsplash.com/photo-1593443320739-77f74939d0da?w=800&fm=webp&q=80'
-    ],
-    'Beverage': [
-        'https://images.unsplash.com/photo-1544145945-f904253d0c7e?w=800&fm=webp&q=80',
-        'https://images.unsplash.com/photo-1497515114629-f71d768fd07c?w=800&fm=webp&q=80'
-    ],
-    'Default': [
-        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&fm=webp&q=80',
-        'https://images.unsplash.com/photo-1473093226795-af9932fe5856?w=800&fm=webp&q=80'
     ]
 };
 
-function getRandomImage(category) {
-    const list = FOOD_IMAGES[category] || FOOD_IMAGES['Default'];
-    return list[Math.floor(Math.random() * list.length)];
+const KEYWORDS = {
+    DRINK: ['kopi', 'coffee', 'cafe', 'teh', 'es', 'jeruk', 'jus', 'drink', 'bobba', 'haus'],
+    POULTRY: ['ayam', 'bebek', 'puyuh', 'sate', 'geprek', 'fried chicken', 'daging'],
+    SOUP: ['bakso', 'pentol', 'soto', 'seblak', 'baso', 'mie ayam', 'siomay', 'batagor'],
+    MAIN: ['nasi', 'mie', 'goreng', 'lalapan', 'pecel', 'gudeg', 'lele', 'penyet', 'rames', 'warung', 'kantin', 'rm '],
+    SNACK: ['roti', 'martabak', 'snack', 'kue', 'donut', 'donat', 'pisang', 'cimol', 'cilok']
+};
+
+function getSmartImage(name, category) {
+    const combined = `${name} ${category}`.toLowerCase();
+    
+    for (const [key, keywords] of Object.entries(KEYWORDS)) {
+        if (keywords.some(kw => combined.includes(kw))) {
+            return POOLS[key][Math.floor(Math.random() * POOLS[key].length)];
+        }
+    }
+    return POOLS.MAIN[Math.floor(Math.random() * POOLS.MAIN.length)];
 }
 
-async function populateMerchantImages() {
-    console.log("Starting merchant image population...");
+async function updateMerchantThumbnails() {
+    console.log("Updating merchant thumbnails with smart matching...");
     const snapshot = await db.collection('merchants').get();
-    let count = 0;
     let batch = db.batch();
+    let count = 0;
 
     for (const doc of snapshot.docs) {
         const merchant = doc.data();
+        const smartImg = getSmartImage(merchant.name || '', merchant.category || '');
         
-        let needsUpdate = false;
-        let updateData = {};
+        batch.update(doc.ref, { image: smartImg });
+        count++;
 
-        // Populate top-level image if empty
-        if (!merchant.image) {
-            updateData.image = getRandomImage(merchant.category);
-            needsUpdate = true;
-            count++;
-        }
-
-        // Safety: Ensure menu items also have images (just in case)
-        const menu = merchant.menu || [];
-        let menuUpdated = false;
-        const updatedMenu = menu.map(item => {
-            if (!item.img) {
-                menuUpdated = true;
-                return { ...item, img: getRandomImage(merchant.category) };
-            }
-            return item;
-        });
-
-        if (menuUpdated) {
-            updateData.menu = updatedMenu;
-            needsUpdate = true;
-        }
-
-        if (needsUpdate) {
-            batch.update(doc.ref, updateData);
-        }
-
-        if (count % 400 === 0 && count > 0) {
+        if (count % 400 === 0) {
             await batch.commit();
+            console.log(`Updated ${count} thumbnails...`);
             batch = db.batch();
-            console.log(`Updated ${count} records...`);
         }
     }
 
     await batch.commit();
-    console.log(`Finished! Total merchants updated with top-level images: ${count}`);
+    console.log(`Finished! Total merchant thumbnails updated: ${count}`);
     process.exit(0);
 }
 
-populateMerchantImages().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+updateMerchantThumbnails().catch(console.error);
