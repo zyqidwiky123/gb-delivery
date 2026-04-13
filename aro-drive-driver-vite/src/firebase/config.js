@@ -15,6 +15,11 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// Debugging Aid: Cek jika API Key hilang (terjadi jika build GitHub tidak bawa env vars)
+if (!firebaseConfig.apiKey) {
+  console.error("FATAL ERROR: Firebase API Key is missing! Check your environment variables / GitHub Secrets.");
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
