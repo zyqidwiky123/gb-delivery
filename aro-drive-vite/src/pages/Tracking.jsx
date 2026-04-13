@@ -150,10 +150,10 @@ function Tracking() {
     }
   }, [driverPos]);
 
-  // Fetch Driver Profile
+  // Fetch Driver Profile (Run regardless of payment method if driverId exists)
   useEffect(() => {
     const driverId = order?.driverId || order?.driver?.id;
-    if (!driverId || (order?.paymentMethod === 'TUNAI')) return;
+    if (!driverId) return;
 
     const unsubscribe = onSnapshot(doc(db, "drivers", driverId), (docSnap) => {
       if (docSnap.exists()) {
@@ -162,15 +162,25 @@ function Tracking() {
     });
 
     return () => unsubscribe();
-  }, [order?.driverId, order?.driver?.id, order?.paymentMethod]);
+  }, [order?.driverId, order?.driver?.id]);
 
   const handleContactDriver = () => {
-    const driverPhone = order?.driver?.phone || '';
-    if (!driverPhone) {
+    const phone = driverProfile?.whatsapp || driverProfile?.phone || order?.driver?.phone || '';
+    if (!phone) {
       alert('Nomor driver belum tersedia');
       return;
     }
-    window.location.href = `https://wa.me/${driverPhone}?text=Halo%20Pak%20Driver,%20posisi%20dimana?`;
+
+    // Format to 62...
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '62' + cleanPhone.slice(1);
+    } else if (!cleanPhone.startsWith('62')) {
+      cleanPhone = '62' + cleanPhone;
+    }
+
+    const message = encodeURIComponent(`Halo Pak Driver, saya customer ARO-DRIVE. Posisi dimana ya?`);
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
   if (loading) return (
@@ -299,21 +309,42 @@ function Tracking() {
 
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-surface-container-highest border-2 border-primary overflow-hidden">
-                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr5XAajWHWnCVcEoi2VhomU2RRi1oJj14RBhltVEwmTbfEKW_i84dn2BDkUz9qAQj07nsW1VB0znDXOW5qiwlc18aHqhw7Gb53jOgqu22HqidGCHExwD202ID9AIWBaNt6MkzajfHVnmrUTACMJknmlViLwxT-oUuNyAm-gWNyh8y73S-6_JDv5sLo-ZwmgEHwjPyTeaqbJyqf_UDWD4h30dkfYwiVwaVX5dP2bncVn6yn1IfcqPjFpKBz4VY49nkar4KuReEa7jY" alt="Driver" className="w-full h-full object-cover" />
+                <div className="w-16 h-16 rounded-full bg-surface-container-highest border-2 border-primary overflow-hidden shadow-[0_0_15px_rgba(202,253,0,0.2)]">
+                  <img 
+                    src={driverProfile?.photoUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuAr5XAajWHWnCVcEoi2VhomU2RRi1oJj14RBhltVEwmTbfEKW_i84dn2BDkUz9qAQj07nsW1VB0znDXOW5qiwlc18aHqhw7Gb53jOgqu22HqidGCHExwD202ID9AIWBaNt6MkzajfHVnmrUTACMJknmlViLwxT-oUuNyAm-gWNyh8y73S-6_JDv5sLo-ZwmgEHwjPyTeaqbJyqf_UDWD4h30dkfYwiVwaVX5dP2bncVn6yn1IfcqPjFpKBz4VY49nkar4KuReEa7jY"} 
+                    alt="Driver" 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
                 <div>
-                  <h3 className="font-headline font-bold text-lg text-white">{order.driver?.name || (order.status === 'searching' ? 'Mencari...' : 'Driver')}</h3>
-                  <p className="text-on-surface-variant text-sm font-bold tracking-wider text-primary">{order.driver?.plate || '-'}</p>
+                  <h3 className="font-headline font-bold text-lg text-white leading-tight">
+                    {driverProfile?.name || order.driver?.name || (order.status === 'searching' ? 'Mencari...' : 'Driver')}
+                  </h3>
+                  <div className="flex flex-col mt-0.5">
+                    <span className="text-[10px] font-black tracking-widest text-primary uppercase">
+                      {driverProfile?.plateNumber || order.driver?.plate || '-'}
+                    </span>
+                    {driverProfile?.vehicleType && (
+                      <span className="text-[11px] font-bold text-white/50 tracking-wide mt-0.5 italic flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px]">directions_bike</span>
+                        {driverProfile.vehicleType}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <button
-                onClick={handleContactDriver}
-                className="w-12 h-12 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center hover:bg-primary/20 transition-all"
-              >
-                <span className="material-symbols-outlined text-xl">chat</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleContactDriver}
+                  className="w-12 h-12 rounded-2xl bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 flex items-center justify-center hover:bg-[#25D366]/20 active:scale-90 transition-all shadow-lg"
+                  title="WhatsApp Driver"
+                >
+                  <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.185-.573c.948.527 1.933.866 3.142.867 3.185 0 5.767-2.577 5.768-5.766.002-3.187-2.575-5.709-5.764-5.709zm3.374 8.263c-.149.424-.755.773-1.055.822-.299.051-.62.036-.912-.047-.323-.092-.727-.225-1.226-.43-2.04-.84-3.367-2.914-3.469-3.05-.102-.136-.761-.915-.761-1.745 0-.83.435-1.238.591-1.41.156-.172.34-.216.453-.216.113 0 .227.001.326.005.102.003.242-.039.379.292.149.362.51.127.561.226.042.085.021.163-.01.227-.031.063-.057.104-.15.213-.094.108-.2.241-.286.323-.094.091-.192.19-.083.378.109.188.485.801 1.039 1.293.714.634 1.314.83 1.502.923.188.094.299.078.411-.05.112-.128.482-.562.61-.754.128-.192.255-.162.43-.099.175.064 1.111.524 1.303.62.192.097.32.146.368.226.048.081.048.468-.101.892z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="bg-[#0e0e0e] p-5 rounded-3xl border border-white/5 space-y-4 shadow-inner text-white">
               <div className="flex justify-between items-center border-b border-white/5 pb-4">
