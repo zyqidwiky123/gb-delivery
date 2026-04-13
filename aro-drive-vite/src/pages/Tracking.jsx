@@ -179,7 +179,7 @@ function Tracking() {
       cleanPhone = '62' + cleanPhone;
     }
 
-    const message = encodeURIComponent(`Halo Pak Driver, saya customer ARO-DRIVE. Posisi dimana ya?`);
+    const message = encodeURIComponent(`Halo Bang Driver, saya customer ARO-DRIVE. Posisi dimana ya?`);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
@@ -302,49 +302,74 @@ function Tracking() {
             </div>
           )}
 
-          <div className="bg-[#131313]/90 backdrop-blur-2xl rounded-t-[2.5rem] px-6 pt-5 pb-8 shadow-[0_-12px_48px_rgba(0,0,0,0.6)] border-t border-white/5">
+          <div className="bg-[#131313]/90 backdrop-blur-2xl rounded-t-[2.5rem] px-6 pt-6 pb-8 shadow-[0_-12px_48px_rgba(0,0,0,0.6)] border-t border-white/5">
             <div className="flex justify-center mb-6">
-              <div className="w-12 h-1.5 bg-on-surface-variant/30 rounded-full"></div>
+              <div className="w-12 h-1.5 bg-white/10 rounded-full"></div>
             </div>
 
-            <div className="flex justify-between items-center mb-6">
+            {/* Driver Profile Section */}
+            <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-surface-container-highest border-2 border-primary overflow-hidden shadow-[0_0_15px_rgba(202,253,0,0.2)]">
-                  <img 
-                    src={driverProfile?.photoUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuAr5XAajWHWnCVcEoi2VhomU2RRi1oJj14RBhltVEwmTbfEKW_i84dn2BDkUz9qAQj07nsW1VB0znDXOW5qiwlc18aHqhw7Gb53jOgqu22HqidGCHExwD202ID9AIWBaNt6MkzajfHVnmrUTACMJknmlViLwxT-oUuNyAm-gWNyh8y73S-6_JDv5sLo-ZwmgEHwjPyTeaqbJyqf_UDWD4h30dkfYwiVwaVX5dP2bncVn6yn1IfcqPjFpKBz4VY49nkar4KuReEa7jY"} 
-                    alt="Driver" 
-                    className="w-full h-full object-cover" 
-                  />
+                {/* Driver Photo with Glow */}
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-3xl bg-surface-container-highest border border-white/10 overflow-hidden shadow-2xl relative z-10">
+                    <img 
+                      src={driverProfile?.photoUrl || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop&q=80"} 
+                      alt="Driver" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                  {order.status !== 'searching' && (
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-[#131313] rounded-full z-20"></div>
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-headline font-bold text-lg text-white leading-tight">
-                    {driverProfile?.name || order.driver?.name || (order.status === 'searching' ? 'Mencari...' : 'Driver')}
-                  </h3>
-                  <div className="flex flex-col mt-0.5">
-                    <span className="text-[10px] font-black tracking-widest text-primary uppercase">
-                      {driverProfile?.plateNumber || order.driver?.plate || '-'}
-                    </span>
-                    {driverProfile?.vehicleType && (
-                      <span className="text-[11px] font-bold text-white/50 tracking-wide mt-0.5 italic flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">directions_bike</span>
-                        {driverProfile.vehicleType}
-                      </span>
+
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-headline font-black text-xl text-white tracking-tight leading-none uppercase italic">
+                      {driverProfile?.name || order.driver?.name || (order.status === 'searching' ? 'Mencari...' : 'Driver')}
+                    </h3>
+                    {/* Minimalist WA Button next to name */}
+                    {order.status !== 'searching' && (
+                      <button
+                        onClick={handleContactDriver}
+                        className="w-8 h-8 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center hover:bg-[#25D366]/20 active:scale-90 transition-all border border-[#25D366]/20"
+                      >
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.185-.573c.948.527 1.933.866 3.142.867 3.185 0 5.767-2.577 5.768-5.766.002-3.187-2.575-5.709-5.764-5.709zm3.374 8.263c-.149.424-.755.773-1.055.822-.299.051-.62.036-.912-.047-.323-.092-.727-.225-1.226-.43-2.04-.84-3.367-2.914-3.469-3.05-.102-.136-.761-.915-.761-1.745 0-.83.435-1.238.591-1.41.156-.172.34-.216.453-.216.113 0 .227.001.326.005.102.003.242-.039.379.292.149.362.51.127.561.226.042.085.021.163-.01.227-.031.063-.057.104-.15.213-.094.108-.2.241-.286.323-.094.091-.192.19-.083.378.109.188.485.801 1.039 1.293.714.634 1.314.83 1.502.923.188.094.299.078.411-.05.112-.128.482-.562.61-.754.128-.192.255-.162.43-.099.175.064 1.111.524 1.303.62.192.097.32.146.368.226.048.081.048.468-.101.892z"/>
+                        </svg>
+                      </button>
                     )}
+                  </div>
+                  
+                  {/* Vehicle Details */}
+                  <div className="flex gap-2 mt-2 items-center">
+                    {/* Plate Number (Aesthetic Badge) */}
+                    <div className="bg-[#1a1a1a] border border-white/10 px-2.5 py-1 rounded-md shadow-inner">
+                      <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-white">
+                        {driverProfile?.plateNumber || order.driver?.plate || 'AG ---- ---'}
+                      </span>
+                    </div>
+                    {/* Vehicle Type */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20">
+                      <span className="material-symbols-outlined text-[14px] text-primary">directions_bike</span>
+                      <span className="text-[10px] font-black uppercase text-primary tracking-wider">
+                        {driverProfile?.vehicleType || 'Motor'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={handleContactDriver}
-                  className="w-12 h-12 rounded-2xl bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 flex items-center justify-center hover:bg-[#25D366]/20 active:scale-90 transition-all shadow-lg"
-                  title="WhatsApp Driver"
-                >
-                  <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.185-.573c.948.527 1.933.866 3.142.867 3.185 0 5.767-2.577 5.768-5.766.002-3.187-2.575-5.709-5.764-5.709zm3.374 8.263c-.149.424-.755.773-1.055.822-.299.051-.62.036-.912-.047-.323-.092-.727-.225-1.226-.43-2.04-.84-3.367-2.914-3.469-3.05-.102-.136-.761-.915-.761-1.745 0-.83.435-1.238.591-1.41.156-.172.34-.216.453-.216.113 0 .227.001.326.005.102.003.242-.039.379.292.149.362.51.127.561.226.042.085.021.163-.01.227-.031.063-.057.104-.15.213-.094.108-.2.241-.286.323-.094.091-.192.19-.083.378.109.188.485.801 1.039 1.293.714.634 1.314.83 1.502.923.188.094.299.078.411-.05.112-.128.482-.562.61-.754.128-.192.255-.162.43-.099.175.064 1.111.524 1.303.62.192.097.32.146.368.226.048.081.048.468-.101.892z"/>
-                  </svg>
-                </button>
-              </div>
+              {/* Minimalist Phone Button */}
+              {order.status !== 'searching' && (
+                 <a 
+                   href={`tel:${driverProfile?.phone || order.driver?.phone}`}
+                   className="w-11 h-11 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-primary transition-all"
+                 >
+                   <span className="material-symbols-outlined text-xl">phone</span>
+                 </a>
+              )}
             </div>
             <div className="bg-[#0e0e0e] p-5 rounded-3xl border border-white/5 space-y-4 shadow-inner text-white">
               <div className="flex justify-between items-center border-b border-white/5 pb-4">
