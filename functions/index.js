@@ -1,4 +1,5 @@
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
@@ -152,3 +153,30 @@ async function sendWAFonnte(target, message) {
         console.error("[Fonnte] Error sending WA:", error);
     }
 }
+
+/**
+ * Admin function to delete a user account from Firebase Auth
+ */
+exports.deleteUserAccount = onRequest({ cors: true }, async (req, res) => {
+    // Check for POST method
+    if (req.method !== 'POST') {
+        res.status(405).send('Method Not Allowed');
+        return;
+    }
+
+    const { uid } = req.body;
+    
+    if (!uid) {
+        res.status(400).send({ success: false, error: 'UID is required' });
+        return;
+    }
+
+    try {
+        await admin.auth().deleteUser(uid);
+        console.log(`Successfully deleted user with UID: ${uid}`);
+        res.status(200).send({ success: true, message: 'User deleted successfully from Firebase Auth' });
+    } catch (error) {
+        console.error(`Error deleting user ${uid}:`, error);
+        res.status(500).send({ success: false, error: error.message });
+    }
+});
