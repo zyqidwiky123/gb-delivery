@@ -78,16 +78,18 @@ function Dashboard() {
       const snapshot = await getDocs(q);
       const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      const todayTotal = orders
-        .filter(o => o.status === 'completed' && o.createdAt?.toDate() >= startOfToday)
+      const filteredToday = orders.filter(o => o.createdAt?.toDate() >= startOfToday);
+      
+      const todayTotal = filteredToday
+        .filter(o => o.status === 'completed')
         .reduce((sum, o) => sum + (o.serviceFee || 0), 0);
       
       const activeDriversCount = (await getDocs(query(collection(db, "drivers"), orderBy("isOnline", "desc"))))
         .docs.filter(d => d.data().isOnline).length;
 
-      useAdminStore.getState().updateMetrics(activeDriversCount, orders.length);
+      useAdminStore.getState().updateMetrics(activeDriversCount, filteredToday.length);
       // We'll use local state for revenue display
-      setMetrics({ revenue: todayTotal, drivers: activeDriversCount, orders: orders.length });
+      setMetrics({ revenue: todayTotal, drivers: activeDriversCount, orders: filteredToday.length });
     } catch (error) {
       console.error("Error fetching overview:", error);
     } finally {
