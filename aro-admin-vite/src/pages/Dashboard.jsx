@@ -11,6 +11,7 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const { 
     baseFare, setBaseFare, 
@@ -362,9 +363,17 @@ function Dashboard() {
   ];
 
   return (
-    <div className="bg-background text-on-surface antialiased overflow-x-hidden min-h-screen">
+    <div className="bg-background text-on-surface antialiased overflow-x-hidden min-h-screen relative">
+      {/* Mobile Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* SideNavBar */}
-      <aside className="h-screen w-64 fixed left-0 top-0 flex flex-col bg-[#0e0e0e] border-r border-white/5 z-50">
+      <aside className={`h-screen w-64 fixed left-0 top-0 flex flex-col bg-[#0e0e0e] border-r border-white/5 z-50 transition-transform duration-300 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="flex flex-col h-full py-6">
           <div className="px-6 mb-10">
             <h1 className="text-2xl font-black text-[#f3ffca] tracking-tighter font-headline">Aro Drive</h1>
@@ -374,7 +383,10 @@ function Dashboard() {
             {menuItems.map(item => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setIsSidebarOpen(false);
+                }}
                 className={`w-full flex items-center gap-3 px-6 py-3 transition-all duration-200 active:scale-95 ${
                   activeTab === item.id 
                     ? 'text-[#f3ffca] bg-[#262626] rounded-r-full font-bold border-l-4 border-[#f3ffca]' 
@@ -403,9 +415,15 @@ function Dashboard() {
       </aside>
 
       {/* TopAppBar */}
-      <header className="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-[#0e0e0e]/60 backdrop-blur-xl border-b border-white/5">
-        <div className="flex justify-between items-center px-8 h-full">
-          <div className="flex items-center gap-4">
+      <header className="fixed top-0 right-0 w-full md:w-[calc(100%-16rem)] h-16 z-40 bg-[#0e0e0e]/60 backdrop-blur-xl border-b border-white/5">
+        <div className="flex justify-between items-center px-4 md:px-8 h-full">
+          <div className="flex items-center gap-3 md:gap-4">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="md:hidden text-white p-2 hover:bg-white/5 rounded-lg transition-colors"
+            >
+              <span className="material-symbols-outlined">menu</span>
+            </button>
             <h2 className="text-lg font-bold text-white font-headline">Admin Portal</h2>
             <div className="h-4 w-px bg-white/10"></div>
             <div className="flex items-center gap-2 text-on-surface-variant">
@@ -414,8 +432,8 @@ function Dashboard() {
               <span className="text-xs font-bold text-primary">Live</span>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="relative group">
+          <div className="flex items-center gap-3 md:gap-6">
+            <div className="hidden lg:relative lg:group lg:block">
               <input className="bg-surface-container-low border-none rounded-full px-4 py-1.5 text-sm w-64 focus:ring-1 focus:ring-[#f3ffca] text-on-surface placeholder:text-gray-600 transition-all" placeholder="Search operations..." type="text" />
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
             </div>
@@ -428,11 +446,11 @@ function Dashboard() {
                 <span className="material-symbols-outlined">help_outline</span>
               </button>
               <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-                <div className="text-right">
+                <div className="hidden sm:block text-right">
                   <p className="text-xs font-bold text-white leading-none">Super Admin</p>
                   <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-tighter">Master Access</p>
                 </div>
-                <img alt="Super Admin" className="w-10 h-10 rounded-full border border-white/10 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxcz1taIWZuXhNzE4Kk8oX_K9kT3igqduygNAUgv7_mTFp-ymwFm4L7ke1X76c_myYezYuZT9zekztDR3w5IV4Lgug2NioMihbUn5oQ-zEWNovvdARWlUM-meti753-l48VVcuClnG81nXwpnYadPnldhulNhPKo6MBKQcNG_mtAOs5Hz7k0ch-FbGfdgDxPLJ1GvQlQJB6eYPHC6Ni-X7we4GomSYlkde5kTLUHJMvCa-IknsHAV3RuT4ANIU5qG82r3eByVnFWA" />
+                <img alt="Super Admin" className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/10 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxcz1taIWZuXhNzE4Kk8oX_K9kT3igqduygNAUgv7_mTFp-ymwFm4L7ke1X76c_myYezYuZT9zekztDR3w5IV4Lgug2NioMihbUn5oQ-zEWNovvdARWlUM-meti753-l48VVcuClnG81nXwpnYadPnldhulNhPKo6MBKQcNG_mtAOs5Hz7k0ch-FbGfdgDxPLJ1GvQlQJB6eYPHC6Ni-X7we4GomSYlkde5kTLUHJMvCa-IknsHAV3RuT4ANIU5qG82r3eByVnFWA" />
               </div>
             </div>
           </div>
@@ -440,7 +458,7 @@ function Dashboard() {
       </header>
 
       {/* Content Canvas */}
-      <main className="ml-64 pt-24 pb-12 px-8 min-h-screen">
+      <main className="ml-0 md:ml-64 pt-24 pb-12 px-4 md:px-8 min-h-screen">
         <div className="max-w-6xl mx-auto">
           {activeTab === 'Overview' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -461,7 +479,7 @@ function Dashboard() {
                     </p>
                   </div>
                 </div>
-                <div className="col-span-12 lg:col-span-5 grid grid-cols-2 gap-4">
+                <div className="col-span-12 lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-surface-container-highest rounded-3xl p-6 flex flex-col justify-between">
                     <span className="material-symbols-outlined text-primary">electric_bolt</span>
                     <div>
@@ -519,12 +537,12 @@ function Dashboard() {
 
           {activeTab === 'Food' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-center bg-surface-container-low p-8 rounded-[2.5rem] border border-white/5">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-surface-container-low p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/5 gap-6">
                 <div>
-                  <h3 className="text-3xl font-black text-white font-headline tracking-tighter uppercase italic">Food Merchant Management</h3>
+                  <h3 className="text-2xl md:text-3xl font-black text-white font-headline tracking-tighter uppercase italic text-shadow-glow">Food Merchant Management</h3>
                   <p className="text-sm text-on-surface-variant font-medium">Kelola daftar warung dan upload foto menu fisik untuk manual order</p>
                 </div>
-                <div className="relative">
+                <div className="relative w-full md:w-auto">
                   <input 
                     type="text" 
                     placeholder="Cari warung/resto..." 
@@ -593,25 +611,25 @@ function Dashboard() {
           )}
           {activeTab === 'Drivers' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-center bg-surface-container-low p-8 rounded-[2.5rem] border border-white/5">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-surface-container-low p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/5 gap-6">
                 <div>
-                  <h3 className="text-3xl font-black text-white font-headline tracking-tighter uppercase italic">Driver Management</h3>
+                  <h3 className="text-2xl md:text-3xl font-black text-white font-headline tracking-tighter uppercase italic text-shadow-glow">Driver Management</h3>
                   <p className="text-sm text-on-surface-variant font-medium">Verifikasi pendaftaran driver dan kelola otorisasi akses</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                  <div className="relative w-full sm:w-64">
                     <input 
                       type="text" 
                       placeholder="Cari driver..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-surface-container-highest border-none rounded-2xl px-6 py-3 text-sm w-64 focus:ring-2 focus:ring-primary transition-all text-white"
+                      className="bg-surface-container-highest border-none rounded-2xl px-6 py-3 text-sm w-full focus:ring-2 focus:ring-primary transition-all text-white"
                     />
                     <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary">search</span>
                   </div>
                   <button 
                     onClick={() => setShowAddDriverModal(true)}
-                    className="bg-primary text-black font-black px-6 py-3 rounded-2xl hover:shadow-lg active:scale-95 transition-all flex items-center gap-2 uppercase tracking-widest text-[10px]"
+                    className="w-full sm:w-auto bg-primary text-black font-black px-6 py-3 rounded-2xl hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[10px]"
                   >
                     <span className="material-symbols-outlined text-sm">person_add</span>
                     Tambah Driver
@@ -663,12 +681,12 @@ function Dashboard() {
 
           {activeTab === 'Transactions' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="bg-surface-container-low p-8 rounded-[2.5rem] border border-white/5">
-                <h3 className="text-3xl font-black text-white font-headline tracking-tighter uppercase italic mb-2">Riwayat Transaksi</h3>
-                <div className="flex items-center gap-4 text-xs text-on-surface-variant font-medium">
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary"></span> Completed</span>
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-500"></span> Pending / OntheWay</span>
-                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-error"></span> Cancelled</span>
+              <div className="bg-surface-container-low p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/5">
+                <h3 className="text-2xl md:text-3xl font-black text-white font-headline tracking-tighter uppercase italic mb-2 text-shadow-glow">Riwayat Transaksi</h3>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-on-surface-variant font-medium">
+                  <span className="flex items-center gap-1 shrink-0"><span className="h-2 w-2 rounded-full bg-primary"></span> Completed</span>
+                  <span className="flex items-center gap-1 shrink-0"><span className="h-2 w-2 rounded-full bg-yellow-500"></span> Pending / OntheWay</span>
+                  <span className="flex items-center gap-1 shrink-0"><span className="h-2 w-2 rounded-full bg-error"></span> Cancelled</span>
                 </div>
               </div>
 
@@ -718,8 +736,8 @@ function Dashboard() {
 
           {activeTab === 'Banners' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <div className="bg-surface-container-low p-8 rounded-[2.5rem] border border-white/5">
-                <h3 className="text-3xl font-black text-white font-headline tracking-tighter uppercase italic">Banner Management</h3>
+               <div className="bg-surface-container-low p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/5">
+                <h3 className="text-2xl md:text-3xl font-black text-white font-headline tracking-tighter uppercase italic text-shadow-glow">Banner Management</h3>
                 <p className="text-sm text-on-surface-variant font-medium">Kelola gambar promosi yang tampil di dashboard aplikasi user</p>
               </div>
 
@@ -821,13 +839,13 @@ function Dashboard() {
 
           {activeTab === 'Tarif' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-center bg-surface-container-low p-8 rounded-[2.5rem] border border-white/5">
+              <div className="flex justify-between items-center bg-surface-container-low p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/5">
                 <div>
-                  <h3 className="text-3xl font-black text-white font-headline tracking-tighter uppercase italic">Manajemen Tarif Layanan</h3>
-                  <p className="text-sm text-on-surface-variant font-medium">Atur biaya dasar dan tarif per KM untuk semua layanan ARO DRIVE</p>
+                  <h3 className="text-2xl md:text-3xl font-black text-white font-headline tracking-tighter uppercase italic text-shadow-glow">Manajemen Tarif</h3>
+                  <p className="text-sm text-on-surface-variant font-medium">Atur biaya dasar dan tarif per KM</p>
                 </div>
-                <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-3xl">payments</span>
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-2xl md:rounded-3xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-2xl md:text-3xl">payments</span>
                 </div>
               </div>
 
@@ -1076,7 +1094,7 @@ function Dashboard() {
                     }
                   }}
                   disabled={loading}
-                  className="bg-primary text-black font-black px-12 py-5 rounded-2xl active:scale-95 transition-all shadow-2xl shadow-primary/30 uppercase tracking-[0.2em] text-sm flex items-center gap-3"
+                  className="w-full md:w-auto bg-primary text-black font-black px-12 py-5 rounded-2xl active:scale-95 transition-all shadow-2xl shadow-primary/30 uppercase tracking-[0.2em] text-sm flex items-center justify-center gap-3"
                 >
                   <span className="material-symbols-outlined">{loading ? 'sync' : 'done_all'}</span>
                   {loading ? 'MENYIMPAN...' : 'SIMPAN SEMUA TARIF'}
@@ -1086,13 +1104,13 @@ function Dashboard() {
           )}
           {activeTab === 'Topups' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-center bg-surface-container-low p-8 rounded-[2.5rem] border border-white/5">
+              <div className="flex justify-between items-center bg-surface-container-low p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-white/5">
                 <div>
-                  <h3 className="text-3xl font-black text-white font-headline tracking-tighter uppercase italic">Top-up Approval</h3>
-                  <p className="text-sm text-on-surface-variant font-medium">Review dan Approve permintaan pengisian saldo driver</p>
+                  <h3 className="text-2xl md:text-3xl font-black text-white font-headline tracking-tighter uppercase italic text-shadow-glow">Top-up Approval</h3>
+                  <p className="text-sm text-on-surface-variant font-medium">Review permintaan saldo driver</p>
                 </div>
-                <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined text-3xl">account_balance_wallet</span>
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-2xl md:rounded-3xl flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-2xl md:text-3xl">account_balance_wallet</span>
                 </div>
               </div>
 
