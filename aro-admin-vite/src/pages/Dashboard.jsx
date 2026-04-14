@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, updatePassword } from 'firebase/auth';
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
@@ -19,6 +19,7 @@ function Dashboard() {
     platformFeePercent, setPlatformFee,
     pointsPerTenk, setPointsPerTenk,
     pointsToRedeem, setPointsToRedeem,
+    adminUser,
     pricing, setServicePricing, setAllPricing,
     banners, setBanners,
     drivers, setDrivers,
@@ -257,6 +258,44 @@ function Dashboard() {
       // If we had a members list, we'd refresh that too
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      alert("Isi kedua field password!");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert("Password tidak cocok!");
+      return;
+    }
+    if (newPassword.length < 6) {
+      alert("Password minimal 6 karakter!");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        await updatePassword(user, newPassword);
+        alert("Password berhasil diperbarui!");
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        alert("Sesi berakhir, silakan login ulang.");
+      }
+    } catch (error) {
+      console.error(error);
+      if (error.code === 'auth/requires-recent-login') {
+        alert("Sesi keamanan berakhir. Silakan Logout lalu Login kembali untuk mengganti password.");
+      } else {
+        alert("Gagal ganti password: " + error.message);
+      }
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -883,6 +922,22 @@ function Dashboard() {
                       />
                     </div>
                   </div>
+
+                  {/* Points To Redeem */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-black uppercase tracking-widest text-[#f3ffca]">Poin Dibutuhkan Untuk Voucher</label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                        <span className="text-primary font-bold">Poin</span>
+                      </div>
+                      <input 
+                        type="number" 
+                        value={pointsToRedeem}
+                        onChange={(e) => setPointsToRedeem(Number(e.target.value))}
+                        className="w-full bg-surface-container-highest border-none rounded-2xl py-4 pl-4 pr-16 text-on-surface font-bold focus:ring-2 focus:ring-primary transition-all"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-white/5">
@@ -905,6 +960,73 @@ function Dashboard() {
                   >
                     Simpan Settings
                   </button>
+                </div>
+              </div>
+
+              {/* Account Settings */}
+              <div className="bg-surface-container-low rounded-3xl p-8 space-y-8 border border-white/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-black text-white font-headline tracking-tighter uppercase">Pengaturan Akun</h3>
+                    <p className="text-sm text-on-surface-variant font-medium">Kelola keamanan akses dashboard admin</p>
+                  </div>
+                  <span className="material-symbols-outlined text-secondary text-4xl">manage_accounts</span>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Email Admin</label>
+                    <div className="bg-surface-container-highest/50 p-4 rounded-2xl text-white font-bold border border-white/5">
+                      {adminUser?.email || 'Admin ARO-DRIVE'}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Password Baru</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-4 text-on-surface font-bold focus:ring-2 focus:ring-secondary transition-all"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Konfirmasi Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-surface-container-highest border-none rounded-2xl py-4 px-4 text-on-surface font-bold focus:ring-2 focus:ring-secondary transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/5 flex flex-wrap gap-4">
+                    <button 
+                      onClick={handleUpdatePassword}
+                      disabled={passwordLoading}
+                      className="kinetic-gradient bg-secondary text-black font-black px-8 py-4 rounded-2xl active:scale-95 disabled:opacity-50 transition-all shadow-xl shadow-secondary/20 uppercase tracking-widest text-sm"
+                    >
+                      {passwordLoading ? 'Memproses...' : 'Ganti Password Sekarang'}
+                    </button>
+                    
+                    <button 
+                      onClick={async () => {
+                        try {
+                           const auth = getAuth();
+                           if (auth.currentUser?.email) {
+                             alert("Fitur Bantuan Keamanan sedang disiapkan. Sementara pakai ganti password langsung di atas ya Bang.");
+                           }
+                        } catch (err) {}
+                      }}
+                      className="bg-white/5 hover:bg-white/10 text-white font-bold px-8 py-4 rounded-2xl active:scale-95 transition-all uppercase tracking-widest text-[10px] border border-white/10"
+                    >
+                      Bantuan Keamanan
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
