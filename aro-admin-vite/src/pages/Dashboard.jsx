@@ -356,13 +356,7 @@ function Dashboard() {
     setIsDeleting(driver.id);
     try {
       // 1. Delete from Firebase Auth via Cloud Function
-      const functionUrl = 'https://deleteuseraccount-6r6r6r6r6r-uc.a.run.app'; // THIS IS A PLACEHOLDER, user needs to deploy
-      // Since I don't know the exact URL until deploy, I'll use a relative path or ask the user to provide it.
-      // But typically it's https://<region>-<project-id>.cloudfunctions.net/deleteUserAccount
-      // I'll construct a likely one or use a more generic approach if possible.
-      // For now, I'll alert the user that they need the correct URL.
-      
-      const response = await fetch('https://deleteuseraccount-3idshqclua-uc.a.run.app', { // I'll use a placeholder that hopefully matches their project
+      const response = await fetch('https://us-central1-gb-delivery-41bf6.cloudfunctions.net/deleteUserAccount', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid: driver.id })
@@ -410,6 +404,8 @@ function Dashboard() {
       setLoading(false);
     }
   };
+  
+  const fetchMerchants = async () => {
     setLoading(true);
     try {
       const q = query(collection(db, "merchants"), orderBy("name", "asc"));
@@ -1521,7 +1517,7 @@ function Dashboard() {
                   <input required type="tel" value={newDriver.phone} onChange={e => setNewDriver({...newDriver, phone: e.target.value})} className="w-full bg-surface-container-highest border-none rounded-xl py-3 px-4 text-white" placeholder="0812..." />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px) font-black uppercase tracking-widest text-on-surface-variant">Plat Nomor</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Plat Nomor</label>
                   <input required type="text" value={newDriver.plateNumber} onChange={e => setNewDriver({...newDriver, plateNumber: e.target.value})} className="w-full bg-surface-container-highest border-none rounded-xl py-3 px-4 text-white" placeholder="AG 1234 XX" />
                 </div>
               </div>
@@ -1541,6 +1537,7 @@ function Dashboard() {
             </form>
           </div>
         </div>
+      )}
       {/* Edit Driver Modal */}
       {showEditDriverModal && editingDriver && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
