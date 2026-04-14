@@ -21,7 +21,8 @@
     <nav class="navbar" id="navbar">
         <div class="container nav-content">
             <a href="#" class="logo">
-                <span class="logo-accent">ARO</span> DRIVE
+                <img src="assets/logo.png" alt="ARO DRIVE Logo" class="logo-img">
+                <span class="logo-text">ARO DRIVE</span>
             </a>
             
             <!-- Mobile Menu Button -->
@@ -37,14 +38,17 @@
                 <li><a href="#gabung">Gabung Mitra</a></li>
             </ul>
             
-            <a href="#" class="btn-primary desktop-cta">Buka Aplikasi</a>
+            <a href="https://aro-drive-user.web.app" class="btn-primary desktop-cta" target="_blank">Buka Aplikasi</a>
         </div>
     </nav>
 
     <!-- Mobile Sidebar Menu -->
     <div class="mobile-menu" id="mobile-menu">
         <div class="mobile-menu-header">
-            <a href="#" class="logo text-white"><span class="logo-accent">ARO</span> DRIVE</a>
+            <a href="#" class="logo text-white">
+                <img src="assets/logo.png" alt="ARO DRIVE" class="logo-img">
+                <span class="logo-text">ARO DRIVE</span>
+            </a>
             <button class="menu-close" id="menu-close"><i data-lucide="x"></i></button>
         </div>
         <ul class="mobile-nav-links">
@@ -53,7 +57,7 @@
             <li><a href="#mitra" class="mobile-link">Mitra UMKM</a></li>
             <li><a href="#gabung" class="mobile-link">Gabung Mitra</a></li>
         </ul>
-        <a href="#" class="btn-primary mobile-cta">Buka Aplikasi</a>
+        <a href="https://aro-drive-user.web.app" class="btn-primary mobile-cta" target="_blank">Buka Aplikasi</a>
     </div>
     <!-- Menu Overlay -->
     <div class="menu-overlay" id="menu-overlay"></div>
@@ -67,10 +71,10 @@
                 <h1>Semua Kebutuhan Kota, <br><span class="text-accent text-glow">Dalam Satu Genggaman.</span></h1>
                 <p class="hero-subtitle">Mulai dari pesan makan, antar paket, ojek online, sampai titip belanja. ARO DRIVE bikin aktivitas harianmu makin gampang dan sat-set!</p>
                 <div class="hero-buttons">
-                    <a href="#" class="btn-primary btn-large">
+                    <a href="https://aro-drive-user.web.app" class="btn-primary btn-large" target="_blank">
                         Pesan Sekarang <i data-lucide="arrow-right"></i>
                     </a>
-                    <a href="#gabung" class="btn-secondary btn-large">
+                    <a href="https://wa.me/6285748343842?text=Halo%20ARO%20DRIVE%2C%20saya%20ingin%20bergabung%20menjadi%20Mitra%20Driver." class="btn-secondary btn-large" target="_blank">
                         Jadi Mitra Driver
                     </a>
                 </div>
@@ -86,8 +90,7 @@
                 </div>
             </div>
             <div class="hero-image">
-                <!-- Placeholder for generated 3D illustration -->
-                <img src="assets/hero-illustration.png" alt="ARO DRIVE App Illustration" id="hero-img">
+                <img src="assets/hero-driver.jpg" alt="ARO DRIVE Mitra Driver" id="hero-img">
             </div>
         </div>
     </section>
@@ -195,10 +198,15 @@
     <!-- Mitra UMKM Banner -->
     <section class="mitra-banner" id="mitra">
         <div class="container container-mitra">
-            <div class="mitra-content">
-                <h2>Punya Usaha Kuliner atau Toko? <br>Jangkau Lebih Banyak Pelanggan!</h2>
-                <p>Gabung jadi Mitra UMKM ARO DRIVE dan nikmati proses pendaftaran yang cepat, sistem komisi transparan, dan bantuan promosi memukau. Kembangkan omset harianmu bersama kami.</p>
-                <a href="#" class="btn-primary mt-4">Daftar Warungmu <i data-lucide="arrow-right"></i></a>
+            <div class="mitra-wrapper">
+                <div class="mitra-content">
+                    <h2>Punya Usaha Kuliner atau Toko? <br>Jangkau Lebih Banyak Pelanggan!</h2>
+                    <p>Gabung jadi Mitra UMKM ARO DRIVE dan nikmati proses pendaftaran yang cepat, sistem komisi transparan, dan bantuan promosi memukau. Kembangkan omset harianmu bersama kami.</p>
+                    <a href="#" class="btn-primary mt-4">Daftar Warungmu <i data-lucide="arrow-right"></i></a>
+                </div>
+                <div class="mitra-visual">
+                    <img src="assets/delivery-scene.jpg" alt="Delivery Experience" class="img-rounded shadow-neon">
+                </div>
             </div>
         </div>
     </section>
@@ -208,7 +216,8 @@
         <div class="container footer-grid">
             <div class="footer-brand">
                 <a href="#" class="logo logo-footer">
-                    <span class="logo-accent">ARO</span> DRIVE
+                    <img src="assets/logo.png" alt="ARO DRIVE" class="logo-img">
+                    <span class="logo-text">ARO DRIVE</span>
                 </a>
                 <p class="footer-desc">Solusi mobilitas dan pengiriman tercepat, langsung dari tangan anak bangsa. Mendukung kemajuan ekonomi UMKM lokal.</p>
                 <div class="social-links">
@@ -228,15 +237,15 @@
             </div>
             <div class="footer-links">
                 <h4>Gabung Mitra</h4>
-                <ul>
-                    <li><a href="#">Daftar Mitra Driver</a></li>
+                <ul class="footer-links-list">
+                    <li><a href="https://wa.me/6285748343842?text=Halo%20ARO%20DRIVE%2C%20saya%20ingin%20bergabung%20menjadi%20Mitra%20Driver." target="_blank">Daftar Mitra Driver</a></li>
                     <li><a href="#mitra">Daftar Merchant UMKM</a></li>
                 </ul>
             </div>
             <div class="footer-care">
                 <h4>Care Center</h4>
                 <p>Butuh bantuan masalah aplikasi atau kendala pesanan?</p>
-                <a href="#" class="btn-secondary btn-outline mt-2"><i data-lucide="message-circle"></i> Hubungi CS ARO</a>
+                <a href="https://wa.me/6285748343842?text=Halo%20ARO%20DRIVE%2C%20saya%20butuh%20bantuan%20terkait%20layanan%20ARO." class="btn-secondary btn-outline mt-2" target="_blank"><i data-lucide="message-circle"></i> Hubungi CS ARO</a>
             </div>
         </div>
         <div class="footer-bottom text-center">
