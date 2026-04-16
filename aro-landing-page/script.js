@@ -1,4 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 0. Force Unregister Old Service Workers (To prevent cache issues from previous app versions)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let registration of registrations) {
+                registration.unregister();
+                console.log('Old Service Worker unregistered');
+            }
+            if(registrations.length > 0) window.location.reload(); 
+        });
+    }
+
     // 1. Initialize Lucide Icons
     lucide.createIcons();
 

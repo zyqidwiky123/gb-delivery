@@ -1,6 +1,7 @@
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
+const axios = require("axios");
 
 admin.initializeApp();
 
@@ -178,5 +179,79 @@ exports.deleteUserAccount = onRequest({ cors: true }, async (req, res) => {
     } catch (error) {
         console.error(`Error deleting user ${uid}:`, error);
         res.status(500).send({ success: false, error: error.message });
+    }
+});
+
+/**
+ * Fetch photo from Google Maps Places API and save to Merchant Thumbnail
+ */
+exports.fetchMerchantPhotoFromMaps = onRequest({ cors: true }, async (req, res) => {
+    if (req.method !== 'POST') {
+        res.status(405).send('Method Not Allowed');
+        return;
+    }
+
+    const { merchantId, searchQuery } = req.body;
+    if (!merchantId || !searchQuery) {
+        res.status(400).send({ success: false, error: 'merchantId and searchQuery are required' });
+        return;
+    }
+
+    try {
+        const apiKey = "AIzaSyB2urHuowq3a4qzjtRQL1yHlibCNGOX2LU";
+
+        // Step 1: Search the place
+        const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
+        const searchResponse = await axios.get(searchUrl);
+
+        if (!searchResponse.data.results || searchResponse.data.results.length === 0) {
+            res.status(404).send({ success: false, error: 'No places found on Google Maps for this query.' });
+            return;
+        }
+
+        const firstResult = searchResponse.data.results[0];
+        if (!firstResult.photos || firstResult.photos.length === 0) {
+            res.status(404).send({ success: false, error: 'Place found but no photos available.' });
+            return;
+        }
+
+        const photoReference = firstResult.photos[0].photo_reference;
+
+        // Step 2: Fetch the actual photo as ArrayBuffer
+        const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoReference}&key=${apiKey}`;
+        
+        // Axios follows redirects by default so the response will be the actual image buffer
+        const imageResponse = await axios.get(photoUrl, { responseType: 'arraybuffer' });
+        const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+
+        // Step 3: Upload to Firebase Storage
+        const bucket = admin.storage().bucket();
+        const filePath = `merchants/${merchantId}/maps_thumbnail.jpg`;
+        const file = bucket.file(filePath);
+
+        await file.save(imageBuffer, {
+            metadata: {
+                contentType: 'image/jpeg' 
+            }
+        });
+        
+        // Make it public and get URL
+        await file.makePublic();
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+
+        // Step 4: Update Merchant Document with 'image' (Thumbnail)
+        await admin.firestore().collection('merchants').doc(merchantId).update({
+            image: publicUrl
+        });
+
+        res.status(200).send({ 
+            success: true, 
+            message: 'Successfully fetched and uploaded image',
+            imageUrl: publicUrl
+        });
+
+    } catch (error) {
+        console.error("Error fetching map photo:", error.message);
+        res.status(500).send({ success: false, error: 'Failed to fetch photo from Google Maps' });
     }
 });

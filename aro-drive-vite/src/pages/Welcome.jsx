@@ -39,7 +39,19 @@ const Welcome = () => {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (isStandalone) {
+      alert("Anda sudah menginstall app ARO DRIVE");
+      return;
+    }
+
+    if (!deferredPrompt) {
+      if (isIOS) {
+        alert("Untuk pengguna iOS: Klik tombol Share lalu 'Add to Home Screen'");
+      } else {
+        alert("Gunakan Chrome/Edge untuk pengalaman terbaik dan kemudahan instalasi.");
+      }
+      return;
+    }
     
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -65,9 +77,7 @@ const Welcome = () => {
       {/* Logo & Greetings */}
       <div className="flex flex-col items-center mb-12">
         <div className="w-32 h-32 mb-6 transition-transform hover:scale-105 duration-300">
-          {/* User has provided the logo, assuming it will be saved as logo.png in the public folder */}
           <img src="/logo.png" alt="Aro Drive Logo" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-          {/* Fallback box if image is not there yet */}
           <div className="w-full h-full bg-surface-container rounded-full flex items-center justify-center -mt-32 border-2 border-primary-fixed opacity-20" style={{ zIndex: -1 }}>
              <span className="text-primary-fixed font-bold text-xl">ARO</span>
           </div>
@@ -123,37 +133,19 @@ const Welcome = () => {
           <div className="absolute inset-0 bg-surface-container-high opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </button>
 
-        {/* Install PWA Button */}
-        {!isStandalone && (
-          <>
-            {deferredPrompt ? (
-              <button 
-                onClick={handleInstallClick}
-                className="w-full mt-4 flex items-center justify-center gap-2 bg-primary-fixed/10 text-primary-fixed border border-primary-fixed/30 font-bold py-4 px-6 rounded-xl text-sm transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_10px_rgba(202,253,0,0.2)]"
-              >
-                <Download size={20} className="animate-bounce" />
-                <span>Install Aplikasi ARO DRIVE</span>
-              </button>
-            ) : isIOS ? (
-              <div className="w-full mt-4 p-4 bg-surface-container-high rounded-xl border border-outline-variant text-center">
-                <p className="text-xs text-textSecondary mb-2">
-                  Untuk menginstall di iPhone/iPad:
-                </p>
-                <div className="flex items-center justify-center gap-2 text-sm font-bold text-primary-fixed">
-                  <span>Klik tombol</span>
-                  <span className="bg-white/10 p-1 rounded">
-                    <svg width="20" height="20" viewBox="0 0 50 50" fill="currentColor"><path d="M30.3,13.7L25,8.4l-5.3,5.3l-1.4-1.4L25,5.6l6.7,6.7L30.3,13.7z M24,30.3V10.7h2v19.7H24z M13,19h8v2h-8v21h24V21h-8v-2h8 c1.1,0,2,0.9,2,2v21c0,1.1-0.9,2-2,2H13c-1.1,0-2-0.9-2-2V21C11,19.9,11.9,19,13,19z"/></svg>
-                  </span>
-                  <span>lalu pilih "Add to Home Screen"</span>
-                </div>
-              </div>
-            ) : (
-              /* Fallback message if prompt not supported yet */
-              <p className="text-[10px] text-textSecondary text-center mt-2 px-4 italic">
-                Gunakan Chrome/Edge untuk pengalaman terbaik dan kemudahan instalasi.
-              </p>
-            )}
-          </>
+        {/* Install PWA Button - Always Visible */}
+        <button 
+          onClick={handleInstallClick}
+          className="w-full mt-4 flex items-center justify-center gap-2 bg-primary-fixed/10 text-primary-fixed border border-primary-fixed/30 font-bold py-4 px-6 rounded-xl text-sm transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_10px_rgba(202,253,0,0.2)]"
+        >
+          <Download size={20} className={(!isStandalone && deferredPrompt) ? "animate-bounce" : ""} />
+          <span>{isStandalone ? "Aplikasi Sudah Terpasang" : "Install Aplikasi ARO DRIVE"}</span>
+        </button>
+
+        {isIOS && !isStandalone && (
+          <p className="text-[10px] text-primary-fixed text-center mt-2 px-4 italic">
+            Klik tombol Share (kotak panah atas) lalu pilih "Add to Home Screen"
+          </p>
         )}
       </div>
 
