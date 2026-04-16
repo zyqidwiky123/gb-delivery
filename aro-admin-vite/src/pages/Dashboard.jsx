@@ -45,6 +45,11 @@ function Dashboard() {
   const [editingDriver, setEditingDriver] = useState(null);
   const [showEditDriverModal, setShowEditDriverModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(null);
+  
+  // Account Settings States
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Fetch Data based on active tab
   useEffect(() => {
@@ -445,6 +450,35 @@ function Dashboard() {
     }
   };
 
+  const handleFetchMapsPhoto = async (merchant) => {
+    setUploadingId(merchant.id);
+    try {
+      const response = await fetch('https://us-central1-gb-delivery-41bf6.cloudfunctions.net/fetchMerchantPhotoFromMaps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          merchantId: merchant.id,
+          searchQuery: `${merchant.name} ${merchant.address || ''}`.trim()
+        })
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch from Maps');
+      }
+
+      alert("Berhasil mengambil foto dari Google Maps!");
+      fetchMerchants();
+    } catch (error) {
+      console.error("Fetch Maps photo error:", error);
+      alert("Gagal mengambil foto: " + error.message);
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
   const filteredMerchants = merchants.filter(m => 
     m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     m.type?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -676,31 +710,54 @@ function Dashboard() {
                       <h4 className="text-lg font-black text-white font-headline mb-1 uppercase tracking-tight">{m.name}</h4>
                       <p className="text-xs text-on-surface-variant font-medium mb-6 line-clamp-1">{m.address || "Kab. Blitar"}</p>
                       
-                      <div className="pt-4 border-t border-white/5 flex gap-3">
-                        <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest cursor-pointer transition-all ${
-                          uploadingId === m.id ? 'bg-zinc-800 text-zinc-500' : 'bg-primary text-black hover:shadow-lg hover:shadow-primary/20 active:scale-95'
-                        }`}>
-                          <span className="material-symbols-outlined text-sm">
-                            {uploadingId === m.id ? 'sync' : 'upload_file'}
-                          </span>
-                          {uploadingId === m.id ? 'SABAR...' : 'Unggah Menu'}
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            accept="image/*"
-                            disabled={uploadingId === m.id}
-                            onChange={(e) => handlePhotoUpload(m.id, e.target.files[0])}
-                          />
-                        </label>
+                      <div className="pt-4 border-t border-white/5 flex flex-col gap-3">
+                        <div className="flex gap-3">
+                          <label className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest cursor-pointer transition-all ${
+                            uploadingId === m.id ? 'bg-zinc-800 text-zinc-500' : 'bg-primary text-black hover:shadow-lg hover:shadow-primary/20 active:scale-95'
+                          }`}>
+                            <span className="material-symbols-outlined text-sm">
+                              {uploadingId === m.id ? 'sync' : 'upload_file'}
+                            </span>
+                            {uploadingId === m.id ? 'SABAR...' : 'Unggah Menu'}
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*"
+                              disabled={uploadingId === m.id}
+                              onChange={(e) => handlePhotoUpload(m.id, e.target.files[0])}
+                            />
+                          </label>
+                          
+                          {m.originalMenuImage && (
+                            <button 
+                              onClick={() => window.open(m.originalMenuImage, '_blank')}
+                              className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-white hover:bg-white/10 transition-all border border-white/10"
+                            >
+                              <span className="material-symbols-outlined text-sm">visibility</span>
+                            </button>
+                          )}
+                        </div>
                         
-                        {m.originalMenuImage && (
+                        <div className="flex gap-3">
                           <button 
-                            onClick={() => window.open(m.originalMenuImage, '_blank')}
-                            className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-white hover:bg-white/10 transition-all border border-white/10"
+                            onClick={() => handleFetchMapsPhoto(m)}
+                            disabled={uploadingId === m.id}
+                            className={`flex-[3] flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+                              uploadingId === m.id ? 'bg-white/5 text-white/30' : 'border border-[#4285F4] bg-[#4285F4]/10 text-white hover:bg-[#4285F4] active:scale-95'
+                            }`}
                           >
-                            <span className="material-symbols-outlined text-sm">visibility</span>
+                            <span className="material-symbols-outlined text-sm">travel_explore</span>
+                            Ambil Thumbnail via Maps
                           </button>
-                        )}
+                         {m.image && (
+                            <button 
+                              onClick={() => window.open(m.image, '_blank')}
+                              className="w-12 h-12 bg-[#4285F4]/10 rounded-xl flex items-center justify-center text-[#4285F4] border border-[#4285F4]/20 hover:bg-[#4285F4]/20"
+                            >
+                              <span className="material-symbols-outlined text-sm">image</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -737,6 +794,11 @@ function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {drivers.filter(d => 
+                  d.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  d.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  d.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+                ).map(driver => (
                   <div key={driver.id} className="bg-surface-container-low rounded-[2rem] p-6 border border-white/5 hover:border-primary/20 transition-all group relative overflow-hidden">
                     <div className="absolute top-4 right-4 z-10">
                       <button 

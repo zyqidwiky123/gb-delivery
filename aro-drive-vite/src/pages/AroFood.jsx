@@ -586,45 +586,7 @@ function AroFood() {
                   </div>
                 )}
 
-                {/* Digital Menu Grid */}
-                {selectedMerchant.menu && selectedMerchant.menu.length > 0 && (
-                  <div className="mb-10">
-                    <div className="flex items-center justify-between mb-4 sticky top-0 bg-surface-container py-2 z-10">
-                      <h3 className="text-sm font-label font-black uppercase tracking-widest text-white/50">Digital Menu</h3>
-                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-md font-bold">{selectedMerchant.menu.length} Items</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      {selectedMerchant.menu.map((item, idx) => (
-                        <motion.div 
-                          key={idx}
-                          whileHover={{ y: -4 }}
-                          className="bg-surface-container-low rounded-2xl overflow-hidden border border-white/5 flex flex-col group"
-                        >
-                          <div className="h-28 relative overflow-hidden">
-                            {item.img ? (
-                              <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                            ) : (
-                              <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-white/10">restaurant</span>
-                              </div>
-                            )}
-                            <button 
-                              onClick={(e) => handleAddToCart(e, item, selectedMerchant)}
-                              className="absolute bottom-2 right-2 w-8 h-8 rounded-lg bg-primary text-black flex items-center justify-center shadow-lg active:scale-90 transition-all hover:scale-110"
-                            >
-                              <span className="material-symbols-outlined text-sm font-bold">add</span>
-                            </button>
-                          </div>
-                          <div className="p-3 flex-1 flex flex-col justify-between">
-                            <h4 className="text-xs font-bold text-white line-clamp-1 mb-1 group-hover:text-primary transition-colors">{item.name}</h4>
-                            <p className="text-xs font-black text-primary">Rp {Number(item.price || 0).toLocaleString()}</p>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Reference Physical Menu Photo */}
                 {selectedMerchant.originalMenuImage && (

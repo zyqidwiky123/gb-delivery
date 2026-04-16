@@ -53,15 +53,14 @@ function App() {
   }, [user]);
 
   useEffect(() => {
-    // Redirect to welcome page if not a guest and not logged in, and trying to access root
-    if (!user && !isGuestMode && location.pathname === '/') {
+    // Redirect to welcome page if not a guest and not logged in, and not on auth pages
+    if (!user && !isGuestMode && !['/welcome', '/login', '/register'].includes(location.pathname)) {
       navigate('/welcome', { replace: true });
     }
-    // Redirect logged in user from root, welcome, login, or register to member home
+    // Redirect logged in user from root or welcome to member home
     if (user && ['/', '/welcome', '/login', '/register'].includes(location.pathname)) {
       navigate('/member', { replace: true });
     }
-
   }, [user, isGuestMode, location.pathname, navigate]);
 
   useEffect(() => {

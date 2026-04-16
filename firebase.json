@@ -1,4 +1,27 @@
 {
+  "auth": {
+    "authorizedDomains": [
+      "aro-drive-user.web.app",
+      "aro-drive-driver.web.app",
+      "aro-drive-admin.web.app",
+      "gb-delivery-41bf6.web.app",
+      "localhost"
+    ],
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "ARO DRIVE",
+        "supportEmail": "zyqidwiky@gmail.com",
+        "authorizedRedirectUris": [
+          "https://aro-drive-user.web.app",
+          "https://aro-drive-driver.web.app",
+          "https://aro-drive-admin.web.app",
+          "https://gb-delivery-41bf6.web.app",
+          "http://localhost:5173",
+          "http://localhost:4000"
+        ]
+      }
+    }
+  },
   "firestore": {
     "database": "(default)",
     "location": "asia-southeast1",
@@ -16,6 +39,26 @@
         "firebase.json",
         "**/.*",
         "**/node_modules/**"
+      ],
+      "headers": [
+        {
+          "source": "/sw.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        }
       ]
     },
     {
