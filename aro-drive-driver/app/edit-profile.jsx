@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { ArrowLeft, User, Phone, Truck, Shield } from 'lucide-react-native';
 import { useDriverStore } from '../src/store/useDriverStore';
-import { auth } from '../src/firebase/config';
+import { auth, db } from '../src/firebase/config';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, updateProfile as updateAuthProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 
 export default function EditProfileScreen() {

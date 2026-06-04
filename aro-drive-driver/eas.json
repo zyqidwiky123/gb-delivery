@@ -15,7 +15,7 @@
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
       }
     }
   }

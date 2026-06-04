@@ -1,5 +1,4 @@
-; 'EWHG6
-[import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert, TextInput } from 'react-native';
 import { Camera, Star, Info, Wallet, Plus, Trash2, Edit, ChevronRight, LogOut } from 'lucide-react-native';
 import { useDriverStore } from '../../src/store/useDriverStore';
