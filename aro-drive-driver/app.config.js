@@ -1,6 +1,6 @@
 export default {
   expo: {
-    name: "aro-drive-driver",
+    name: "aro partner",
     slug: "aro-drive-driver",
     version: "1.0.0",
     orientation: "portrait",
@@ -65,8 +65,7 @@ export default {
         {
           android: {
             buildArchs: ["arm64-v8a"],
-            enableProguardInReleaseBuilds: true,
-            proGuardPropertiesFile: "./proguard-rules.pro",
+            enableProguardInReleaseBuilds: false,
           },
         },
       ],
