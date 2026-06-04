@@ -7,7 +7,7 @@ export default {
     icon: "./assets/images/icon.png",
     scheme: "arodrivedriver",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
+    newArchEnabled: false,
     android: {
       package: "com.arodrivedriver",
       adaptiveIcon: {
@@ -65,6 +65,8 @@ export default {
         {
           android: {
             buildArchs: ["arm64-v8a"],
+            enableProguardInReleaseBuilds: true,
+            proGuardPropertiesFile: "./proguard-rules.pro",
           },
         },
       ],
