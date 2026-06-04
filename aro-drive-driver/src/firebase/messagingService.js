@@ -2,7 +2,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "./config";
 import { Platform, Vibration } from "react-native";
 import * as Notifications from "expo-notifications";
-import { Audio } from "expo-av";
+import { AudioPlayer } from "expo-audio";
 
 // Configure Expo notifications behavior
 if (Platform.OS !== 'web') {
@@ -18,16 +18,8 @@ if (Platform.OS !== 'web') {
 // Native Sound Playback Helper
 const playNotificationSound = async () => {
   try {
-    const { sound } = await Audio.Sound.createAsync(
-      require('../../assets/notif-driver.mp3')
-    );
-    await sound.playAsync();
-    // Unload the sound from memory when it finishes playing
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) {
-        sound.unloadAsync().catch(e => console.log("[Audio] Unload sound error:", e));
-      }
-    });
+    const audioPlayer = new AudioPlayer(require('../../assets/notif-driver.mp3'));
+    await audioPlayer.play();
   } catch (e) {
     console.log("[Audio] Failed to play native sound:", e);
   }

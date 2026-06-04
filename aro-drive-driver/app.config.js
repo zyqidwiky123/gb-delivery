@@ -60,6 +60,7 @@ export default {
       "expo-image",
       "expo-status-bar",
       "expo-web-browser",
+      "expo-audio",
       [
         "expo-build-properties",
         {
