@@ -55,6 +55,8 @@ export default {
         {
           locationAlwaysAndWhenInUsePermission: "Izinkan ARO DRIVE Driver mengakses lokasi Anda untuk navigasi pengantaran.",
           locationWhenInUsePermission: "Izinkan ARO DRIVE Driver mengakses lokasi Anda saat aplikasi digunakan.",
+          locationAlwaysPermission: "Izinkan ARO DRIVE Driver mengakses lokasi Anda di background agar status online dan tracking pengantaran tetap berjalan.",
+          isAndroidBackgroundLocationEnabled: true,
         },
       ],
       [
