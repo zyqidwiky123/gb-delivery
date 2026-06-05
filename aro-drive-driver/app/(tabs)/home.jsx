@@ -402,7 +402,7 @@ export default function HomeScreen() {
                     <TouchableOpacity
                       onPress={() => handleAcceptOrder(order.id)}
                       disabled={actionLoading}
-                      className="flex-2 bg-lime-400 py-3.5 rounded-xl items-center justify-center flex-row gap-1.5 shadow-lg"
+                      className="flex-[2] bg-lime-400 py-3.5 rounded-xl items-center justify-center flex-row gap-1.5 shadow-lg"
                     >
                       <CheckCircle2 size={14} color="black" />
                       <Text className="text-black font-black text-xs uppercase tracking-wider">TERIMA SEKARANG</Text>
