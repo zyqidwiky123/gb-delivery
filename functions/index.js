@@ -405,7 +405,13 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
                     type: "NEW_ORDER",
                     orderId: orderId,
                 },
-                android: { priority: "high", notification: { sound: "default" } },
+                android: { 
+                    priority: "high", 
+                    notification: { 
+                        sound: "notif_driver.mp3",
+                        channelId: "new-orders"
+                    } 
+                },
             };
             await admin.messaging().send(message);
         } catch (fcmErr) {
