@@ -25,6 +25,7 @@ import {
 import { updateDriverStatus, updateDriverLocation } from '../../src/firebase/driverService';
 import * as Location from 'expo-location';
 import { Bike, MapPin, CheckCircle2, XCircle, AlertCircle } from 'lucide-react-native';
+import { AudioPlayer } from 'expo-audio';
 
 const formatRupiah = (value) => (Number(value) || 0).toLocaleString('id-ID');
 const getShoppingTotal = (order) => Number(order?.actualShoppingCost || order?.subtotal || 0);
@@ -46,6 +47,25 @@ export default function HomeScreen() {
   const [errorMsg, setErrorMsg] = useState('');
   const [costModal, setCostModal] = useState({ show: false, jobId: null, amount: '' });
   const lastKnownLocationRef = useRef(null);
+  
+  const prevOrderIdsRef = useRef([]);
+  const audioPlayerRef = useRef(null);
+
+  // Initialize AudioPlayer for incoming orders
+  useEffect(() => {
+    try {
+      const player = new AudioPlayer(require('../../assets/sounds/notif_driver.mp3'));
+      audioPlayerRef.current = player;
+      console.log("[HomeScreen] AudioPlayer successfully initialized");
+    } catch (err) {
+      console.warn("[HomeScreen] Failed to initialize AudioPlayer:", err);
+    }
+    return () => {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+      }
+    };
+  }, []);
 
   // 1. Subscribe to real-time Active Jobs and Available Orders when user is loaded
   useEffect(() => {
@@ -56,6 +76,18 @@ export default function HomeScreen() {
     // Subscribe to incoming offers
     const unsubscribeIncoming = listenForAvailableOrders(user.uid, (orders) => {
       console.log("[HomeScreen] Received incoming orders update:", orders.length);
+      
+      const newOrderIds = orders.map(o => o.id);
+      const hasNewOrder = newOrderIds.some(id => !prevOrderIdsRef.current.includes(id));
+      
+      if (hasNewOrder && orders.length > 0) {
+        console.log("[HomeScreen] New order detected via Firestore! Playing sound.");
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.play();
+        }
+      }
+      
+      prevOrderIdsRef.current = newOrderIds;
       setIncomingOrders(orders);
     });
 
