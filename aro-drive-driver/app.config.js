@@ -61,7 +61,8 @@ export default {
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
-          "color": "#a3e635"
+          "color": "#a3e635",
+          "sounds": ["./assets/sounds/notif_driver.mp3"]
         }
       ],
       "expo-font",
