@@ -10,6 +10,7 @@ export default {
     newArchEnabled: false,
     android: {
       package: "com.arodrivedriver",
+      googleServicesFile: "./google-services.json",
       adaptiveIcon: {
         backgroundColor: "#000000",
         foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -55,6 +56,13 @@ export default {
           locationAlwaysAndWhenInUsePermission: "Izinkan ARO DRIVE Driver mengakses lokasi Anda untuk navigasi pengantaran.",
           locationWhenInUsePermission: "Izinkan ARO DRIVE Driver mengakses lokasi Anda saat aplikasi digunakan.",
         },
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#a3e635"
+        }
       ],
       "expo-font",
       "expo-image",

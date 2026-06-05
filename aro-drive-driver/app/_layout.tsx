@@ -7,6 +7,7 @@ import '../global.css';
 import { ActivityIndicator, View } from 'react-native';
 import { useDriverStore } from '../src/store/useDriverStore';
 import { useAuthObserver } from '../src/hooks/useAuthObserver';
+import { usePushNotifications } from '../src/hooks/usePushNotifications';
 
 export default function RootLayout() {
   const authLoading = useDriverStore((s) => (s as any).authLoading);
@@ -15,6 +16,9 @@ export default function RootLayout() {
   const router = useRouter();
 
   useAuthObserver();
+  
+  // Call push notification hook for the authenticated user
+  usePushNotifications(user?.uid);
 
   useEffect(() => {
     if (authLoading) return;
