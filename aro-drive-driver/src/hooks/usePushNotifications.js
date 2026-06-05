@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { AudioPlayer } from 'expo-audio';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -12,6 +13,17 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+// Helper to play notification sound
+const playNotificationSound = async () => {
+  try {
+    const audioPlayer = new AudioPlayer(require('../../assets/sounds/notif_driver.mp3'));
+    await audioPlayer.play();
+    console.log("[Audio] Successfully played notification sound in foreground");
+  } catch (e) {
+    console.warn("[Audio] Failed to play native sound in foreground:", e);
+  }
+};
 
 export function usePushNotifications(userUid) {
   const [expoPushToken, setExpoPushToken] = useState('');
@@ -49,7 +61,12 @@ export function usePushNotifications(userUid) {
 
     // This listener is fired whenever a notification is received while the app is foregrounded
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log("[PushNotifications] Received notification:", notification);
+      console.log("[PushNotifications] Received notification in foreground:", notification);
+      const data = notification.request?.content?.data;
+      if (data && data.type === 'NEW_ORDER') {
+        console.log("[PushNotifications] New order notification! Playing sound.");
+        playNotificationSound();
+      }
     });
 
     // This listener is fired whenever a user taps on or interacts with a notification 
@@ -60,10 +77,10 @@ export function usePushNotifications(userUid) {
 
     return () => {
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        responseListener.current.remove();
       }
     };
   }, [userUid]);
@@ -84,7 +101,7 @@ async function registerForPushNotificationsAsync() {
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#cafd00',
-        sound: 'notif_driver.mp3',
+        sound: 'notif_driver',
       });
       console.log("[FCM] ✅ Notification channel 'new-orders' dibuat");
     }
