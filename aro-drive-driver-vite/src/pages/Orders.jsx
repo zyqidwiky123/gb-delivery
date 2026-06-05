@@ -1,18 +1,39 @@
 import React, { useEffect, useState } from 'react';
-import { listenForAllDriverOrders } from '../firebase/orderService';
+import { toast } from 'react-hot-toast';
+import PullToRefresh from 'react-simple-pull-to-refresh';
+import { listenForAllDriverOrders, listenForCompletedOrders, observeDriverBalance } from '../firebase/orderService';
 import { useDriverStore } from '../store/useDriverStore';
 
 function Orders() {
   const { user } = useDriverStore();
-  const [orders, setOrders] = useState([]);
+  const [completedOrders, setCompletedOrders] = useState([]);
+  const [balance, setBalance] = useState(0);
+  const [refreshFlag, setRefreshFlag] = useState(0);
+
 
   useEffect(() => {
     if (!user?.uid) return;
-    const unsubscribe = listenForAllDriverOrders(user.uid, (fetchedOrders) => {
-      setOrders(fetchedOrders);
+
+    // Listen for transaction history
+    const unsubscribeOrders = listenForCompletedOrders(user.uid, (orders) => {
+      setCompletedOrders(orders);
     });
-    return () => unsubscribe();
-  }, [user?.uid]);
+
+    // Listen for real-time balance
+    const unsubscribeBalance = observeDriverBalance(user.uid, (newBalance) => {
+      setBalance(newBalance);
+    });
+
+    return () => {
+      unsubscribeOrders();
+      unsubscribeBalance();
+    };
+  }, [user?.uid, refreshFlag]);
+
+  const handleRefresh = async () => {
+    setRefreshFlag(prev => prev + 1);
+    toast.success('Data refreshed');
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -31,26 +52,36 @@ function Orders() {
   };
 
   return (
-    <div className="bg-surface-dim min-h-screen text-white font-body pb-32">
+    <PullToRefresh onRefresh={handleRefresh}>
+        <div className="bg-surface-dim min-h-screen text-white font-body pb-32">
       {/* Header */}
       <header className="bg-[#0e0e0e]/90 backdrop-blur-md sticky top-0 z-50 border-b border-white/5 py-5 px-6">
         <div className="w-full max-w-xl mx-auto flex items-center justify-between">
-          <h1 className="font-headline font-bold text-2xl text-on-primary-fixed">Riwayat Orders</h1>
-          <div className="bg-surface-container-highest px-3 py-1 rounded-full border border-white/5 flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-outline">TOTAL:</span>
-            <span className="text-sm font-black text-white">{orders.length}</span>
+          <h1 className="font-headline font-bold text-2xl text-on-primary-fixed uppercase tracking-tighter italic">Riwayat Orders</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setRefreshFlag(prev => prev + 1); toast.success('Data refreshed'); }}
+              className="flex items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm mr-1">refresh</span>
+              Refresh
+            </button>
+            <div className="bg-surface-container-highest px-3 py-1 rounded-full border border-white/5 flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-outline">SALDO:</span>
+              <span className="text-sm font-black text-white">Rp {balance.toLocaleString()}</span>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-xl mx-auto w-full p-4 space-y-4">
-        {orders.length === 0 ? (
+        {completedOrders.length === 0 ? (
           <div className="bg-surface-container-low p-8 rounded-xl border border-dashed border-white/10 text-center mt-6">
              <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">history</span>
              <p className="text-sm text-on-surface-variant">Belum ada riwayat pesanan yang terdata.</p>
           </div>
         ) : (
-          orders.map((order) => (
+          completedOrders.map((order) => (
             <div key={order.id} className="bg-surface-container-low p-5 rounded-2xl border border-white/5 shadow-sm group hover:border-primary/20 transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
@@ -86,6 +117,7 @@ function Orders() {
         )}
       </main>
     </div>
+      </PullToRefresh>
   );
 }
 

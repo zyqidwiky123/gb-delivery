@@ -82,7 +82,7 @@ function DriverOrder() {
   };
 
   if (!order) return (
-    <div className="bg-[#0a0a0a] min-h-screen flex items-center justify-center text-primary font-black italic">
+    <div className="bg-background min-h-screen flex items-center justify-center text-primary font-black italic">
        Memuat Data Order...
     </div>
   );
@@ -92,22 +92,22 @@ function DriverOrder() {
   const mapCenter = pickupPos || BLITAR_CENTER;
 
   return (
-    <div className="bg-[#0a0a0a] min-h-screen text-white font-body pb-20 relative">
+    <div className="bg-background min-h-screen text-on-background font-body pb-20 relative">
       {/* Map Header */}
       <header className="fixed top-0 left-0 right-0 z-[1000] p-6 pointer-events-none">
         <div className="max-w-xl mx-auto flex items-center justify-between pointer-events-auto">
-          <div className="bg-[#131313]/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/5 flex items-center gap-3 shadow-xl">
+          <div className="bg-[#131313]/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-on-background/5 flex items-center gap-3 shadow-xl">
              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-2xl animate-spin" style={{ fontVariationSettings: "'FILL' 1" }}>radar</span>
              </div>
              <div>
                 <p className="text-[10px] uppercase font-black text-primary tracking-widest leading-none mb-1">Status Perjalanan</p>
-                <p className="text-sm font-bold text-white uppercase italic tracking-tight">{order.status === 'accepted' ? 'Menuju Tujuan' : 'Selesai'}</p>
+                <p className="text-sm font-bold text-on-background uppercase italic tracking-tight">{order.status === 'accepted' ? 'Menuju Tujuan' : 'Selesai'}</p>
              </div>
           </div>
           <button
             onClick={() => navigate('/driver')}
-            className="w-12 h-12 rounded-full bg-[#131313] border border-white/5 flex items-center justify-center text-zinc-500 shadow-lg"
+            className="w-12 h-12 rounded-full bg-[#131313] border border-on-background/5 flex items-center justify-center text-zinc-500 shadow-lg"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -144,51 +144,121 @@ function DriverOrder() {
       {/* Driver Order Summary & Actions */}
       <div className="fixed bottom-0 left-0 right-0 z-[1000] pointer-events-none">
         <div className="max-w-xl mx-auto pointer-events-auto">
-          <div className="bg-[#131313]/95 backdrop-blur-2xl rounded-t-[3rem] px-8 pt-6 pb-12 shadow-[0_-12px_64px_rgba(0,0,0,0.8)] border-t border-white/5">
+          <div className="bg-[#131313]/95 backdrop-blur-2xl rounded-t-[3rem] px-8 pt-6 pb-12 shadow-[0_-12px_64px_rgba(0,0,0,0.8)] border-t border-on-background/5">
             <div className="flex justify-center mb-6">
               <div className="w-12 h-1.5 bg-zinc-800 rounded-full"></div>
             </div>
 
             <div className="flex justify-between items-center mb-8">
                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-surface-container-highest border border-white/5 overflow-hidden p-0.5">
+                  <div className="w-16 h-16 rounded-2xl bg-surface-container-highest border border-on-background/5 overflow-hidden p-0.5">
                      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhvGbfQcTBTs-MwFKtiEIuopYsrYOKdIZotGJdI1XPg3h0oV9b6K_YWqpZjJJYLPoOx0jejmCAmTxI2qczzP1w3iqb0W2iTwfrCuQTqAHR5Fxau8NsrM6-qfQjYTuG_odvVFaDehyVV14nBKRj88SgI1Y8UbtY6DRnQv6CZWdVvE12f2gvWNU-iNMmKDUWU1Uo4q64b0u3EJhhXCa8Y2_TBOgXHJJplOr-XlwwiFGHSODrHfwIYqVrOdGLjXo5whDwSzUJg5XZfzk" alt="Customer" className="w-full h-full object-cover rounded-[0.9rem]" />
                   </div>
                   <div>
-                     <h2 className="font-headline font-black text-xl italic uppercase text-white tracking-tight">{order.customer?.name || "Budi Waluyo"}</h2>
+                     <h2 className="font-headline font-black text-xl italic uppercase text-on-background tracking-tight">{order.customer?.name || "Budi Waluyo"}</h2>
                      <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#f3ffca]/60 mt-0.5">Customer • VIP Status</p>
                   </div>
                </div>
-               <button className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group active:scale-90 transition-all">
+               <button 
+                 onClick={() => {
+                   if (order.customer?.wa || order.customer?.phone) {
+                     let phone = order.customer.wa || order.customer.phone;
+                     let clean = phone.replace(/\D/g, '');
+                     if (clean.startsWith('0')) clean = '62' + clean.slice(1);
+                     if (!clean.startsWith('62')) clean = '62' + clean;
+                     window.open(`https://wa.me/${clean}?text=${encodeURIComponent(`Halo ${order.customer.name || 'Customer'}, saya driver ARO-DRIVE. Saya sedang memproses pesanan Anda.`)}`, '_blank');
+                   } else {
+                     alert("Nomor telepon tidak tersedia.");
+                   }
+                 }}
+                 className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group active:scale-90 transition-all pointer-events-auto"
+               >
                   <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">call</span>
                </button>
             </div>
 
-            <div className="bg-[#0a0a0a] p-6 rounded-[2rem] border border-white/5 space-y-4 shadow-inner mb-8">
+            <div className="bg-background p-6 rounded-[2rem] border border-on-background/5 space-y-4 shadow-inner mb-8">
                <div className="flex justify-between items-center">
                   <div>
                      <p className="text-[10px] font-black uppercase tracking-widest text-[#f3ffca]/40 mb-1">Detail Tujuan</p>
-                     <p className="text-sm font-bold text-white">{order.receiver?.address || 'Jl. Lokasi Sesuai Peta'}</p>
+                     <p className="text-sm font-bold text-on-background">{order.receiver?.address || 'Jl. Lokasi Sesuai Peta'}</p>
                   </div>
                   <div className="text-right">
                      <p className="text-[10px] font-black uppercase tracking-widest text-[#f3ffca]/40 mb-1">Jarak</p>
                      <p className="text-2xl font-headline font-black text-primary italic leading-none">{order.distance?.toFixed(1) || '0.0'} KM</p>
                   </div>
                </div>
-               <div className="pt-4 border-t border-white/5 flex justify-between items-end">
+               <div className="pt-4 border-t border-on-background/5 flex justify-between items-end">
                   <div>
                      <p className="text-[10px] uppercase font-bold text-[#f3ffca]/40 tracking-widest mb-1">Metode Bayar</p>
                      <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-sm text-primary">payments</span>
-                        <span className="text-sm font-black uppercase text-white tracking-widest">TUNAI</span>
+                        <span className="text-sm font-black uppercase text-on-background tracking-widest">TUNAI</span>
                      </div>
                   </div>
                   <div className="text-right">
                      <p className="text-[10px] font-black uppercase tracking-widest text-[#f3ffca]/40 mb-1">Harus Ditagih</p>
-                     <p className="text-2xl font-headline font-black text-white italic">Rp {order.total?.toLocaleString()}</p>
+                     <p className="text-2xl font-headline font-black text-on-background italic">Rp {order.total?.toLocaleString()}</p>
                   </div>
                </div>
             </div>
+
+            {/* Sender & Receiver details for ARO Send */}
+            {order.serviceType === 'send' && (order.sender || order.receiver) && (
+              <div className="bg-background p-6 rounded-[2rem] border border-on-background/5 space-y-4 shadow-inner mb-8">
+                <p className="text-[10px] text-primary font-black uppercase tracking-widest border-b border-on-background/5 pb-2 italic flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[14px]">local_shipping</span> Detail Pengiriman Paket
+                </p>
+                
+                {/* Pengirim */}
+                {order.sender && (
+                  <div className="flex items-center justify-between border-b border-on-background/5 pb-3">
+                    <div className="space-y-1">
+                      <span className="bg-primary/20 text-primary text-[8px] font-black px-2 py-0.5 rounded border border-primary/30 uppercase tracking-wider">PENGIRIM</span>
+                      <p className="text-xs font-bold text-on-background mt-1">{order.sender.name || 'Pengirim'}</p>
+                      <p className="text-[10px] text-on-background/60 font-mono">{order.sender.phone || '-'}</p>
+                    </div>
+                    {order.sender.phone && (
+                      <button 
+                        onClick={() => {
+                          let clean = order.sender.phone.replace(/\D/g, '');
+                          if (clean.startsWith('0')) clean = '62' + clean.slice(1);
+                          if (!clean.startsWith('62')) clean = '62' + clean;
+                          window.open(`https://wa.me/${clean}?text=${encodeURIComponent(`Halo ${order.sender.name || 'Pengirim'}, saya driver ARO-DRIVE. Saya sedang menuju ke lokasi Anda untuk menjemput paket.`)}`, '_blank');
+                        }}
+                        className="bg-primary/10 hover:bg-primary/20 border border-primary/30 hover:border-primary/50 text-primary px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all shadow-lg shadow-primary/5 pointer-events-auto"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">chat</span> Chat WA
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Penerima */}
+                {order.receiver && (
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="space-y-1">
+                      <span className="bg-[#ece856]/20 text-[#ece856] text-[8px] font-black px-2 py-0.5 rounded border border-[#ece856]/30 uppercase tracking-wider">PENERIMA</span>
+                      <p className="text-xs font-bold text-on-background mt-1">{order.receiver.name || 'Penerima'}</p>
+                      <p className="text-[10px] text-on-background/60 font-mono">{order.receiver.phone || '-'}</p>
+                    </div>
+                    {order.receiver.phone && (
+                      <button 
+                        onClick={() => {
+                          let clean = order.receiver.phone.replace(/\D/g, '');
+                          if (clean.startsWith('0')) clean = '62' + clean.slice(1);
+                          if (!clean.startsWith('62')) clean = '62' + clean;
+                          window.open(`https://wa.me/${clean}?text=${encodeURIComponent(`Halo ${order.receiver.name || 'Penerima'}, saya driver ARO-DRIVE. Saya sedang membawa paket pesanan Anda dari ${order.sender?.name || 'Pengirim'}.`)}`, '_blank');
+                        }}
+                        className="bg-[#ece856]/10 hover:bg-[#ece856]/20 border border-[#ece856]/30 hover:border-[#ece856]/50 text-[#ece856] px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all shadow-lg shadow-[#ece856]/5 pointer-events-auto"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">chat</span> Chat WA
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <button
               disabled={loading}

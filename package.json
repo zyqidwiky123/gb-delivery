@@ -1,10 +1,109 @@
-{
-  "name": "aro-drive-monorepo",
-  "private": true,
-  "workspaces": [
-    "aro-drive-vite",
-    "aro-drive-driver-vite",
-    "aro-admin-vite",
-    "functions"
-  ]
+# Fix: Driver Tidak Ditemukan Saat Searching dari App Customer
+
+## Analisis Masalah
+
+Setelah membandingkan app driver **web (PWA)** di `aro-drive-driver-vite` dengan app driver **native (React Native)** di `aro-drive-driver`, saya menemukan **2 bug kritis** yang menyebabkan customer tidak bisa menemukan driver.
+
+### 🔴 Bug 1: App Native Tidak Mengirim Lokasi Driver ke Firestore
+
+Ini adalah **akar masalah utama**. Sistem dispatch di Cloud Functions **membutuhkan** field `driver.location` (`{lat, lng}`) dan `driver.lastLocationUpdate` di dokumen Firestore `drivers/{uid}` untuk menemukan driver terdekat.
+
+**App Web (PWA) — ✅ Benar:**
+Di [Home.jsx](file:///home/marco/ARO-DRIVE/aro-drive-driver-vite/src/pages/Home.jsx#L87-L110), app web melakukan:
+1. `watchPosition()` saat driver online
+2. Mengirim lokasi ke Firestore via `updateDriverLocation(user.uid, {lat, lng})` setiap lokasi berubah
+3. Heartbeat setiap 60 detik untuk menjaga `lastLocationUpdate` tetap segar
+
+```javascript
+// Web driver app — lokasi dikirim ke Firestore
+const watchId = navigator.geolocation.watchPosition((pos) => {
+  const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+  updateDriverLocation(user.uid, newLoc);  // ← DIKIRIM KE FIRESTORE
+}, ...);
+```
+
+**App Native (React Native) — ❌ Salah:**
+Di [MapComponent.jsx](file:///home/marco/ARO-DRIVE/aro-drive-driver/src/components/MapComponent.jsx#L31-L78), app native:
+1. ✅ Melacak lokasi via `Location.watchPositionAsync()`
+2. ❌ Hanya meng-update lokasi ke dokumen **order** (`orders/{orderId}`) — dan hanya saat ada `activeJob`
+3. ❌ **TIDAK PERNAH** memanggil `updateDriverLocation()` untuk menulis ke dokumen **driver** (`drivers/{uid}`)
+
+```javascript
+// Native driver app — lokasi HANYA dikirim ke order, BUKAN ke Firestore driver doc
+if (user?.uid && activeJob?.id) {
+  await updateDoc(doc(db, "orders", activeJob.id), {
+    driverLocation: { lat: newLoc.latitude, lng: newLoc.longitude }
+  });
 }
+// ← TIDAK ADA updateDriverLocation() ke drivers collection!
+```
+
+**Dampak:** Cloud Functions `dispatchOrder()` di [index.js:L308-L361](file:///home/marco/ARO-DRIVE/functions/index.js#L308-L361) melakukan filter:
+
+```javascript
+if (!isDriverLocationFresh(driver)) {
+  console.log(`[Dispatch] Skipping stale or missing location for driver ${driverId}.`);
+  return; // ← DRIVER DISKIP karena lokasi tidak ada/kadaluwarsa
+}
+
+if (driver.location && driver.location.lat && driver.location.lng) {
+  // ← DRIVER DISKIP karena driver.location tidak pernah di-set oleh app native
+}
+```
+
+> [!CAUTION]
+> Tanpa fix ini, **setiap driver yang menggunakan app native TIDAK AKAN PERNAH menerima pesanan** karena Cloud Functions selalu melewatkan mereka.
+
+---
+
+### 🔴 Bug 2: Tidak Ada Location Heartbeat di App Native
+
+App web memiliki heartbeat setiap 60 detik di [Home.jsx:L113-L123](file:///home/marco/ARO-DRIVE/aro-drive-driver-vite/src/pages/Home.jsx#L113-L123) yang me-refresh `lastLocationUpdate` meskipun driver diam di tempat. 
+
+App native **tidak memiliki heartbeat ini**, sehingga meskipun Bug 1 diperbaiki, driver yang diam akan segera dianggap "stale" (karena `MAX_DRIVER_LOCATION_AGE_MS = 5 menit`) dan dilewatkan oleh dispatch.
+
+---
+
+### ⚠️ Bug 3: Timeout Searching Customer Hanya 1 Menit
+
+Di Cloud Functions [index.js:L41](file:///home/marco/ARO-DRIVE/functions/index.js#L41):
+```javascript
+const DRIVER_OFFER_TIMEOUT_MS = 60 * 1000; // 60 detik per offer
+```
+
+Ditambah konfigurasi region [index.js:L43-L56](file:///home/marco/ARO-DRIVE/functions/index.js#L43-L56):
+- **Kota:** max 5 menit searching, radius 3→10km
+- **Kabupaten:** max 7 menit searching, radius 4→20km
+
+Jadi sebenarnya sistemnya sudah cukup, **hanya saja driver selalu diskip karena Bug 1 dan 2**, jadi timeout 1 menit itu hanya membuang waktu karena radius expansion pun akan gagal mendapatkan driver tanpa lokasi.
+
+## Proposed Changes
+
+### Driver App Native (`aro-drive-driver`)
+
+#### [MODIFY] [home.jsx](file:///home/marco/ARO-DRIVE/aro-drive-driver/app/(tabs)/home.jsx)
+
+Tambahkan location tracking dan heartbeat di `HomeScreen`, bukan di `MapComponent`:
+
+1. Import `updateDriverLocation` dari `driverService`
+2. Import `* as Location` dari `expo-location`
+3. Tambahkan `useEffect` untuk **background location tracking** saat driver online:
+   - Gunakan `Location.watchPositionAsync()` 
+   - Setiap update lokasi, panggil `updateDriverLocation(user.uid, { lat, lng })`
+   - Simpan lokasi terakhir di ref untuk heartbeat
+4. Tambahkan `useEffect` **heartbeat** setiap 60 detik
+
+#### [MODIFY] [MapComponent.jsx](file:///home/marco/ARO-DRIVE/aro-drive-driver/src/components/MapComponent.jsx)
+
+Tambahkan sinkronisasi lokasi driver ke Firestore `drivers/{uid}` selain ke `orders/{orderId}`:
+- Panggil `updateDriverLocation()` di callback `watchPositionAsync`
+
+---
+
+## Verification Plan
+
+### Manual Verification
+1. Buka app driver native, login, dan tekan tombol ONLINE
+2. Cek di Firebase Console: `drivers/{uid}` harus memiliki field `location: {lat, lng}` dan `lastLocationUpdate` yang terus terupdate
+3. Dari app customer, buat order dan pastikan searching berhasil menemukan driver native
+4. Pastikan countdown timer muncul di app driver native saat order ditawarkan

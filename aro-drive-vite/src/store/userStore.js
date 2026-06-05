@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { db } from '../firebase/config';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 export const useUserStore = create(
   persist(
@@ -32,11 +32,51 @@ export const useUserStore = create(
       })),
       setAdminStatus: (status) => set({ isAdmin: status }),
       setLastOrderId: (id) => set({ lastOrderId: id }),
-      addPoints: (amount) => set((state) => ({ loyaltyPoints: state.loyaltyPoints + amount })),
-      redeemVoucher: (cost) => set((state) => ({ 
-        loyaltyPoints: state.loyaltyPoints - cost,
-        vouchers: [...state.vouchers, { id: Date.now(), type: 'FREE_DELIVERY', title: 'Gratis Ongkir' }]
-      })),
+      addPoints: (amount) => set((state) => {
+        const newPoints = state.loyaltyPoints + amount;
+        if (state.user?.id) {
+          updateDoc(doc(db, "users", state.user.id), {
+            loyaltyPoints: newPoints
+          }).catch(e => console.error("Sync Error (Points):", e));
+        }
+        return { loyaltyPoints: newPoints };
+      }),
+      redeemVoucher: (cost) => set((state) => {
+        const newPoints = state.loyaltyPoints - cost;
+        const newVoucher = { 
+          id: Date.now(), 
+          type: 'FREE_DELIVERY', 
+          title: 'Gratis Ongkir',
+          createdAt: new Date().toISOString(),
+          used: false
+        };
+        const updatedVouchers = [...state.vouchers, newVoucher];
+        
+        if (state.user?.id) {
+          updateDoc(doc(db, "users", state.user.id), {
+            loyaltyPoints: newPoints,
+            vouchers: updatedVouchers
+          }).catch(e => console.error("Sync Error (Redeem):", e));
+        }
+        
+        return { 
+          loyaltyPoints: newPoints,
+          vouchers: updatedVouchers
+        };
+      }),
+      useVoucher: (voucherId) => set((state) => {
+        const updatedVouchers = state.vouchers.map(v => 
+          v.id === voucherId ? { ...v, used: true, usedAt: new Date().toISOString() } : v
+        );
+        
+        if (state.user?.id) {
+          updateDoc(doc(db, "users", state.user.id), {
+            vouchers: updatedVouchers
+          }).catch(e => console.error("Sync Error (Use Voucher):", e));
+        }
+        
+        return { vouchers: updatedVouchers };
+      }),
       addSavedAddress: async (address) => {
         const id = Date.now();
         const newAddr = { id, ...address };
@@ -73,6 +113,20 @@ export const useUserStore = create(
             .catch(e => console.error("Firestore Update Error:", e));
             
           return { user: updatedUser };
+        });
+      },
+      deleteFirestoreUser: async () => {
+        const state = useUserStore.getState();
+        if (state.user?.id) {
+          await deleteDoc(doc(db, "users", state.user.id));
+        }
+        set({ 
+          user: null, 
+          isAdmin: false, 
+          isGuestMode: false, 
+          loyaltyPoints: 0, 
+          vouchers: [],
+          savedAddresses: [] 
         });
       },
     }),

@@ -77,7 +77,11 @@ function Register() {
       await setDoc(doc(db, 'users', user.uid), {
         displayName: name,
         email: email,
-        whatsapp: whatsapp,
+        whatsapp: whatsapp.replace(/\D/g, '').startsWith('0') 
+          ? '62' + whatsapp.replace(/\D/g, '').slice(1) 
+          : whatsapp.replace(/\D/g, '').startsWith('62') 
+            ? whatsapp.replace(/\D/g, '') 
+            : whatsapp.replace(/\D/g, '') ? '62' + whatsapp.replace(/\D/g, '') : '',
         photoURL: '',
         createdAt: serverTimestamp()
       });
@@ -125,7 +129,7 @@ function Register() {
           <div className="bg-surface-container-highest p-4 rounded-xl mb-4 shadow-2xl">
             <span className="material-symbols-outlined text-primary text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>app_registration</span>
           </div>
-          <h1 className="font-headline font-black italic tracking-tighter text-3xl text-primary text-center uppercase">ARO DRIVE</h1>
+          <h1 className="font-headline font-black tracking-tighter text-3xl text-primary text-center uppercase">ARO DRIVE</h1>
           <p className="font-label text-on-surface-variant text-[10px] uppercase tracking-[0.2em] mt-1 font-medium">
             Daftar Member Baru
           </p>
@@ -235,7 +239,7 @@ function Register() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full mt-2 kinetic-gradient text-on-primary-fixed font-headline font-extrabold py-4 rounded-full text-base shadow-[0_10px_20px_rgba(202,253,0,0.15)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:grayscale"
+              className="w-full mt-2 kinetic-gradient text-on-primary-fixed font-headline font-extrabold py-4 rounded-full text-base shadow-[0_10px_20px_rgb(var(--primary)/0.15)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:grayscale"
             >
               {loading ? 'MEMPROSES...' : 'DAFTAR SEKARANG'}
               {!loading && <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">person_add</span>}

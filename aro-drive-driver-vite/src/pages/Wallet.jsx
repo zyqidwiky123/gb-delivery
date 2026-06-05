@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom';
 import { listenForCompletedOrders } from '../firebase/orderService';
 import { useDriverStore } from '../store/useDriverStore';
 import { observeDriverBalance, requestTopup } from '../firebase/walletService';
+import PullToRefresh from 'react-simple-pull-to-refresh';
 
 function Wallet() {
   const { user, profile } = useDriverStore();
   const [completedOrders, setCompletedOrders] = useState([]);
   const [balance, setBalance] = useState(0);
   const [showTopupModal, setShowTopupModal] = useState(false);
-  const [topupAmount, setTopupAmount] = useState(20000);
+  const [topupAmount, setTopupAmount] = useState(10000);
   const [loading, setLoading] = useState(false);
+  const [expandedDates, setExpandedDates] = useState({});
+  const [refreshFlag, setRefreshFlag] = useState(0);
   
   useEffect(() => {
     if (!user?.uid) return;
@@ -29,16 +32,75 @@ function Wallet() {
       unsubscribeOrders();
       unsubscribeBalance();
     };
-  }, [user?.uid]);
+  }, [user?.uid, refreshFlag]);
 
-  const totalEarnings = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
-  const totalDeductions = completedOrders.reduce((sum, order) => sum + (order.platformFee || 0), 0);
-  const netEarnings = totalEarnings - totalDeductions;
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
 
-  const handleTopupSubmit = async (e) => {
-    e.preventDefault();
-    if (topupAmount < 20000) {
-      alert("Minimal top-up adalah Rp 20.000");
+  // Group by Date
+  const dailyStats = completedOrders.reduce((acc, order) => {
+    if (!order.completedAt) return acc;
+    const dateObj = order.completedAt.toDate ? order.completedAt.toDate() : new Date(order.completedAt);
+    const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    const delivery = (order.deliveryFee !== undefined) 
+      ? Number(order.deliveryFee || 0)
+      : (Number(order.total || 0) - Number(order.actualShoppingCost || 0));
+      
+    const gross = delivery + Number(order.subsidizedFee || 0);
+    const platformFee = Number(order.platformFee || 0);
+    const net = gross - platformFee;
+    
+    if (!acc[dateStr]) {
+      acc[dateStr] = {
+        totalNet: 0,
+        count: 0,
+        dateObj: dateObj,
+        orders: []
+      };
+    }
+    acc[dateStr].totalNet += net;
+    acc[dateStr].count += 1;
+    acc[dateStr].orders.push({
+      ...order,
+      net: net,
+      gross: gross,
+      delivery: delivery,
+      shopping: Number(order.actualShoppingCost || order.subtotal || 0),
+      appFee: Number(order.appServiceFee || 0),
+      commission: platformFee
+    });
+    return acc;
+  }, {});
+
+  const dailyHistory = Object.entries(dailyStats)
+    .map(([dateStr, stats]) => ({ dateStr, ...stats }))
+    .sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+
+  const todayEarnings = dailyStats[today]?.totalNet || 0;
+  
+  const monthlyEarnings = completedOrders.reduce((sum, order) => {
+    if (!order.completedAt) return sum;
+    const dateObj = order.completedAt.toDate ? order.completedAt.toDate() : new Date(order.completedAt);
+    if (dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear) {
+      const delivery = (order.deliveryFee !== undefined) 
+        ? Number(order.deliveryFee || 0)
+        : (Number(order.total || 0) - Number(order.actualShoppingCost || 0));
+        
+      const gross = delivery + Number(order.subsidizedFee || 0);
+      const net = gross - (Number(order.platformFee || 0));
+      return sum + net;
+    }
+    return sum;
+  }, 0);
+
+  const handleRefresh = async () => {
+    setRefreshFlag(prev => prev + 1);
+    toast.success('Data refreshed');
+  };
+    if (topupAmount < 10000) {
+      alert("Minimal top-up adalah Rp 10.000");
       return;
     }
 
@@ -62,29 +124,21 @@ function Wallet() {
     }
   };
 
-  return (
-    <div className="bg-surface-dim min-h-screen pb-40 text-white font-body">
-      
-      {/* Top Header */}
-      <header className="bg-[#0e0e0e]/90 backdrop-blur-md sticky top-0 z-50 border-b border-white/5 py-5 px-6">
-        <div className="w-full max-w-xl mx-auto flex items-center justify-between">
-          <h1 className="font-headline font-bold text-2xl text-on-primary-fixed uppercase tracking-tighter italic">ARO Wallet</h1>
-          <button className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-surface-container-high transition-colors text-on-surface-variant">
-            <span className="material-symbols-outlined">help</span>
-          </button>
-        </div>
-      </header>
+  const handleWithdraw = () => {
+    if (balance <= 0) {
+      alert("Saldo tidak cukup untuk ditarik.");
+      return;
+    }
+    const waNumber = "6285748343842"; // Nomor Admin ARO DRIVE
+    const message = encodeURIComponent(`Halo Admin ARO DRIVE, saya mau Tarik Tunai.\n\nID Driver: ${user.uid}\nNama: ${profile?.name || 'Driver'}\nSaldo Saat Ini: Rp ${balance.toLocaleString()}\n\nMohon bantuannya untuk proses pencairan dana.`);
+    const waLink = `https://wa.me/${waNumber}?text=${message}`;
+    window.open(waLink, '_blank');
+  };
 
-      <main className="max-w-xl mx-auto px-6 mt-6 space-y-6">
-        
-        {/* Main Balance Card (Virtual Card Style) */}
-        <div className="relative overflow-hidden rounded-[2rem] p-8 shadow-2xl">
-          {/* Kinetic Gradient Background */}
-          <div className="absolute inset-0 kinetic-gradient opacity-95"></div>
-          
-          {/* Grain Overlay */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
-          
+  return (
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div>
+          <div className="bg-surface-dim min-h-screen pb-40 text-white font-body">
           <div className="relative z-10 text-on-tertiary-fixed">
             <div className="flex justify-between items-start mb-10">
               <div>
@@ -127,7 +181,10 @@ function Wallet() {
             <span className="font-black text-[10px] uppercase tracking-[0.2em] text-on-surface">Top Up Saldo</span>
           </button>
           
-          <button className="flex-1 bg-surface-container-highest hover:bg-surface-container-high border border-white/5 py-5 rounded-[2rem] flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-xl group border-b-4 border-white/5 opacity-50">
+          <button 
+            onClick={handleWithdraw}
+            className="flex-1 bg-surface-container-highest hover:bg-surface-container-high border border-white/5 py-5 rounded-[2rem] flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-xl group border-b-4 border-white/5"
+          >
             <div className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center group-hover:bg-[#262626] transition-colors">
               <span className="material-symbols-outlined text-on-surface-variant text-2xl">account_balance</span>
             </div>
@@ -135,79 +192,127 @@ function Wallet() {
           </button>
         </div>
 
-        {/* Earnings Summary */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div className="bg-surface-container-highest/50 p-4 rounded-2xl border border-white/5 text-center">
-            <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Gross</p>
-            <p className="text-sm font-bold text-white">Rp {totalEarnings.toLocaleString()}</p>
-          </div>
-          <div className="bg-surface-container-highest/50 p-4 rounded-2xl border border-white/5 text-center">
-            <p className="text-[9px] font-black uppercase tracking-widest text-error mb-1">Fee App</p>
-            <p className="text-sm font-bold text-error">-Rp {totalDeductions.toLocaleString()}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Hari Ini</p>
+            <p className="text-sm font-bold text-white">Rp {todayEarnings.toLocaleString()}</p>
           </div>
           <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 text-center">
-            <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-1">Net</p>
-            <p className="text-sm font-bold text-primary">Rp {netEarnings.toLocaleString()}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-1">Bulan Ini</p>
+            <p className="text-sm font-bold text-primary">Rp {monthlyEarnings.toLocaleString()}</p>
           </div>
         </div>
 
-        {/* Info Banner */}
         <div className="bg-primary/5 border border-primary/10 p-5 rounded-3xl flex gap-4 items-center">
             <span className="material-symbols-outlined text-primary">info</span>
-            <p className="text-xs text-on-surface-variant font-medium">Saldo Wallet dikurangi otomatis setiap pesanan selesai sebagai <span className="text-white font-bold">biaya layanan platform</span>. Top-up saldo untuk terus menerima order.</p>
+            <p className="text-xs text-on-surface-variant font-medium">Saldo Wallet dikurangi otomatis setiap pesanan selesai. Top-up saldo untuk terus menerima order.</p>
         </div>
 
         {/* Transaction History */}
         <section className="bg-surface-container-low rounded-[2.5rem] border border-white/5 p-8 shadow-inner mt-4">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="font-headline font-bold text-xl text-white uppercase italic tracking-tighter">Riwayat Transaksi</h2>
-            <button className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Lihat Semua</button>
+            <h2 className="font-headline font-bold text-xl text-white uppercase italic tracking-tighter">Riwayat Pendapatan Harian</h2>
           </div>
           
           <div className="space-y-4">
-            {completedOrders.length === 0 ? (
+            {dailyHistory.length === 0 ? (
               <div className="text-center py-10 opacity-50">
                  <span className="material-symbols-outlined text-4xl mb-2">history</span>
                  <p className="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest">Belum ada riwayat pendapatan.</p>
               </div>
             ) : (
-              completedOrders.map((order, i) => (
-                <React.Fragment key={order.id}>
-                  {/* Earning Entry */}
-                  <div className="flex items-center justify-between group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 border border-green-500/10">
-                        <span className="material-symbols-outlined text-lg">arrow_downward</span>
-                      </div>
-                      <div>
-                        <h3 className="font-black text-xs text-white uppercase tracking-tight">Order {order.serviceType?.toUpperCase()}</h3>
-                        <p className="text-[10px] text-on-surface-variant font-mono mt-0.5">#ARO-{order.id.slice(-6).toUpperCase()}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                        <span className="font-black text-sm text-green-400">+Rp {(order.total || 0).toLocaleString()}</span>
-                        <p className="text-[10px] text-on-surface-variant opacity-50 uppercase font-bold">Pendapatan</p>
-                    </div>
-                  </div>
-                  {/* Fee Deduction Entry */}
-                  {(order.platformFee || 0) > 0 && (
-                    <div className="flex items-center justify-between group ml-6 opacity-70">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-lg bg-error/10 flex items-center justify-center text-error border border-error/10">
-                          <span className="material-symbols-outlined text-sm">arrow_upward</span>
+              dailyHistory.map((item, i) => {
+                const d = item.dateObj;
+                const formattedDate = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                
+                const isExpanded = expandedDates[item.dateStr];
+                
+                return (
+                   <React.Fragment key={item.dateStr}>
+                    <div className="group">
+                      <div 
+                        className="flex items-center justify-between cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all"
+                        onClick={() => setExpandedDates(prev => ({ ...prev, [item.dateStr]: !prev[item.dateStr] }))}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isExpanded ? 'bg-primary border-primary text-black' : 'bg-primary/10 border-primary/10 text-primary'}`}>
+                            <span className="material-symbols-outlined text-lg">
+                              {isExpanded ? 'expand_more' : 'calendar_today'}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-black text-xs text-white uppercase tracking-tight">{formattedDate}</h3>
+                            <p className="text-[10px] text-on-surface-variant font-mono mt-0.5">{item.count} Pesanan Selesai</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-bold text-[10px] text-on-surface-variant uppercase tracking-tight">Biaya Layanan</h3>
+                        <div className="text-right">
+                            <span className="font-black text-sm text-primary">+Rp {item.totalNet.toLocaleString()}</span>
+                            <p className="text-[10px] text-on-surface-variant opacity-50 uppercase font-bold">Total Bersih</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                          <span className="font-bold text-xs text-error">-Rp {(order.platformFee).toLocaleString()}</span>
-                      </div>
+                      
+                      {/* Detailed Order List for this date (Expandable) */}
+                      {isExpanded && (
+                        <div className="mt-4 ml-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                          {item.orders.map((ord, idx) => (
+                            <div key={ord.id || idx} className="bg-white/5 rounded-[1.5rem] p-4 border border-white/5">
+                              <div className="flex justify-between items-start mb-3 border-b border-white/5 pb-2">
+                                <span className="text-[9px] font-black text-primary uppercase tracking-widest">#{ord.id?.slice(-5)} - {ord.serviceType?.toUpperCase()}</span>
+                                <span className="text-[10px] font-bold text-white/60">{ord.completedAt?.toDate ? ord.completedAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="space-y-1">
+                                  <p className="text-[7px] text-white/40 uppercase font-bold tracking-widest">Total Belanja</p>
+                                  <p className="text-[11px] font-bold">Rp {ord.shopping.toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1 text-right">
+                                  <p className="text-[7px] text-white/40 uppercase font-bold tracking-widest">Biaya Layanan (Admin)</p>
+                                  <p className="text-[11px] font-bold">Rp {ord.appFee.toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-[7px] text-white/40 uppercase font-bold tracking-widest">Ongkir Murni (Driver)</p>
+                                  <p className="text-[11px] font-bold text-primary">Rp {(ord.delivery - ord.appFee).toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1 text-right">
+                                  <p className="text-[7px] text-error/60 uppercase font-bold tracking-widest">Dipotong dari Saldo</p>
+                                  <p className="text-[11px] font-bold text-error">-Rp {ord.commission.toLocaleString()}</p>
+                                </div>
+                              </div>
+
+                              <div className="bg-primary/10 rounded-2xl p-3 border border-primary/20">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">Pendapatan Bersih</span>
+                                  <span className="text-sm font-black text-primary italic">Rp {ord.net.toLocaleString()}</span>
+                                </div>
+                              </div>
+
+                              {/* Balance Movement Snapshot */}
+                              {(ord.balanceBefore !== undefined) && (
+                                <div className="mt-3 bg-white/5 rounded-2xl p-3 border border-white/5 flex items-center justify-between">
+                                  <div className="flex flex-col">
+                                    <span className="text-[7px] text-white/40 uppercase font-bold tracking-widest">Saldo Awal</span>
+                                    <span className="text-[10px] font-bold text-white/70">Rp {ord.balanceBefore.toLocaleString()}</span>
+                                  </div>
+                                  <div className="flex flex-col items-center">
+                                    <span className="material-symbols-outlined text-primary/40 text-sm">double_arrow</span>
+                                  </div>
+                                  <div className="flex flex-col text-right">
+                                    <span className="text-[7px] text-primary/60 uppercase font-bold tracking-widest">Saldo Akhir</span>
+                                    <span className="text-[10px] font-black text-primary">Rp {ord.balanceAfter.toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {i < completedOrders.length - 1 && <div className="w-full h-px bg-white/5"></div>}
-                </React.Fragment>
-              ))
+
+                    {i < dailyHistory.length - 1 && <div className="w-full h-px bg-white/5"></div>}
+                  </React.Fragment>
+                );
+              })
             )}
           </div>
         </section>
@@ -239,11 +344,11 @@ function Wallet() {
                                 value={topupAmount}
                                 onChange={(e) => setTopupAmount(Number(e.target.value))}
                                 className="w-full bg-[#161616] border-none rounded-2xl py-5 pl-14 pr-6 text-xl font-headline font-black text-white focus:ring-2 focus:ring-primary transition-all"
-                                min="20000"
+                                min="10000"
                             />
                         </div>
                         <div className="grid grid-cols-3 gap-2">
-                            {[20000, 50000, 100000].map(amt => (
+                            {[10000, 50000, 100000].map(amt => (
                                 <button 
                                     key={amt} 
                                     type="button"

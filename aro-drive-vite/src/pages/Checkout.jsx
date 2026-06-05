@@ -6,7 +6,7 @@ import { createOrder } from '../firebase/orderService';
 import { calculateDistance } from '../utils/mapConfig';
 import { useAdminStore } from '../store/adminStore';
 import { db, auth } from '../firebase/config';
-import { collection, query, where, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 
 function Checkout() {
@@ -14,16 +14,43 @@ function Checkout() {
   const { 
     cart, currentOrder, clearCart, clearRoute, 
     foodDeliveryLocation, clearShopLocations, clearSendLocations,
-    calculateFee
+    calculateFee, calculateAppServiceFee, pricing
   } = useOrderStore();
-  const { user, setLastOrderId } = useUserStore();
+  const { user, setLastOrderId, vouchers, useVoucher } = useUserStore();
+  const { platformFeePercent, pointsPerTenk } = useAdminStore();
   
   const [guestName, setGuestName] = useState('');
   const [guestWA, setGuestWA] = useState('');
   const [loading, setLoading] = useState(false);
   const [dbOrder, setDbOrder] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('TUNAI');
+  const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoError, setPromoError] = useState('');
+  const { vouchers: globalVouchers } = useAdminStore();
+
+  const handleApplyCode = () => {
+    setPromoError('');
+    if (!promoCode.trim()) return;
+    
+    const code = promoCode.trim().toUpperCase();
+    const found = (globalVouchers || []).find(v => v.code?.toUpperCase() === code && v.active);
+    
+    if (found) {
+      const minOrder = found.minOrder || 0;
+      if (subtotal < minOrder) {
+        setPromoError(`Minimal pesanan untuk voucher ini adalah Rp ${minOrder.toLocaleString()}`);
+        return;
+      }
+      setSelectedVoucher(found);
+      setPromoCode('');
+      setPromoError('');
+    } else {
+      setPromoError('Kode voucher tidak ditemukan atau sudah tidak aktif.');
+    }
+  };
+
+
 
   // Sync with Database
   React.useEffect(() => {
@@ -66,60 +93,103 @@ function Checkout() {
   const isEmpty = !displayOrder && !isInitializing;
   const serviceType = displayOrder?.type || displayOrder?.serviceType || (isCartOrder ? 'food' : null);
 
-  const { serviceFeePercent } = useAdminStore();
+  
   
   // Pricing Logic (Centralized in orderStore)
   const subtotal = dbOrder ? (dbOrder.subtotal || 0) : (isCartOrder ? cart.reduce((sum, item) => sum + (item.price * item.qty), 0) : 0);
   
+  // Calculate Route/Order Distance helper
+  const getOrderDistance = () => {
+    if (dbOrder) return dbOrder.distance || 0;
+    if (isCartOrder && serviceType === 'food') {
+      const merchants = [];
+      const seen = new Set();
+      cart.forEach(item => {
+        if (item.merchantId && !seen.has(item.merchantId)) {
+          seen.add(item.merchantId);
+          merchants.push({ 
+            id: item.merchantId, 
+            loc: item.merchantLocation ? { lat: item.merchantLocation[0], lng: item.merchantLocation[1] } : null 
+          });
+        }
+      });
+      if (merchants.length === 0 || !foodDeliveryLocation) return 0;
+      let totalDist = 0;
+      for (let i = 1; i < merchants.length; i++) {
+        if (merchants[i-1].loc && merchants[i].loc) {
+          totalDist += calculateDistance(merchants[i-1].loc, merchants[i].loc);
+        }
+      }
+      const lastMerchant = merchants[merchants.length - 1];
+      if (lastMerchant.loc && foodDeliveryLocation) {
+        totalDist += calculateDistance(lastMerchant.loc, { lat: foodDeliveryLocation.lat, lng: foodDeliveryLocation.lng });
+      }
+      return totalDist;
+    }
+    return displayOrder?.distance || 0;
+  };
+
+  const distance = getOrderDistance();
+  
   // Calculate delivery fee dynamically if not from DB
-  const getDeliveryFee = () => {
+  const getDeliveryFee = (dist) => {
     if (dbOrder) return dbOrder.deliveryFee || 0;
     if (isCartOrder) {
-      if (serviceType === 'food') {
-        // Collect unique merchants from cart
-        const merchants = [];
-        const seen = new Set();
-        cart.forEach(item => {
-          if (item.merchantId && !seen.has(item.merchantId)) {
-            seen.add(item.merchantId);
-            merchants.push({ 
-              id: item.merchantId, 
-              name: item.merchantName, 
-              loc: item.merchantLocation ? { lat: item.merchantLocation[0], lng: item.merchantLocation[1] } : null 
-            });
-          }
-        });
-
-        if (merchants.length === 0 || !foodDeliveryLocation) return calculateFee(0, 'food', 0);
-
-        // Calculate Route Distance: M1 -> M2 -> ... -> Dest
-        let totalDist = 0;
-        for (let i = 1; i < merchants.length; i++) {
-          if (merchants[i-1].loc && merchants[i].loc) {
-            totalDist += calculateDistance(merchants[i-1].loc, merchants[i].loc);
-          }
-        }
-        
-        const lastMerchant = merchants[merchants.length - 1];
-        if (lastMerchant.loc && foodDeliveryLocation) {
-          totalDist += calculateDistance(lastMerchant.loc, { lat: foodDeliveryLocation.lat, lng: foodDeliveryLocation.lng });
-        }
-
-        return calculateFee(totalDist, 'food', 0);
-      }
-      return calculateFee(0, 'food', 0);
+      return calculateFee(dist, 'food', 0);
     }
-    if (isRouteOrder) return calculateFee(currentOrder.distance || 0, currentOrder.serviceType, currentOrder.weight || 0);
+    if (isRouteOrder) return calculateFee(
+      dist, 
+      displayOrder?.serviceType || displayOrder?.type, 
+      displayOrder?.weight || 0
+    );
     return 0;
   };
-  const deliveryFee = getDeliveryFee();
-  
-  // Service Fee from Platform Settings (Admin Store)
-  const rawServiceFee = dbOrder ? (dbOrder.serviceFee || 0) : ((subtotal + deliveryFee) * (serviceFeePercent / 100));
-  const serviceFee = dbOrder ? (dbOrder.serviceFee || 0) : (Math.round(rawServiceFee / 1000) * 1000);
-  
-  const total = dbOrder ? (dbOrder.total || 0) : (subtotal + deliveryFee + serviceFee);
 
+  const originalDeliveryTotal = getDeliveryFee(distance);
+  
+  // Dynamic Voucher Calculation
+  const calculateDiscountedFee = () => {
+    if (!selectedVoucher) return originalDeliveryTotal;
+    
+    // Check Min Order
+    const minOrder = selectedVoucher.minOrder || 0;
+    if (subtotal < minOrder) return originalDeliveryTotal;
+
+    if (selectedVoucher.type === 'FREE_DELIVERY') return 0;
+    
+    if (selectedVoucher.type === 'PERCENTAGE') {
+      const discount = originalDeliveryTotal * (selectedVoucher.value / 100);
+      return Math.max(0, originalDeliveryTotal - discount);
+    }
+    
+    if (selectedVoucher.type === 'FLAT') {
+      return Math.max(0, originalDeliveryTotal - (selectedVoucher.value || 0));
+    }
+    
+    return originalDeliveryTotal;
+  };
+
+  const deliveryFee = calculateDiscountedFee();
+  
+  // Calculate App Service Fee breakdown for display
+  const appServiceFee = calculateAppServiceFee(distance);
+  const baseDeliveryFee = Math.max(0, deliveryFee - appServiceFee);
+
+  const total = dbOrder ? (dbOrder.total || 0) : (subtotal + deliveryFee);
+  
+  // Loyalty Points to Earn
+  const earnedPoints = Math.floor(total / (pointsPerTenk || 10000));
+
+  // Admin Commission Calculation (Dynamic from settings)
+  const getCommission = () => {
+    const type = serviceType || 'jek';
+    const p = pricing[type] || pricing['jek'];
+    const rate = Number(p.commission || platformFeePercent || 10) / 100;
+    // Commission is calculated ONLY from the pure delivery fee (baseDeliveryFee)
+    return Math.round(baseDeliveryFee * rate);
+  };
+  const platformCommission = getCommission();
+  
   const handleOrder = async () => {
     if (!user && (!guestName || !guestWA)) {
       alert('Mohon isi Nama dan WhatsApp Anda.');
@@ -211,16 +281,22 @@ function Checkout() {
         customerId: safeStr(user?.id, safeStr(auth.currentUser?.uid, '')),
         subtotal: safeNum(subtotal),
         deliveryFee: safeNum(deliveryFee),
-        serviceFee: safeNum(serviceFee),
+        serviceFee: safeNum(platformCommission + appServiceFee), // Total Admin Cut = Commission % + Fixed Service Fee
+        appServiceFee: safeNum(appServiceFee), // Keep for transparency
         total: safeNum(total),
-        paymentMethod: safeStr(paymentMethod, 'TUNAI'),
+        paymentMethod: user ? 'TUNAI' : 'TUNAI', // Default to TUNAI for both, Members can change in Tracking
+        earnedPoints: safeNum(earnedPoints),
+        voucherUsed: selectedVoucher ? true : false,
+        voucherId: selectedVoucher ? selectedVoucher.id : null,
+        subsidizedFee: selectedVoucher ? safeNum(originalDeliveryTotal) : 0,
         pickupAddress: '',
         dropoffAddress: '',
         customer: user ? { 
           id: safeStr(user.id),
           name: safeStr(user.displayName, 'User'),
           email: safeStr(user.email),
-          wa: safeStr(user.whatsapp || user.phoneNumber)
+          wa: safeStr(user.whatsapp || user.phoneNumber),
+          isMember: true
         } : { 
           name: safeStr(guestName, 'Guest'), 
           wa: safeStr(guestWA), 
@@ -239,7 +315,9 @@ function Checkout() {
           qty: safeNum(item.qty, 1),
           merchantId: safeStr(item.merchantId),
           merchantName: safeStr(item.merchantName, 'Restoran'),
-          merchantLocation: sanitizePos(item.merchantLocation)
+          merchantLocation: sanitizePos(item.merchantLocation),
+          desc: item.desc || '',
+          isManual: !!item.isManual
         }));
 
         const uniqueMerchants = [];
@@ -254,6 +332,13 @@ function Checkout() {
           }
         });
 
+        // Set top-level merchantId so merchant app can query orders
+        // Uses first merchant from cart as primary merchant
+        const primaryMerchantId = cart.find(i => i.merchantId)?.merchantId || '';
+        const primaryMerchantName = cart.find(i => i.merchantId)?.merchantName || '';
+        basePayload.merchantId = safeStr(primaryMerchantId);
+        basePayload.merchantName = safeStr(primaryMerchantName, 'Restoran');
+
         // pickups is array of {lat, lng} objects (NOT array of arrays!)
         basePayload.pickups = uniqueMerchants.map(m => m.loc);
         basePayload.pickup = basePayload.pickups[0] || { ...DEFAULT_POS };
@@ -267,16 +352,21 @@ function Checkout() {
         basePayload.distance = safeNum(currentOrder.distance);
 
         if (serviceType === 'send') {
+          const senderPos = sanitizePos(currentOrder.sender?.latlng || currentOrder.sender);
+          const receiverPos = sanitizePos(currentOrder.receiver?.latlng || currentOrder.receiver);
+
           basePayload.sender = {
-            address: safeStr(currentOrder.sender?.address),
-            lat: safeNum(currentOrder.sender?.lat),
-            lng: safeNum(currentOrder.sender?.lng),
+            name: safeStr(currentOrder.sender?.name, 'Pengirim'),
+            address: safeStr(currentOrder.sender?.address, 'Lokasi Pengirim'),
+            lat: safeNum(senderPos.lat),
+            lng: safeNum(senderPos.lng),
             phone: safeStr(currentOrder.sender?.phone)
           };
           basePayload.receiver = {
-            address: safeStr(currentOrder.receiver?.address),
-            lat: safeNum(currentOrder.receiver?.lat),
-            lng: safeNum(currentOrder.receiver?.lng),
+            name: safeStr(currentOrder.receiver?.name, 'Penerima'),
+            address: safeStr(currentOrder.receiver?.address, 'Lokasi Penerima'),
+            lat: safeNum(receiverPos.lat),
+            lng: safeNum(receiverPos.lng),
             phone: safeStr(currentOrder.receiver?.phone)
           };
           basePayload.itemMeta = {
@@ -293,6 +383,15 @@ function Checkout() {
             address: safeStr(s.address),
             latlng: sanitizePos(s.latlng || [s.lat, s.lng])
           }));
+          
+          // Route order to merchant dashboard if a registered shop was selected
+          const primaryShopId = currentOrder.shopLocations?.[0]?.place_id || currentOrder.shopLocations?.[0]?.id || '';
+          const primaryShopName = currentOrder.shopLocations?.[0]?.name || '';
+          if (primaryShopId) {
+            basePayload.merchantId = safeStr(primaryShopId);
+            basePayload.merchantName = safeStr(primaryShopName, 'Toko');
+          }
+
           basePayload.delivery = {
             name: safeStr(currentOrder.delivery?.name),
             phone: safeStr(currentOrder.delivery?.phone),
@@ -326,6 +425,23 @@ function Checkout() {
       console.log("FINAL FIREBASE PAYLOAD:", JSON.stringify(cleanedPayload, null, 2));
 
       const orderId = await createOrder(cleanedPayload);
+
+      // Update User Profile in Firestore (especially for Guests to show up in Admin)
+      if (cleanedPayload.customerId) {
+        try {
+          const userRef = doc(db, "users", cleanedPayload.customerId);
+          const userSyncData = {
+            displayName: cleanedPayload.customer.name,
+            whatsapp: cleanedPayload.customer.wa,
+            lastSeen: serverTimestamp(),
+            isGuest: !user,
+            updatedAt: serverTimestamp()
+          };
+          await setDoc(userRef, userSyncData, { merge: true });
+        } catch (syncErr) {
+          console.warn("Failed to sync user profile:", syncErr);
+        }
+      }
       
       if (isCartOrder) clearCart();
       if (isRouteOrder) {
@@ -333,8 +449,13 @@ function Checkout() {
         if (serviceType === 'shop') clearShopLocations();
         if (serviceType === 'send') clearSendLocations();
       }
-      setLastOrderId(orderId);
       
+      // If voucher used, mark it as used in local store (which syncs to Firestore)
+      if (selectedVoucher) {
+        useVoucher(selectedVoucher.id);
+      }
+
+      setLastOrderId(orderId);
       navigate(`/tracking?id=${orderId}`);
     } catch (e) {
       console.error("DEBUG ORDER ERROR:", e);
@@ -350,11 +471,11 @@ function Checkout() {
 
   if (isEmpty) {
     return (
-      <div className="bg-surface text-on-surface font-body min-h-screen flex flex-col items-center justify-center p-6 text-center">
+      <div className="bg-background text-on-background font-body min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <span className="material-symbols-outlined text-primary text-5xl">shopping_cart_off</span>
         </div>
-        <h2 className="text-2xl font-headline font-black text-white uppercase italic tracking-tight mb-2">Keranjang Kosong</h2>
+        <h2 className="text-2xl font-headline font-black text-on-surface uppercase italic tracking-tight mb-2">Keranjang Kosong</h2>
         <p className="text-sm text-on-surface-variant max-w-xs mb-8">
           Belum ada pesanan yang akan dibayar. Silakan pilih layanan kami terlebih dahulu.
         </p>
@@ -369,12 +490,12 @@ function Checkout() {
   }
 
   return (
-    <div className="bg-surface text-on-surface font-body min-h-screen pb-40">
-      <main className="max-w-xl mx-auto px-6 py-8 space-y-8 text-white relative">
+    <div className="bg-background text-on-background font-body min-h-screen pb-40">
+      <main className="max-w-xl mx-auto px-6 py-8 space-y-8 text-on-surface relative">
         {/* Manual Back Button since Header is hidden */}
         <button 
           onClick={() => navigate(-1)} 
-          className="absolute top-0 left-6 flex items-center gap-2 text-primary hover:text-[#f3ffca] transition-colors font-bold text-sm"
+          className="absolute top-0 left-6 flex items-center gap-2 text-primary hover:text-primary-container transition-colors font-bold text-sm"
         >
           <span className="material-symbols-outlined">arrow_back</span>
           <span>Kembali</span>
@@ -382,7 +503,7 @@ function Checkout() {
 
         <div className="pt-8 flex justify-between items-start">
           <div>
-            <h2 className="text-2xl font-headline font-extrabold text-[#f3ffca] uppercase italic tracking-tight mb-1">
+            <h2 className="text-2xl font-headline font-extrabold text-primary uppercase italic tracking-tight mb-1">
               {dbOrder ? `Order Aktif` : `Checkout ${serviceType}`}
             </h2>
             <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">
@@ -400,7 +521,7 @@ function Checkout() {
           )}
         </div>
         {/* Delivery / Route Summary */}
-        <section className="bg-surface-container-low p-6 rounded-[2rem] border border-white/5 space-y-4 shadow-lg">
+        <section className="bg-surface-container-low p-6 rounded-[2rem] border border-outline space-y-4 shadow-lg">
           <div className="flex items-center gap-3">
              <span className="material-symbols-outlined text-primary">assistant_navigation</span>
              <div className="flex-1">
@@ -411,6 +532,38 @@ function Checkout() {
                </p>
              </div>
           </div>
+
+          {/* Shop Locations List */}
+          {serviceType === 'shop' && displayOrder?.shopLocations && (
+            <div className="space-y-4 pt-2 border-t border-outline">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Toko / Pasar ({displayOrder.shopLocations.length})</p>
+              {displayOrder.shopLocations.map((loc, idx) => (
+                <div key={idx} className="flex gap-3">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary flex-none">
+                    {idx + 1}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-on-surface">{loc.name || 'Toko Tanpa Nama'}</p>
+                    <p className="text-[10px] text-on-surface-variant line-clamp-1">{loc.address}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Recipient Details for Shop */}
+          {serviceType === 'shop' && displayOrder?.delivery && (
+            <div className="space-y-3 pt-4 border-t border-outline">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Tujuan Pengiriman</p>
+              <div className="flex gap-3">
+                <span className="material-symbols-outlined text-primary text-xl flex-none">person_pin</span>
+                <div>
+                  <p className="text-xs font-bold text-on-surface">{displayOrder.delivery.name || 'Penerima'} • {displayOrder.delivery.phone || '-'}</p>
+                  <p className="text-[10px] text-on-surface-variant">{displayOrder.delivery.address}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Order Details */}
@@ -433,38 +586,38 @@ function Checkout() {
           </div>
           <div className="space-y-3">
             {isCartOrder ? (dbOrder?.items || cart).map((item, idx) => (
-              <div key={item.id || idx} className="flex justify-between items-center bg-[#131313] p-4 rounded-2xl border border-white/5 shadow-sm">
+              <div key={item.id || idx} className="flex justify-between items-center bg-surface-container p-4 rounded-2xl border border-outline shadow-sm">
                 <div className="flex items-center gap-3">
                   <span className="bg-primary/20 text-primary w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold">{item.qty}x</span>
-                  <span className="text-sm font-bold">{item.name}</span>
+                  <span className="text-sm font-bold text-on-surface">{item.name}</span>
                 </div>
                 <span className="text-sm font-medium text-on-surface-variant">Rp {(item.price * item.qty).toLocaleString()}</span>
               </div>
             )) : (
-              <div className="flex justify-between items-center bg-[#131313] p-5 rounded-2xl border border-white/5">
+              <div className="flex justify-between items-center bg-surface-container p-5 rounded-2xl border border-outline">
                 <div className="flex items-center gap-4">
                   <span className="material-symbols-outlined text-primary text-3xl">
                     {serviceType === 'ride' ? 'directions_bike' : 'package_2'}
                   </span>
                   <div>
-                    <span className="text-sm font-bold block uppercase tracking-tight">ARO {serviceType?.toUpperCase()}</span>
+                    <span className="text-sm font-bold block uppercase tracking-tight text-on-surface">ARO {serviceType?.toUpperCase()}</span>
                     <span className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">
                       Priority Service {displayOrder?.weight ? `• ${displayOrder.weight} KG` : ''}
                     </span>
                   </div>
                 </div>
-                <span className="text-lg font-headline font-black text-white italic">Rp {total.toLocaleString()}</span>
+                <span className="text-lg font-headline font-black text-on-surface italic">Rp {total.toLocaleString()}</span>
               </div>
             )}
 
             {/* Additional Details for Shop Service */}
             {serviceType === 'shop' && displayOrder?.items && (
-              <div className="bg-[#131313] p-5 rounded-2xl border border-white/5 space-y-3">
-                <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+              <div className="bg-surface-container p-5 rounded-2xl border border-outline space-y-3">
+                <div className="flex items-center gap-2 border-b border-outline pb-2">
                   <span className="material-symbols-outlined text-primary text-sm">shopping_list</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#f3ffca]/60">Daftar Barang</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Daftar Barang</span>
                 </div>
-                <p className="text-sm font-medium text-white/90 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm font-medium text-on-surface leading-relaxed whitespace-pre-wrap">
                   {displayOrder.items}
                 </p>
                 <div className="pt-2 flex items-center justify-between">
@@ -477,90 +630,148 @@ function Checkout() {
             )}
           </div>
         </section>
-
-        {/* Payment Summary */}
-        <section className="bg-surface-container-highest/40 p-6 rounded-3xl border border-white/5 space-y-3 shadow-md">
-          {isCartOrder && (
-            <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant font-medium">Subtotal</span>
-              <span className="font-bold">Rp {subtotal.toLocaleString()}</span>
+        
+        {/* Promo Code Input */}
+        {!dbOrder && (
+          <section className="space-y-4">
+            <h2 className="text-xs font-label font-bold uppercase tracking-widest text-[#f3ffca]/60">Punya Kode Voucher?</h2>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input 
+                  type="text" 
+                  placeholder={selectedVoucher ? "Voucher Terpasang" : "Masukkan Kode Voucher"} 
+                  value={selectedVoucher ? selectedVoucher.code || selectedVoucher.title : promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  disabled={!!selectedVoucher}
+                  className={`w-full bg-surface-container border-2 ${promoError ? 'border-error/50' : 'border-outline'} rounded-2xl px-5 py-3.5 text-sm font-bold tracking-widest uppercase focus:border-primary transition-all outline-none ${selectedVoucher ? 'text-primary' : 'text-on-surface'}`}
+                />
+                {selectedVoucher && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary">verified</span>
+                )}
+              </div>
+              {selectedVoucher ? (
+                <button 
+                  onClick={() => {
+                    setSelectedVoucher(null);
+                    setPromoCode('');
+                  }}
+                  className="bg-error/10 text-error border border-error/20 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all"
+                >
+                  Hapus
+                </button>
+              ) : (
+                <button 
+                  onClick={handleApplyCode}
+                  className="bg-primary text-black px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-lg"
+                >
+                  Pakai
+                </button>
+              )}
             </div>
-          )}
-          <div className="flex justify-between text-sm">
-            <span className="text-on-surface-variant font-medium">Biaya Kirim</span>
-            <span className="font-bold">Rp {deliveryFee.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-on-surface-variant font-medium">Biaya Layanan</span>
-            <span className="font-bold">Rp {serviceFee.toLocaleString()}</span>
-          </div>
-          <hr className="border-white/5 my-2" />
-          <div className="flex justify-between text-2xl font-headline font-black text-[#cafd00] italic">
-            <span>TOTAL</span>
-            <span>Rp {total.toLocaleString()}</span>
-          </div>
-        </section>
+            {promoError && <p className="text-[10px] font-bold text-error px-2">{promoError}</p>}
+          </section>
+        )}
 
-        {/* Metode Pembayaran */}
-        <section className="space-y-4">
-          <h2 className="text-xs font-label font-bold uppercase tracking-widest text-[#f3ffca]/60 ml-1">Metode Pembayaran</h2>
-          
-          {user ? (
-            <div className="grid grid-cols-1 gap-3">
-              {[
-                { id: 'TUNAI', label: 'Tunai (COD)', icon: 'payments', desc: 'Bayar cash ke driver' },
-                { id: 'TRANSFER', label: 'Transfer Bank', icon: 'account_balance', desc: 'Transfer ke rekening driver' },
-                { id: 'QRIS', label: 'QRIS', icon: 'qr_code_2', desc: 'Scan QRIS driver' }
-              ].map((method) => (
+        {/* Voucher Section for Members */}
+        {user && vouchers.filter(v => !v.used).length > 0 && !dbOrder && (
+          <section className="space-y-4">
+            <h2 className="text-xs font-label font-bold uppercase tracking-widest text-[#f3ffca]/60">Voucher Saya</h2>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+              {vouchers.filter(v => !v.used).map((v) => (
                 <button
-                  key={method.id}
-                  onClick={() => setPaymentMethod(method.id)}
-                  className={`flex items-center gap-4 p-5 rounded-3xl border transition-all text-left ${
-                    paymentMethod === method.id 
-                    ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(202,253,0,0.1)]' 
-                    : 'bg-[#131313] border-white/5 hover:border-white/10'
+                  key={v.id}
+                  onClick={() => setSelectedVoucher(selectedVoucher?.id === v.id ? null : v)}
+                  className={`flex-none w-48 p-4 rounded-3xl border-2 transition-all text-left relative overflow-hidden ${
+                    selectedVoucher?.id === v.id 
+                      ? 'bg-primary/20 border-primary shadow-[0_0_20px_rgb(var(--primary)/0.2)]' 
+                      : 'bg-surface-container border-outline hover:border-primary/40'
                   }`}
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
-                    paymentMethod === method.id ? 'bg-primary text-black' : 'bg-white/5 text-primary/60'
-                  }`}>
-                    <span className="material-symbols-outlined text-2xl">{method.icon}</span>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedVoucher?.id === v.id ? 'bg-primary text-black' : 'bg-on-surface/5 text-primary'}`}>
+                      <span className="material-symbols-outlined text-sm">confirmation_number</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-on-surface/40">Loyalty Reward</span>
                   </div>
-                  <div className="flex-grow">
-                    <p className={`font-headline font-bold text-base ${paymentMethod === method.id ? 'text-white' : 'text-white/70'}`}>
-                      {method.label}
-                    </p>
-                    <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold opacity-60">
-                      {method.desc}
-                    </p>
-                  </div>
-                  {paymentMethod === method.id && (
-                    <span className="material-symbols-outlined text-primary">check_circle</span>
+                  <p className="text-sm font-black text-on-surface leading-tight uppercase italic">{v.title}</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant mt-1">Potongan Ongkir Langsung</p>
+                  
+                  {selectedVoucher?.id === v.id && (
+                    <div className="absolute top-2 right-2">
+                      <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                    </div>
                   )}
                 </button>
               ))}
             </div>
-          ) : (
-            <div className="bg-[#131313] p-5 rounded-3xl border border-primary/20 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-2xl">payments</span>
-              </div>
-              <div className="flex-grow">
-                <p className="text-[10px] uppercase tracking-widest text-[#f3ffca]/60 font-black">Metode Pembayaran</p>
-                <p className="text-lg font-headline font-bold text-white">Tunai ke Driver</p>
-              </div>
-              <span className="material-symbols-outlined text-primary">check_circle</span>
+          </section>
+        )}
+
+        {/* Payment Summary */}
+        <section className="bg-surface-container-highest/40 p-6 rounded-3xl border border-outline space-y-3 shadow-md">
+          {isCartOrder && (
+            <div className="flex justify-between text-sm">
+              <span className="text-on-surface-variant font-medium">Subtotal</span>
+              <span className="font-bold text-on-surface">Rp {subtotal.toLocaleString()}</span>
             </div>
           )}
+          <div className="flex justify-between text-sm">
+            <span className="text-on-surface-variant font-medium">Biaya Antar</span>
+            <div className="text-right">
+              <span className={`font-bold ${selectedVoucher && deliveryFee < originalDeliveryTotal ? 'line-through text-on-surface/30 text-xs mr-2' : 'text-on-surface'}`}>
+                Rp {Math.max(0, originalDeliveryTotal - appServiceFee).toLocaleString()}
+              </span>
+              {selectedVoucher && deliveryFee < originalDeliveryTotal && (
+                <span className="font-bold text-primary italic">Rp {Math.max(0, deliveryFee - appServiceFee).toLocaleString()}</span>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-on-surface-variant font-medium">Biaya Layanan</span>
+            <span className="font-bold text-on-surface">Rp {appServiceFee.toLocaleString()}</span>
+          </div>
+          {selectedVoucher && (
+            <div className="flex justify-between text-[10px] bg-primary/10 p-2 rounded-xl border border-primary/20">
+              <span className="text-primary font-black uppercase tracking-widest flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">verified</span>
+                Voucher Digunakan
+              </span>
+              <span className="text-on-surface font-bold uppercase">{selectedVoucher.title}</span>
+            </div>
+          )}
+          <hr className="border-outline my-2" />
+          <div className="flex justify-between text-2xl font-headline font-black text-primary italic">
+            <span>TOTAL</span>
+            <span>Rp {total.toLocaleString()}</span>
+          </div>
+          {(serviceType === 'food' || serviceType === 'shop') && (
+            <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-xl">
+              <p className="text-[10px] font-bold text-primary/80 uppercase tracking-widest text-center leading-relaxed">
+                Catatan: Total dapat berubah menyesuaikan dengan struk belanja asli dari toko.
+              </p>
+            </div>
+          )}
+          <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-start gap-2.5">
+            <span className="material-symbols-outlined text-yellow-500 text-base mt-0.5">info</span>
+            <div>
+              <p className="text-[9px] font-bold text-yellow-500 uppercase tracking-widest leading-normal">
+                Ketentuan Jarak Jemput Driver
+              </p>
+              <p className="text-[8px] text-yellow-500/80 font-medium leading-relaxed mt-0.5">
+                Biaya penjemputan tambahan (+Rp 2.000/km) akan otomatis dikenakan jika driver yang menerima pesanan Anda berada lebih dari 3 km dari titik jemput.
+              </p>
+            </div>
+          </div>
         </section>
+
 
         {/* Identity for Guest */}
         {!user && (
           <section className="space-y-4">
-             <h2 className="text-xs font-label font-bold uppercase tracking-widest text-[#f3ffca]/60">Informasi Pemesan (Guest)</h2>
-             <div className="bg-[#131313] p-6 rounded-3xl border border-primary/20 space-y-4">
-               <input placeholder="Nama Lengkap" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-surface-container-highest border-none rounded-2xl px-5 py-4 text-sm" />
-               <input placeholder="No. WhatsApp (Aktif)" value={guestWA} onChange={e => setGuestWA(e.target.value)} className="w-full bg-surface-container-highest border-none rounded-2xl px-5 py-4 text-sm" />
+             <h2 className="text-xs font-label font-bold uppercase tracking-widest text-primary/60">Informasi Pemesan (Guest)</h2>
+             <div className="bg-surface-container p-6 rounded-3xl border border-primary/20 space-y-4">
+               <input placeholder="Nama Lengkap" value={guestName} onChange={e => setGuestName(e.target.value)} className="w-full bg-surface-container-highest border-none rounded-2xl px-5 py-4 text-sm text-on-surface" />
+               <input placeholder="No. WhatsApp (Aktif)" value={guestWA} onChange={e => setGuestWA(e.target.value)} className="w-full bg-surface-container-highest border-none rounded-2xl px-5 py-4 text-sm text-on-surface" />
              </div>
           </section>
         )}
@@ -568,12 +779,12 @@ function Checkout() {
 
       {/* Place Order Button */}
       {!dbOrder && (
-        <div className="fixed bottom-0 w-full z-50 bg-[#0e0e0e]/80 backdrop-blur-3xl border-t border-white/5 pb-10 pt-4 px-6">
+        <div className="fixed bottom-0 w-full z-50 bg-background/80 backdrop-blur-3xl border-t border-outline pb-10 pt-4 px-6">
           <div className="max-w-xl mx-auto">
             <button 
               onClick={handleOrder}
               disabled={loading}
-              className={`w-full py-5 rounded-full text-black font-headline font-black text-xl uppercase tracking-widest shadow-[0_10px_40px_rgba(202,253,0,0.4)] active:scale-95 transition-all ${loading ? 'bg-zinc-700 opacity-50' : 'bg-gradient-to-br from-[#cafd00] to-[#f3ffca]'}`}
+              className={`w-full py-5 rounded-full text-primary-fg font-headline font-black text-xl uppercase tracking-widest shadow-[0_10px_40px_rgb(var(--primary)/0.4)] active:scale-95 transition-all ${loading ? 'bg-surface-container-highest opacity-50' : 'bg-primary'}`}
             >
               {loading ? 'MEMPROSES...' : 'GAS ORDER!'}
             </button>
@@ -582,11 +793,11 @@ function Checkout() {
       )}
 
       {dbOrder && (
-        <div className="fixed bottom-0 w-full z-50 bg-[#0e0e0e]/80 backdrop-blur-3xl border-t border-white/5 pb-10 pt-4 px-6">
+        <div className="fixed bottom-0 w-full z-50 bg-background/80 backdrop-blur-3xl border-t border-outline pb-10 pt-4 px-6">
           <div className="max-w-xl mx-auto">
             <button 
               onClick={() => navigate(`/tracking?id=${dbOrder.id}`)}
-              className="w-full py-5 rounded-full bg-primary text-black font-headline font-black text-xl uppercase tracking-widest shadow-[0_10px_40px_rgba(202,253,0,0.4)] active:scale-95 transition-all"
+              className="w-full py-5 rounded-full bg-primary text-primary-fg font-headline font-black text-xl uppercase tracking-widest shadow-[0_10px_40px_rgb(var(--primary)/0.4)] active:scale-95 transition-all"
             >
               Lacak Pesanan Aktif
             </button>

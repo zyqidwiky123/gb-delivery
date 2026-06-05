@@ -1,17 +1,29 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, useRef } from 'react'
-import { auth } from './firebase/config'
+import { auth, db } from './firebase/config'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
 import { useDriverStore } from './store/useDriverStore'
-import { getDriverProfile } from './firebase/driverService'
+import { getDriverProfile, observeDriverProfile, updateDriverStatus } from './firebase/driverService'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Wallet from './pages/Wallet'
 import Profile from './pages/Profile'
+import Account from './pages/Account'
 import EditProfile from './pages/EditProfile'
 import Orders from './pages/Orders'
 import BottomNav from './components/BottomNav'
+
+const MAX_ONLINE_SESSION_MS = 12 * 60 * 60 * 1000;
+
+const toMillis = (value) => {
+  if (!value) return null;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.seconds === 'number') return value.seconds * 1000;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+};
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -43,23 +55,80 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-import { requestPermissionAndGetToken, onMessageListener } from './firebase/messagingService';
+import { requestPermissionAndGetToken, registerOnMessageListener } from './firebase/messagingService';
 
 function App() {
   const { setUser, setProfile, setLoading, user, profile, clearData } = useDriverStore();
   const navigate = useNavigate();
   const logoutTimerRef = useRef(null);
+  const autoOfflineHandledRef = useRef(null);
 
   useEffect(() => {
     if (user) {
       requestPermissionAndGetToken(user.uid);
-      onMessageListener().then(payload => {
+      const unsubscribeMessaging = registerOnMessageListener((payload) => {
         console.log("Driver: Notifikasi diterima:", payload);
-        // Alert will show up, and sound is played inside onMessageListener
         alert(`${payload.notification.title}\n${payload.notification.body}`);
       });
+      return () => unsubscribeMessaging();
     }
   }, [user]);
+
+  // Force drivers offline when a single online session exceeds 12 hours.
+  useEffect(() => {
+    if (!user?.uid || !profile?.isOnline) {
+      autoOfflineHandledRef.current = null;
+      return;
+    }
+
+    const onlineSince = toMillis(profile.onlineAt) || toMillis(profile.statusChangedAt);
+    if (!onlineSince) return;
+
+    if (Date.now() - onlineSince < MAX_ONLINE_SESSION_MS) {
+      autoOfflineHandledRef.current = null;
+      return;
+    }
+
+    if (autoOfflineHandledRef.current === onlineSince) return;
+    autoOfflineHandledRef.current = onlineSince;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const ok = await updateDriverStatus(user.uid, false);
+        if (ok && !cancelled) {
+          alert("Status online kamu otomatis dimatikan karena sudah lebih dari 12 jam.");
+        }
+      } catch (err) {
+        console.error("Gagal mematikan status online otomatis:", err);
+        autoOfflineHandledRef.current = null;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid, profile?.isOnline, profile?.onlineAt, profile?.statusChangedAt]);
+
+  // Real-time Profile Listener
+  useEffect(() => {
+    let unsubscribeProfile = () => {};
+    
+    if (user?.uid) {
+      unsubscribeProfile = observeDriverProfile(user.uid, (data) => {
+        if (data) {
+          setProfile(data);
+        } else {
+          // Jika profil tidak ada (kemungkinan akun didelete), paksa logout
+          signOut(auth);
+          clearData();
+          navigate('/login');
+        }
+      });
+    }
+
+    return () => unsubscribeProfile();
+  }, [user?.uid, setProfile, clearData, navigate]);
 
   // Auto-logout if OFFLINE for 10 minutes
   useEffect(() => {
@@ -97,12 +166,25 @@ function App() {
       setLoading(true);
       if (currentUser) {
         try {
+          // Load profile once at start to verify identity
           const profileData = await getDriverProfile(currentUser.uid);
           if (profileData) {
             setUser(currentUser);
             setProfile(profileData);
+
+            // Proactively ensure their role is set in both 'users' and 'drivers'
+            try {
+              const userRef = doc(db, 'users', currentUser.uid);
+              await setDoc(userRef, { role: 'driver' }, { merge: true });
+              
+              if (profileData.role !== 'driver') {
+                const driverRef = doc(db, 'drivers', currentUser.uid);
+                await setDoc(driverRef, { role: 'driver' }, { merge: true });
+              }
+            } catch (roleErr) {
+              console.warn("Gagal sinkronisasi role di database:", roleErr);
+            }
           } else {
-            // If logged in but no driver profile found, it's likely a non-driver account
             console.warn("Akses ditolak: Akun bukan mitra driver.");
             await signOut(auth);
             setUser(null);
@@ -126,12 +208,13 @@ function App() {
   return (
     <div className="min-h-screen bg-background text-textPrimary font-sans relative">
       <Routes>
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+        <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         {/* Catch-all route to redirect back to home/login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

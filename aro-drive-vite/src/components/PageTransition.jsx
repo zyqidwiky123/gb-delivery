@@ -42,7 +42,7 @@ const PageTransition = ({ children }) => {
     
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 400); // 400ms duration for the skeleton effect
+    }, 150); // Reduced from 400ms — just enough for visual cue without artificial lag
 
     return () => clearTimeout(timer);
   }, [location.pathname]);

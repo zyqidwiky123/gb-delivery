@@ -13,14 +13,16 @@ function CompleteProfile() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Determine the currently logged-in user from Firebase Auth
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      setUser(currentUser);
-    } else {
-      // If none, maybe they refreshed or aren't logged in. Redirect to login.
-      navigate('/login');
-    }
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        // If none, maybe they refreshed or aren't logged in. Redirect to login.
+        navigate('/login');
+      }
+    });
+    
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleSubmit = async (e) => {
@@ -34,7 +36,11 @@ function CompleteProfile() {
       await setDoc(doc(db, 'users', user.uid), {
         displayName: user.displayName || 'User Aro Drive',
         email: user.email,
-        whatsapp: whatsapp,
+        whatsapp: whatsapp.replace(/\D/g, '').startsWith('0') 
+          ? '62' + whatsapp.replace(/\D/g, '').slice(1) 
+          : whatsapp.replace(/\D/g, '').startsWith('62') 
+            ? whatsapp.replace(/\D/g, '') 
+            : whatsapp.replace(/\D/g, '') ? '62' + whatsapp.replace(/\D/g, '') : '',
         photoURL: user.photoURL || '',
         createdAt: serverTimestamp()
       }, { merge: true });
@@ -44,7 +50,11 @@ function CompleteProfile() {
         displayName: user.displayName,
         photoURL: user.photoURL,
         email: user.email,
-        whatsapp: whatsapp,
+        whatsapp: whatsapp.replace(/\D/g, '').startsWith('0') 
+          ? '62' + whatsapp.replace(/\D/g, '').slice(1) 
+          : whatsapp.replace(/\D/g, '').startsWith('62') 
+            ? whatsapp.replace(/\D/g, '') 
+            : whatsapp.replace(/\D/g, '') ? '62' + whatsapp.replace(/\D/g, '') : '',
         isAdmin: false
       });
       
@@ -84,7 +94,7 @@ function CompleteProfile() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="bg-surface-container-low p-4 rounded-xl mb-4 text-sm text-on-surface-variant text-center border border-white/5">
+            <div className="bg-surface-container-low p-4 rounded-xl mb-4 text-sm text-on-surface-variant text-center border border-on-background/5">
               Hai <strong>{user?.displayName || 'Boss'}</strong>, <br/>
               Silakan masukkan nomor WhatsApp Anda agar kami dapat menghubungi Anda terkait pesanan.
             </div>
@@ -112,7 +122,7 @@ function CompleteProfile() {
             <button 
               type="submit"
               disabled={loading || !whatsapp}
-              className="w-full mt-4 kinetic-gradient text-on-primary-fixed font-headline font-extrabold py-4 rounded-full text-base shadow-[0_10px_20px_rgba(202,253,0,0.15)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:grayscale"
+              className="w-full mt-4 kinetic-gradient text-on-primary-fixed font-headline font-extrabold py-4 rounded-full text-base shadow-[0_10px_20px_rgb(var(--primary)/0.15)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:grayscale"
             >
               {loading ? 'MENYIMPAN...' : 'SELESAI'}
               {!loading && <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">check_circle</span>}

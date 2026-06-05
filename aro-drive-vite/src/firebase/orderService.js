@@ -92,7 +92,12 @@ export const completeOrder = async (orderId, driverId, totalAmount) => {
     const driverRef = doc(db, "drivers", driverId);
     await updateDoc(driverRef, { 
       status: "online",
+      isOnline: true,
+      onlineAt: serverTimestamp(),
+      statusChangedAt: serverTimestamp(),
+      offlineAt: null,
       lastJobAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       // Pembayaran tunai ke driver. Tidak ada pemotongan saldo digital.
     });
     
@@ -106,9 +111,24 @@ export const completeOrder = async (orderId, driverId, totalAmount) => {
 export const updateDriverStatus = async (driverId, data) => {
   try {
     const driverRef = doc(db, "drivers", driverId);
-    await updateDoc(driverRef, {
+    const nextData = {
       ...data,
       updatedAt: serverTimestamp()
+    };
+
+    if (nextData.status === "online") {
+      nextData.isOnline = true;
+      nextData.onlineAt = serverTimestamp();
+      nextData.statusChangedAt = serverTimestamp();
+      nextData.offlineAt = null;
+    } else if (nextData.status === "offline") {
+      nextData.isOnline = false;
+      nextData.offlineAt = serverTimestamp();
+      nextData.statusChangedAt = serverTimestamp();
+    }
+
+    await updateDoc(driverRef, {
+      ...nextData
     });
   } catch (e) {
     console.error("Error updating driver: ", e);
@@ -130,3 +150,69 @@ export const getDriverData = async (driverId) => {
   }
 };
 
+// 7. Rate an Order
+export const rateOrder = async (orderId, rating, review) => {
+  try {
+    const orderRef = doc(db, "orders", orderId);
+    await updateDoc(orderRef, {
+      rating: Number(rating),
+      review: review || "",
+      ratedAt: serverTimestamp()
+    });
+    console.log(`Order ${orderId} rated: ${rating}`);
+  } catch (e) {
+    console.error("Error rating order: ", e);
+    throw e;
+  }
+};
+// 8. Cancel an Order
+export const cancelOrder = async (orderId, reason, cancelledBy = 'user') => {
+  try {
+    const orderRef = doc(db, "orders", orderId);
+    const orderSnap = await getDoc(orderRef);
+    
+    if (!orderSnap.exists()) return;
+    
+    const orderData = orderSnap.data();
+    
+    await updateDoc(orderRef, {
+      status: "cancelled",
+      cancelledAt: serverTimestamp(),
+      cancelReason: reason || "Dibatalkan oleh " + cancelledBy,
+      cancelledBy: cancelledBy
+    });
+    
+    // If order was accepted, release the driver
+    if (orderData.driverId) {
+      const driverRef = doc(db, "drivers", orderData.driverId);
+      await updateDoc(driverRef, {
+        status: "online",
+        isOnline: true,
+        onlineAt: serverTimestamp(),
+        statusChangedAt: serverTimestamp(),
+        offlineAt: null,
+        updatedAt: serverTimestamp()
+      });
+    }
+    
+    console.log(`Order ${orderId} cancelled by ${cancelledBy}. Reason: ${reason}`);
+  } catch (e) {
+    console.error("Error cancelling order: ", e);
+    throw e;
+  }
+};
+
+// 9. Update Payment Method
+export const updateOrderPaymentMethod = async (orderId, method) => {
+  try {
+    const orderRef = doc(db, "orders", orderId);
+    await updateDoc(orderRef, {
+      paymentMethod: method,
+      paymentMethodUpdatedAt: serverTimestamp()
+    });
+    console.log(`Order ${orderId} payment method updated to: ${method}`);
+  } catch (e) {
+    console.error("Error updating payment method: ", e);
+    throw e;
+  }
+};

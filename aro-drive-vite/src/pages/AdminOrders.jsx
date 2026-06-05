@@ -29,15 +29,15 @@ function AdminOrders() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#080808] text-white font-body">
+    <div className="flex min-h-screen bg-[#080808] text-on-background font-body">
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-[#111] border-r border-white/5 hidden md:flex flex-col">
+      <aside className="w-64 bg-[#111] border-r border-on-background/5 hidden md:flex flex-col">
         <div className="p-8">
            <h1 className="font-['Plus_Jakarta_Sans'] font-black text-2xl italic text-primary tracking-tighter">ARO ADMIN</h1>
         </div>
         
         <nav className="flex-grow px-4 space-y-2">
-           <Link to="/admin" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-white/5 hover:text-white transition-all">
+           <Link to="/admin" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
               <span className="material-symbols-outlined text-xl">dashboard</span>
               <span className="font-bold text-sm">Dashboard</span>
            </Link>
@@ -45,7 +45,11 @@ function AdminOrders() {
               <span className="material-symbols-outlined text-xl">list_alt</span>
               <span className="font-bold text-sm">Semua Pesanan</span>
            </Link>
-           <Link to="/admin/settings" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-white/5 hover:text-white transition-all">
+           <Link to="/admin/merchants" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
+              <span className="material-symbols-outlined text-xl">store</span>
+              <span className="font-bold text-sm">Kelola Merchant</span>
+           </Link>
+           <Link to="/admin/settings" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
               <span className="material-symbols-outlined text-xl">settings</span>
               <span className="font-bold text-sm">Pengaturan Tarif</span>
            </Link>
@@ -59,10 +63,10 @@ function AdminOrders() {
                <h2 className="text-3xl font-headline font-black italic tracking-tight mb-1 uppercase">Monitor Pesanan</h2>
                <p className="text-zinc-500 text-sm font-medium">Memantau seluruh aktivitas transaksi secara real-time.</p>
             </div>
-            <div className="flex bg-[#111] p-1 rounded-xl border border-white/5">
+            <div className="flex bg-[#111] p-1 rounded-xl border border-on-background/5">
                 <button className="px-6 py-2 bg-primary text-black font-black uppercase text-[10px] rounded-lg tracking-widest">Semua</button>
-                <button className="px-6 py-2 text-zinc-500 font-bold uppercase text-[10px] tracking-widest hover:text-white">Aktif</button>
-                <button className="px-6 py-2 text-zinc-500 font-bold uppercase text-[10px] tracking-widest hover:text-white">Selesai</button>
+                <button className="px-6 py-2 text-zinc-500 font-bold uppercase text-[10px] tracking-widest hover:text-on-background">Aktif</button>
+                <button className="px-6 py-2 text-zinc-500 font-bold uppercase text-[10px] tracking-widest hover:text-on-background">Selesai</button>
             </div>
         </header>
 
@@ -71,10 +75,10 @@ function AdminOrders() {
              Loading Data Order...
           </div>
         ) : (
-          <div className="bg-[#111] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
-             <table className="w-full text-left border-collapse">
+          <div className="bg-[#111] rounded-[2.5rem] border border-on-background/5 overflow-hidden shadow-2xl overflow-x-auto">
+             <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                   <tr className="bg-[#1a1a1a] text-zinc-500 text-[10px] uppercase font-black tracking-widest border-b border-white/5">
+                   <tr className="bg-[#1a1a1a] text-zinc-500 text-[10px] uppercase font-black tracking-widest border-b border-on-background/5">
                       <th className="px-8 py-6">ID Pesanan</th>
                       <th className="px-8 py-6">Layanan</th>
                       <th className="px-8 py-6">Pelanggan</th>
@@ -85,11 +89,11 @@ function AdminOrders() {
                 </thead>
                 <tbody>
                    {orders.map((order) => (
-                      <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                      <tr key={order.id} className="border-b border-on-background/5 hover:bg-on-background/5 transition-colors group">
                          <td className="px-8 py-6 text-xs font-mono text-zinc-500">#{order.id?.slice(-6).toUpperCase()}</td>
                          <td className="px-8 py-6">
                             <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-white/5">
+                               <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-on-background/5">
                                   <span className="material-symbols-outlined text-primary text-sm">
                                      {order.serviceType === 'food' ? 'restaurant' : order.serviceType === 'ride' ? 'moped' : 'package_2'}
                                   </span>
@@ -102,7 +106,7 @@ function AdminOrders() {
                             <p className="text-[10px] text-zinc-500 font-bold">{order.customer?.email || 'Customer'}</p>
                          </td>
                          <td className="px-8 py-6">
-                            <span className="text-sm font-black text-white italic">Rp {order.total?.toLocaleString()}</span>
+                            <span className="text-sm font-black text-on-background italic">Rp {order.total?.toLocaleString()}</span>
                          </td>
                          <td className="px-8 py-6">
                             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusColor(order.status)}`}>

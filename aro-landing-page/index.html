@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
@@ -21,7 +18,7 @@
     <nav class="navbar" id="navbar">
         <div class="container nav-content">
             <a href="#" class="logo">
-                <img src="assets/logo.png" alt="ARO DRIVE Logo" class="logo-img">
+                <img src="assets/logo.webp" alt="ARO DRIVE Logo" class="logo-img">
                 <span class="logo-text">ARO DRIVE</span>
             </a>
             
@@ -33,6 +30,7 @@
             <!-- Desktop Menu -->
             <ul class="nav-links" id="nav-links">
                 <li><a href="#layanan">Layanan</a></li>
+                <li><a href="#kelebihan">Kelebihan</a></li>
                 <li><a href="#keunggulan">Keunggulan</a></li>
                 <li><a href="#mitra">Mitra UMKM</a></li>
                 <li><a href="#gabung">Gabung Mitra</a></li>
@@ -46,13 +44,14 @@
     <div class="mobile-menu" id="mobile-menu">
         <div class="mobile-menu-header">
             <a href="#" class="logo text-white">
-                <img src="assets/logo.png" alt="ARO DRIVE" class="logo-img">
+                <img src="assets/logo.webp" alt="ARO DRIVE" class="logo-img">
                 <span class="logo-text">ARO DRIVE</span>
             </a>
             <button class="menu-close" id="menu-close"><i data-lucide="x"></i></button>
         </div>
         <ul class="mobile-nav-links">
             <li><a href="#layanan" class="mobile-link">Layanan</a></li>
+            <li><a href="#kelebihan" class="mobile-link">Kelebihan</a></li>
             <li><a href="#keunggulan" class="mobile-link">Keunggulan</a></li>
             <li><a href="#mitra" class="mobile-link">Mitra UMKM</a></li>
             <li><a href="#gabung" class="mobile-link">Gabung Mitra</a></li>
@@ -90,7 +89,7 @@
                 </div>
             </div>
             <div class="hero-image">
-                <img src="assets/hero-driver.jpg" alt="ARO DRIVE Mitra Driver" id="hero-img">
+                <img src="assets/hero-driver.webp" alt="ARO DRIVE Mitra Driver" id="hero-img" fetchpriority="high">
             </div>
         </div>
     </section>
@@ -202,6 +201,64 @@
             </div>
         </div>
     </section>
+    
+    <!-- Advantages Section (System Comparison) -->
+    <section class="advantages" id="kelebihan">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge">🔥 Keunggulan Sistem</div>
+                <h2>Kelebihan <span class="text-accent">ARO DRIVE</span></h2>
+                <p>Dibandingkan hanya menggunakan chat WA, platform mandiri punya keunggulan di sisi <strong>skalabilitas</strong> dan <strong>profesionalisme</strong>.</p>
+            </div>
+            
+            <div class="advantages-grid">
+                <!-- Sistematis & Otomatis -->
+                <div class="adv-card">
+                    <div class="adv-icon">
+                        <i data-lucide="database"></i>
+                    </div>
+                    <h3>Sistematis & Otomatis</h3>
+                    <p>Pesanan masuk langsung tercatat di database. Tidak ada drama "chat tenggelam" atau lupa mencatat pesanan pelanggan karena trafik lagi ramai.</p>
+                </div>
+
+                <!-- Fitur Terintegrasi -->
+                <div class="adv-card">
+                    <div class="adv-icon">
+                        <i data-lucide="layers"></i>
+                    </div>
+                    <h3>Fitur Terintegrasi</h3>
+                    <p>Dengan adanya <strong>ARO FOOD</strong>, <strong>ARO RIDE</strong>, dan <strong>ARO SEND</strong>, layanan kamu terlihat jauh lebih kredibel dan terpercaya di mata user.</p>
+                </div>
+
+                <!-- Manajemen Data -->
+                <div class="adv-card">
+                    <div class="adv-icon">
+                        <i data-lucide="bar-chart-3"></i>
+                    </div>
+                    <h3>Manajemen Data</h3>
+                    <p>Kamu punya data pelanggan, riwayat transaksi, dan pola pemesanan. Data ini emas untuk strategi marketing ke depannya (misalnya promo buat pelanggan loyal).</p>
+                </div>
+
+                <!-- Perhitungan Tarif Akurat -->
+                <div class="adv-card">
+                    <div class="adv-icon">
+                        <i data-lucide="map"></i>
+                    </div>
+                    <h3>Perhitungan Tarif Akurat</h3>
+                    <p>Integrasi dengan Google Maps API bikin ongkir jadi transparan dan otomatis, nggak perlu lagi nego-nego manual di chat.</p>
+                </div>
+
+                <!-- Branding Kuat -->
+                <div class="adv-card">
+                    <div class="adv-icon">
+                        <i data-lucide="award"></i>
+                    </div>
+                    <h3>Branding Kuat</h3>
+                    <p>Memiliki aplikasi atau PWA sendiri memberikan kesan bahwa bisnis ini serius dan dikelola secara profesional.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Keunggulan Section -->
     <section class="why-us" id="keunggulan">
@@ -265,7 +322,7 @@
                     <a href="#" class="btn-primary mt-4">Daftar Warungmu <i data-lucide="arrow-right"></i></a>
                 </div>
                 <div class="mitra-visual">
-                    <img src="assets/delivery-scene.jpg" alt="Delivery Experience" class="img-rounded shadow-neon">
+                    <img src="assets/delivery-scene.webp" alt="Delivery Experience" class="img-rounded shadow-neon" loading="lazy">
                 </div>
             </div>
         </div>
@@ -276,7 +333,7 @@
         <div class="container footer-grid">
             <div class="footer-brand">
                 <a href="#" class="logo logo-footer">
-                    <img src="assets/logo.png" alt="ARO DRIVE" class="logo-img">
+                    <img src="assets/logo.webp" alt="ARO DRIVE" class="logo-img">
                     <span class="logo-text">ARO DRIVE</span>
                 </a>
                 <p class="footer-desc">Solusi mobilitas dan pengiriman tercepat, langsung dari tangan anak bangsa. Mendukung kemajuan ekonomi UMKM lokal.</p>
@@ -313,6 +370,7 @@
         </div>
     </footer>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="script.js"></script>
 </body>
 </html>

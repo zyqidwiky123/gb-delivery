@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
-    "axios": "^1.14.0",
+    "axios": "^1.15.2",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.8.0",
     "framer-motion": "^12.38.0",
+    "fuse.js": "^7.3.0",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

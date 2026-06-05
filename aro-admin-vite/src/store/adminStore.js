@@ -9,21 +9,26 @@ export const useAdminStore = create((set) => ({
 
   // New multi-service pricing structure
   pricing: {
-    jek: { baseFare: 10000, ratePerKm: 2500, minDistance: 3.5 },
-    car: { baseFare: 20000, ratePerKm: 5000, minDistance: 2 },
-    food: { baseFare: 5000, ratePerKm: 2000, minDistance: 0 },
-    send: { baseFare: 8000, ratePerKm: 2000, weightFareRate: 2000, minDistance: 0 },
-    tip: { baseFare: 0, ratePerKm: 3000, serviceFee: 15000, minDistance: 0 }
+    jek: { baseFare: 10000, ratePerKm: 2500, minDistance: 3.5, commission: 10 },
+    car: { baseFare: 20000, ratePerKm: 5000, minDistance: 2, commission: 10 },
+    food: { baseFare: 5000, ratePerKm: 2000, minDistance: 0, commission: 10 },
+    send: { baseFare: 8000, ratePerKm: 2000, weightFareRate: 2000, minDistance: 0, commission: 10 },
+    tip: { baseFare: 0, ratePerKm: 3000, serviceFee: 15000, minDistance: 0, commission: 10 },
+    appServiceFee: { blockDistance: 3, feePerBlock: 1000 },
+    pickupSurcharge: { freePickupRadius: 3, ratePerKm: 2000, maxFee: 15000 }
   },
 
   pointsPerTenk: 1, // 1 point per 10k
   pointsToRedeem: 50, // 50 points to get voucher
+  bentoPromos: [], // List of hero grid promos on member app
+  vouchers: [], // Global voucher templates
   
   // New lists for dashboard
   banners: [],
   drivers: [],
   transactions: [],
   topupRequests: [],
+  users: [],
 
   // Actions
   setAdminUser: (user) => set({ adminUser: user, authLoading: false }),
@@ -36,6 +41,9 @@ export const useAdminStore = create((set) => ({
   setDrivers: (drivers) => set({ drivers }),
   setTransactions: (transactions) => set({ transactions }),
   setTopupRequests: (list) => set({ topupRequests: list }),
+  setUsers: (users) => set({ users }),
+  setBentoPromos: (list) => set({ bentoPromos: list }),
+  setVouchers: (list) => set({ vouchers: list }),
 
   // Dynamic pricing action
   setServicePricing: (service, field, value) => set((state) => ({
