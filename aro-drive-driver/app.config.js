@@ -2,7 +2,7 @@ export default {
   expo: {
     name: "aro partner",
     slug: "aro-drive-driver",
-    version: "1.0.0",
+    version: "1.0.1",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "arodrivedriver",

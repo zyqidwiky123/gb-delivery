@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useDriverStore } from '../../src/store/useDriverStore';
 import MapComponent from '../../src/components/MapComponent';
 import { 
@@ -14,6 +26,15 @@ import { updateDriverStatus, updateDriverLocation } from '../../src/firebase/dri
 import * as Location from 'expo-location';
 import { Bike, MapPin, CheckCircle2, XCircle, AlertCircle } from 'lucide-react-native';
 
+const formatRupiah = (value) => (Number(value) || 0).toLocaleString('id-ID');
+const getShoppingTotal = (order) => Number(order?.actualShoppingCost || order?.subtotal || 0);
+const getPureDeliveryFee = (order) => Math.max(0, (Number(order?.deliveryFee) || 0) - (Number(order?.appServiceFee) || 0));
+const getBillTotal = (order) => (
+  Number(order?.total) ||
+  getShoppingTotal(order) + (Number(order?.deliveryFee) || 0) + (Number(order?.pickupFee) || 0)
+);
+const needsShoppingCostInput = (order) => ['food', 'shop'].includes(order?.serviceType);
+
 export default function HomeScreen() {
   const user = useDriverStore((state) => state.user);
   const profile = useDriverStore((state) => state.profile);
@@ -23,6 +44,7 @@ export default function HomeScreen() {
   
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [costModal, setCostModal] = useState({ show: false, jobId: null, amount: '' });
   const lastKnownLocationRef = useRef(null);
 
   // 1. Subscribe to real-time Active Jobs and Available Orders when user is loaded
@@ -152,11 +174,11 @@ export default function HomeScreen() {
   };
 
   // Pickup active order
-  const handlePickupOrder = async (orderId) => {
+  const handlePickupOrder = async (orderId, actualShoppingCost = null) => {
     setActionLoading(true);
     setErrorMsg('');
     try {
-      const res = await pickupOrder(orderId);
+      const res = await pickupOrder(orderId, actualShoppingCost);
       if (res && res.status === 'intermediate') {
         Alert.alert("Pickup Berhasil", `Berhasil pickup pemberhentian ${res.done}/${res.total}. Silakan lanjutkan ke lokasi berikutnya.`);
       } else {
@@ -170,12 +192,46 @@ export default function HomeScreen() {
     }
   };
 
+  const handlePickupPress = (order) => {
+    if (needsShoppingCostInput(order)) {
+      setCostModal({
+        show: true,
+        jobId: order.id,
+        amount: getShoppingTotal(order) ? String(getShoppingTotal(order)) : '',
+      });
+      return;
+    }
+
+    const totalPickups = order.pickups?.length || 1;
+    const nextPickup = (order.pickupsDone || 0) + 1;
+    const message = totalPickups > 1
+      ? `Konfirmasi sudah menjemput pesanan di titik ke-${nextPickup} dari ${totalPickups}?`
+      : 'Konfirmasi sudah menjemput barang/kustomer?';
+
+    Alert.alert('Konfirmasi Pickup', message, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Ya, Pickup', onPress: () => handlePickupOrder(order.id) },
+    ]);
+  };
+
+  const handleSubmitShoppingCost = () => {
+    const amount = Number(costModal.amount);
+    if (costModal.amount === '' || Number.isNaN(amount) || amount < 0) {
+      Alert.alert('Nominal Tidak Valid', 'Mohon masukkan total belanja asli sesuai struk.');
+      return;
+    }
+
+    const jobId = costModal.jobId;
+    setCostModal({ show: false, jobId: null, amount: '' });
+    handlePickupOrder(jobId, amount);
+  };
+
   // Complete active order
   const handleCompleteOrder = async (order) => {
     setActionLoading(true);
     setErrorMsg('');
     try {
-      const finalPrice = order.total || order.deliveryFee || 0;
+      const finalPrice = getBillTotal(order);
       await completeOrder(order.id, finalPrice);
       Alert.alert("Pekerjaan Selesai! 🎉", "Terima kasih, Bos! Saldo dompet Anda telah diperbarui sesuai tarif.");
     } catch (err) {
@@ -287,7 +343,7 @@ export default function HomeScreen() {
                 <View>
                   <Text className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Ongkir Driver</Text>
                   <Text className="text-white font-extrabold text-xl">
-                    Rp {((activeJob.deliveryFee || 0) + (Number(activeJob.subsidizedFee) || 0) - (Number(activeJob.serviceFee) || 0)).toLocaleString('id-ID')}
+                    Rp {formatRupiah(getPureDeliveryFee(activeJob))}
                   </Text>
                 </View>
                 {activeJob.customerPhone && (
@@ -298,9 +354,37 @@ export default function HomeScreen() {
                 )}
               </View>
 
+              <View className="bg-lime-400/5 p-4 rounded-xl border border-lime-400/10 mb-5">
+                <Text className="text-[9px] text-lime-400 font-black uppercase tracking-widest mb-3 border-b border-lime-400/20 pb-1 italic">Rincian Pembayaran</Text>
+                <View className="gap-2">
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-zinc-400 text-[11px]">Total Belanja</Text>
+                    <Text className="text-white text-[11px] font-bold">Rp {formatRupiah(getShoppingTotal(activeJob))}</Text>
+                  </View>
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-zinc-400 text-[11px]">Ongkir (Murni)</Text>
+                    <Text className="text-white text-[11px] font-bold">Rp {formatRupiah(getPureDeliveryFee(activeJob))}</Text>
+                  </View>
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-zinc-400 text-[11px]">Biaya Layanan</Text>
+                    <Text className="text-white text-[11px] font-bold">Rp {formatRupiah(activeJob.appServiceFee)}</Text>
+                  </View>
+                  {Number(activeJob.pickupFee) > 0 && (
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-yellow-400 text-[11px] font-bold">Biaya Jemput</Text>
+                      <Text className="text-yellow-400 text-[11px] font-bold">Rp {formatRupiah(activeJob.pickupFee)}</Text>
+                    </View>
+                  )}
+                  <View className="pt-2 mt-1 border-t border-lime-400/20 flex-row justify-between items-center">
+                    <Text className="text-[10px] font-black text-lime-400 uppercase tracking-widest">Total Tagihan</Text>
+                    <Text className="text-lime-400 text-sm font-black italic">Rp {formatRupiah(getBillTotal(activeJob))}</Text>
+                  </View>
+                </View>
+              </View>
+
               {activeJob.status === 'accepted' ? (
                 <TouchableOpacity
-                  onPress={() => handlePickupOrder(activeJob.id)}
+                  onPress={() => handlePickupPress(activeJob)}
                   disabled={actionLoading}
                   className="w-full bg-sky-500 py-4 rounded-xl flex-row items-center justify-center gap-2 shadow-lg"
                 >
@@ -378,7 +462,7 @@ export default function HomeScreen() {
                     <View>
                       <Text className="text-[8px] text-zinc-500 font-bold uppercase">Pendapatan Bersih</Text>
                       <Text className="text-lime-400 font-black text-lg">
-                        Rp {((order.deliveryFee || 0) + (Number(order.subsidizedFee) || 0) - (Number(order.serviceFee) || 0)).toLocaleString('id-ID')}
+                        Rp {formatRupiah(getPureDeliveryFee(order))}
                       </Text>
                     </View>
                     {order.distance && (
@@ -387,6 +471,21 @@ export default function HomeScreen() {
                         <Text className="text-zinc-300 font-extrabold text-sm">{order.distance} km</Text>
                       </View>
                     )}
+                  </View>
+
+                  <View className="bg-black/20 p-3 rounded-xl border border-zinc-800/60 mb-5 gap-1">
+                    <View className="flex-row justify-between">
+                      <Text className="text-zinc-500 text-[10px]">Belanja</Text>
+                      <Text className="text-zinc-300 text-[10px]">Rp {formatRupiah(getShoppingTotal(order))}</Text>
+                    </View>
+                    <View className="flex-row justify-between">
+                      <Text className="text-zinc-500 text-[10px]">Ongkir (Driver)</Text>
+                      <Text className="text-zinc-300 text-[10px]">Rp {formatRupiah(getPureDeliveryFee(order))}</Text>
+                    </View>
+                    <View className="flex-row justify-between">
+                      <Text className="text-zinc-500 text-[10px]">Biaya Layanan</Text>
+                      <Text className="text-zinc-300 text-[10px]">Rp {formatRupiah(order.appServiceFee)}</Text>
+                    </View>
                   </View>
 
                   <View className="flex-row gap-3">
@@ -418,6 +517,52 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={costModal.show}
+        onRequestClose={() => setCostModal({ show: false, jobId: null, amount: '' })}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1 bg-black/80 items-center justify-center px-4"
+        >
+          <View className="w-full bg-zinc-900 rounded-2xl p-6 border border-zinc-800 shadow-2xl">
+            <Text className="text-white font-extrabold text-xl mb-2">Total Belanja Asli</Text>
+            <Text className="text-zinc-400 text-sm leading-5 mb-6">
+              Masukkan total harga belanjaan sesuai struk asli tanpa ongkir. Nominal ini akan mengupdate tagihan customer.
+            </Text>
+
+            <View className="relative mb-6">
+              <Text className="absolute left-4 top-4 text-zinc-500 font-bold z-10">Rp</Text>
+              <TextInput
+                value={costModal.amount}
+                onChangeText={(amount) => setCostModal((current) => ({ ...current, amount }))}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor="#52525b"
+                className="bg-zinc-950 border border-zinc-800 rounded-xl py-4 pl-12 pr-4 text-white font-extrabold text-lg"
+              />
+            </View>
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setCostModal({ show: false, jobId: null, amount: '' })}
+                className="flex-1 py-3 rounded-xl border border-zinc-700 items-center"
+              >
+                <Text className="text-white font-bold text-sm">Batal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSubmitShoppingCost}
+                className="flex-1 py-3 rounded-xl bg-lime-400 items-center"
+              >
+                <Text className="text-black font-black text-sm uppercase tracking-widest">Simpan</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
