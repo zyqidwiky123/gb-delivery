@@ -26,6 +26,11 @@ import { updateDriverStatus, updateDriverLocation } from '../../src/firebase/dri
 import * as Location from 'expo-location';
 import { Bike, MapPin, CheckCircle2, XCircle, AlertCircle } from 'lucide-react-native';
 import { AudioPlayer } from 'expo-audio';
+import {
+  startBackgroundService,
+  stopBackgroundService,
+  requestBackgroundLocationPermission,
+} from '../../src/services/backgroundService';
 
 const formatRupiah = (value) => (Number(value) || 0).toLocaleString('id-ID');
 const getShoppingTotal = (order) => Number(order?.actualShoppingCost || order?.subtotal || 0);
@@ -65,6 +70,11 @@ export default function HomeScreen() {
         audioPlayerRef.current.pause();
       }
     };
+  }, []);
+
+  // Request background location permission on app mount
+  useEffect(() => {
+    requestBackgroundLocationPermission();
   }, []);
 
   // 1. Subscribe to real-time Active Jobs and Available Orders when user is loaded
@@ -156,7 +166,7 @@ export default function HomeScreen() {
     return () => clearInterval(heartbeatId);
   }, [profile?.isOnline, user?.uid]);
 
-  // Toggle online/offline status in Firebase
+  // Toggle online/offline status in Firebase + start/stop Foreground Service
   const toggleOnlineStatus = async () => {
     if (!user?.uid) return;
     const nextStatus = !profile?.isOnline;
@@ -164,6 +174,15 @@ export default function HomeScreen() {
     setErrorMsg('');
     try {
       await updateDriverStatus(user.uid, nextStatus);
+      if (nextStatus) {
+        // Driver ONLINE → start foreground service agar app tetap hidup di background
+        await startBackgroundService(user.uid);
+        console.log('[HomeScreen] Driver online — background service dimulai.');
+      } else {
+        // Driver OFFLINE → stop foreground service
+        await stopBackgroundService();
+        console.log('[HomeScreen] Driver offline — background service dihentikan.');
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg('Gagal memperbarui status online.');
