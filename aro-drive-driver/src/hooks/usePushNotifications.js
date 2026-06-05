@@ -92,17 +92,6 @@ async function registerForPushNotificationsAsync() {
     }
 
     try {
-      // Get Expo push token (if using Expo push service)
-      const projectId =
-        Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-      
-      const pushTokenString = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId,
-        })
-      ).data;
-      expoToken = pushTokenString;
-
       // Get raw FCM device token (needed for direct Firebase Cloud Messaging)
       const devicePushToken = await Notifications.getDevicePushTokenAsync();
       deviceToken = devicePushToken.data;
