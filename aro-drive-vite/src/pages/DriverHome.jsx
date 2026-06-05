@@ -3,6 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { listenForAvailableOrders, acceptOrder, updateDriverStatus, getDriverData } from '../firebase/orderService';
 import { useUserStore } from '../store/userStore';
 
+const MAX_ONLINE_SESSION_MS = 12 * 60 * 60 * 1000;
+
+const toMillis = (value) => {
+  if (!value) return null;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (typeof value.seconds === 'number') return value.seconds * 1000;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
 function DriverHome() {
   const navigate = useNavigate();
   const { user } = useUserStore();
@@ -10,6 +20,7 @@ function DriverHome() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
+  const autoOfflineHandledRef = React.useRef(null);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -23,6 +34,38 @@ function DriverHome() {
     };
     fetchStatus();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !isOnline) {
+      autoOfflineHandledRef.current = null;
+      return;
+    }
+
+    const checkExpiredSession = async () => {
+      const data = await getDriverData(user.id);
+      const onlineSince = toMillis(data?.onlineAt) || toMillis(data?.statusChangedAt);
+
+      if (!onlineSince) return;
+      if (Date.now() - onlineSince < MAX_ONLINE_SESSION_MS) {
+        autoOfflineHandledRef.current = null;
+        return;
+      }
+
+      if (autoOfflineHandledRef.current === onlineSince) return;
+      autoOfflineHandledRef.current = onlineSince;
+
+      try {
+        await updateDriverStatus(user.id, { status: 'offline' });
+        setIsOnline(false);
+        alert("Status online kamu otomatis dimatikan karena sudah lebih dari 12 jam.");
+      } catch (e) {
+        console.error("Gagal auto-offline driver:", e);
+        autoOfflineHandledRef.current = null;
+      }
+    };
+
+    checkExpiredSession();
+  }, [user?.id, isOnline]);
 
   useEffect(() => {
     if (statusLoading || !isOnline) {
@@ -64,9 +107,9 @@ function DriverHome() {
   };
 
   return (
-    <div className="bg-[#0a0a0a] min-h-screen text-white font-body pb-20">
+    <div className="bg-background min-h-screen text-on-background font-body pb-20">
       {/* Driver Header */}
-      <header className="bg-[#131313] p-6 sticky top-0 z-50 border-b border-white/5">
+      <header className="bg-[#131313] p-6 sticky top-0 z-50 border-b border-on-background/5">
         <div className="max-w-xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-[#f3ffca] p-0.5 shadow-lg shadow-primary/20">
@@ -96,14 +139,14 @@ function DriverHome() {
 
       <main className="max-w-xl mx-auto p-6 space-y-6 mt-4">
         {/* Earnings Card */}
-        <section className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] p-6 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+        <section className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] p-6 rounded-[2.5rem] border border-on-background/5 shadow-2xl relative overflow-hidden group">
            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
            <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#f3ffca]/50 mb-1">Pendapatan Hari Ini</p>
            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-headline font-black text-white italic tracking-tighter">IDR 142.500</span>
+              <span className="text-4xl font-headline font-black text-on-background italic tracking-tighter">IDR 142.500</span>
               <span className="text-primary font-bold text-sm">/ 12 Trip</span>
            </div>
-           <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+           <div className="mt-6 pt-4 border-t border-on-background/5 flex justify-between items-center">
               <div className="flex items-center gap-2">
                  <span className="material-symbols-outlined text-primary text-sm">stars</span>
                  <span className="text-xs font-bold">Rating 5.0</span>
@@ -132,7 +175,7 @@ function DriverHome() {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {orders.map((order) => (
-                <div key={order.id} className="bg-[#131313] p-5 rounded-3xl border border-white/5 shadow-lg group hover:border-primary/30 transition-all active:scale-[0.98]">
+                <div key={order.id} className="bg-[#131313] p-5 rounded-3xl border border-on-background/5 shadow-lg group hover:border-primary/30 transition-all active:scale-[0.98]">
                    <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
                          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -141,7 +184,7 @@ function DriverHome() {
                             </span>
                          </div>
                          <div>
-                            <p className="text-xs font-black text-white uppercase tracking-tight">ARO {order.serviceType?.toUpperCase()}</p>
+                            <p className="text-xs font-black text-on-background uppercase tracking-tight">ARO {order.serviceType?.toUpperCase()}</p>
                             <p className="text-[10px] text-[#f3ffca]/60 font-bold">{order.distance?.toFixed(1) || '0'} KM - Estimasi 15m</p>
                          </div>
                       </div>
@@ -151,7 +194,7 @@ function DriverHome() {
                       </div>
                    </div>
 
-                   <div className="flex items-center gap-3 bg-[#0a0a0a] p-4 rounded-2xl mb-5">
+                   <div className="flex items-center gap-3 bg-background p-4 rounded-2xl mb-5">
                       <div className="flex flex-col items-center gap-1">
                          <div className="w-2 h-2 rounded-full bg-primary"></div>
                          <div className="w-0.5 h-4 bg-zinc-800"></div>
@@ -159,7 +202,7 @@ function DriverHome() {
                       </div>
                       <div className="flex-grow space-y-1">
                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter truncate">Pickup: {order.serviceType === 'food' ? 'Restoran Terdekat' : 'Titik Sesuai Peta'}</p>
-                         <p className="text-[10px] text-white font-bold truncate">Antar: {order.receiver?.address || 'Lokasi Tujuan User'}</p>
+                         <p className="text-[10px] text-on-background font-bold truncate">Antar: {order.receiver?.address || 'Lokasi Tujuan User'}</p>
                       </div>
                    </div>
 
@@ -178,7 +221,7 @@ function DriverHome() {
       </main>
 
       {/* Driver Footer Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a]/80 backdrop-blur-2xl border-t border-white/5 p-4 z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-2xl border-t border-on-background/5 p-4 z-50">
          <div className="max-w-xl mx-auto flex justify-around">
             <button className="flex flex-col items-center text-primary">
                <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>grid_view</span>

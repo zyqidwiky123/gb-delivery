@@ -1,5 +1,19 @@
 import { db } from './config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+
+export const observeDriverProfile = (uid, callback) => {
+  const driverRef = doc(db, 'drivers', uid);
+  return onSnapshot(driverRef, (snap) => {
+    if (snap.exists()) {
+      callback({ id: snap.id, ...snap.data() });
+    } else {
+      callback(null);
+    }
+  }, (error) => {
+    console.error("Profile listen error:", error);
+  });
+};
+
 
 export const getDriverProfile = async (uid) => {
   try {
@@ -27,6 +41,10 @@ export const createDriverProfile = async (uid, email) => {
       rating: 4.9,
       level: "Mitra Utama",
       isOnline: true, // New field
+      status: "online", // Set initial status
+      onlineAt: serverTimestamp(),
+      statusChangedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       photoUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuAr5XAajWHWnCVcEoi2VhomU2RRi1oJj14RBhltVEwmTbfEKW_i84dn2BDkUz9qAQj07nsW1VB0znDXOW5qiwlc18aHqhw7Gb53jOgqu22HqidGCHExwD202ID9AIWBaNt6MkzajfHVnmrUTACMJknmlViLwxT-oUuNyAm-gWNyh8y73S-6_JDv5sLo-ZwmgEHwjPyTeaqbJyqf_UDWD4h30dkfYwiVwaVX5dP2bncVn6yn1IfcqPjFpKBz4VY49nkar4KuReEa7jY"
     };
 
@@ -52,10 +70,31 @@ export const createDriverProfile = async (uid, email) => {
 export const updateDriverStatus = async (uid, isOnline) => {
   try {
     const driverRef = doc(db, 'drivers', uid);
-    await setDoc(driverRef, { isOnline }, { merge: true });
+    await setDoc(driverRef, { 
+      isOnline,
+      status: isOnline ? "online" : "offline",
+      ...(isOnline
+        ? { onlineAt: serverTimestamp(), offlineAt: null }
+        : { offlineAt: serverTimestamp() }),
+      statusChangedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
     return true;
   } catch (err) {
     console.error("Error updating online status:", err);
+    return false;
+  }
+};
+export const updateDriverLocation = async (uid, location) => {
+  try {
+    const driverRef = doc(db, 'drivers', uid);
+    await updateDoc(driverRef, { 
+      location,
+      lastLocationUpdate: serverTimestamp() 
+    });
+    return true;
+  } catch (err) {
+    console.error("Error updating location:", err);
     return false;
   }
 };

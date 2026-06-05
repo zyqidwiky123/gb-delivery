@@ -2,10 +2,17 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
-import './index.css'
+import './index.css';
+
 import { registerSW } from 'virtual:pwa-register'
 
-registerSW({ immediate: true })
+registerSW({ 
+  immediate: true,
+  onNeedRefresh() {
+    console.log('New content available, refreshing...');
+    window.location.reload();
+  }
+})
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -34,6 +41,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <BrowserRouter>
         <App />
+        <Toaster />
       </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>

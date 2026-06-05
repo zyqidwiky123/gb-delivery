@@ -166,7 +166,7 @@ function Login() {
           <div className="bg-surface-container-highest p-4 rounded-xl mb-6 shadow-2xl">
             <span className="material-symbols-outlined text-primary text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>person_heart</span>
           </div>
-          <h1 className="font-headline font-black italic tracking-tighter text-4xl text-primary text-center uppercase">ARO DRIVE</h1>
+          <h1 className="font-headline font-black tracking-tighter text-4xl text-primary text-center uppercase">ARO DRIVE</h1>
           <p className="font-label text-on-surface-variant text-[10px] uppercase tracking-[0.2em] mt-2 font-medium">
             Member Portal
           </p>
@@ -175,7 +175,7 @@ function Login() {
         {/* Login Portal Container */}
         <section className="w-full max-w-[400px] z-10">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold text-center">
+            <div className="mb-6 p-4 rounded-xl bg-error/10 border border-error/20 text-error text-xs font-bold text-center">
               {error}
             </div>
           )}
@@ -231,7 +231,7 @@ function Login() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full bg-white text-black font-headline font-bold py-4 rounded-full shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3 border border-zinc-200 disabled:opacity-50"
+              className="w-full bg-surface-container-low text-on-surface font-headline font-bold py-4 rounded-full shadow-lg active:scale-95 transition-all flex items-center justify-center gap-3 border border-outline/20 disabled:opacity-50"
             >
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google Logo" />
               Lanjutkan dengan Google
@@ -258,7 +258,7 @@ function Login() {
 
         {/* Footer Call to Action */}
         <footer className="mt-auto pt-16 z-10 w-full flex flex-col items-center">
-          <button onClick={() => navigate('/register')} className="group flex items-center justify-center gap-3 bg-surface-container-low py-3 px-6 rounded-full border border-outline-variant/10 hover:border-primary/20 transition-all cursor-pointer">
+          <button onClick={() => navigate('/register')} className="group flex items-center justify-center gap-3 bg-surface-container-low py-3 px-6 rounded-full border border-outline/10 hover:border-primary/20 transition-all cursor-pointer shadow-sm">
             <span className="text-on-surface-variant font-medium text-sm">Belum Punya Akun? <span className="text-on-surface font-bold">Daftar</span></span>
             <div className="bg-primary p-1 rounded-full flex items-center justify-center text-on-primary-fixed group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined text-[16px]">chevron_right</span>

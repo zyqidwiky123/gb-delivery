@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
 import { useDriverStore } from '../../src/store/useDriverStore';
 import MapComponent from '../../src/components/MapComponent';
@@ -10,7 +10,8 @@ import {
   pickupOrder,
   completeOrder
 } from '../../src/firebase/orderService';
-import { updateDriverStatus } from '../../src/firebase/driverService';
+import { updateDriverStatus, updateDriverLocation } from '../../src/firebase/driverService';
+import * as Location from 'expo-location';
 import { Bike, MapPin, CheckCircle2, XCircle, AlertCircle } from 'lucide-react-native';
 
 export default function HomeScreen() {
@@ -22,6 +23,7 @@ export default function HomeScreen() {
   
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const lastKnownLocationRef = useRef(null);
 
   // 1. Subscribe to real-time Active Jobs and Available Orders when user is loaded
   useEffect(() => {
@@ -47,6 +49,58 @@ export default function HomeScreen() {
       console.log("[HomeScreen] Cleaned up real-time order listeners");
     };
   }, [user?.uid]);
+
+  // 1.5 Real-time Location Tracking when ONLINE — send to Firestore drivers/{uid}
+  useEffect(() => {
+    if (!profile?.isOnline || !user?.uid) return;
+
+    let locationSubscription;
+
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('[Location] Permission denied for foreground location');
+        return;
+      }
+
+      locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 10000,
+          distanceInterval: 10,
+        },
+        (loc) => {
+          const newLoc = {
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+          };
+          lastKnownLocationRef.current = newLoc;
+          updateDriverLocation(user.uid, newLoc);
+          console.log('[Location] Sent driver location to Firestore:', newLoc.lat.toFixed(4), newLoc.lng.toFixed(4));
+        }
+      );
+    })();
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
+  }, [profile?.isOnline, user?.uid]);
+
+  // 1.6 Heartbeat — keep lastLocationUpdate fresh every 60s even when stationary
+  useEffect(() => {
+    if (!profile?.isOnline || !user?.uid) return;
+
+    const heartbeatId = setInterval(() => {
+      if (lastKnownLocationRef.current) {
+        updateDriverLocation(user.uid, lastKnownLocationRef.current);
+        console.log('[Heartbeat] Refreshed driver location timestamp');
+      }
+    }, 60000);
+
+    return () => clearInterval(heartbeatId);
+  }, [profile?.isOnline, user?.uid]);
 
   // Toggle online/offline status in Firebase
   const toggleOnlineStatus = async () => {

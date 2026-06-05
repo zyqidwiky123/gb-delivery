@@ -1,0 +1,17 @@
+Unknown Names: 44
+Outside Blitar: 17
+Blitar Merchants: 239
+
+Sample Unknown Names:
+- 2JghLsYqeWk6j5QDPxjP: Jalan Cakraningrat, Sentul, Kepanjenkidul, Sentul, Kec. Kepanjenkidul, Kota Blitar, Jawa Timur 66113, Indonesia
+- 2mq8EDOIPwMKMGouu1hx: Jl. Merdeka No. 45, Blitar, Jawa Timur, Indonesia
+- 59PN9kzrpMXP0B4YnPMb: Jl. Raya Turen No. 12, Malang, Jawa Timur, Indonesia
+- 5Ib2muuOXfHQuVo5B5Vg: Jl. Pahlawan No. 88, Blitar, Jawa Timur, Indonesia
+- 5c3mVzDt3Y5d4M2jbf5g: Jl. Kanzan No. 1, Blitar, Jawa Timur, Indonesia
+
+Sample Outside Blitar:
+- Sambal Bakar Indonesia, Grogol (ChIJ-2pon5_3aS4RqoSFswt2kcQ): Jl. Dr. Susilo Raya No.10, RT.1/RW.3, Grogol, Kec. Grogol petamburan, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11450, Indonesia
+- Warung Ropang SYG (ChIJ1fiEyPX3aS4RugyY_HXt3NA): Jl. Dr. Muwardi I No.39, Grogol, Kec. Grogol petamburan, Jakarta, Daerah Khusus Ibukota Jakarta 11450, Indonesia
+- Ayam geprek kanigoro 1 (ChIJ1fmxL8W9eS4RNiaWuhoiajg): 8GQM+WR6, Jl. Kapten Tendean, Sogaten, Sidorejo, Kec. Wungu, Kabupaten Madiun, Jawa Timur 63181, Indonesia
+- Seblak Prasmanan Endul cabang 2 (ChIJ23T2byRXei4RV3qcx2En9RM): Diro, Pendowoharjo, Kec. Sewon, Kabupaten Bantul, Daerah Istimewa Yogyakarta 55186, Indonesia
+- Angkringan Kalimati (ChIJ39kfuaX2aS4RGIWdww6noFs): Jl. Karet Pasar Baru Barat I No.11, RT.12/RW.6, Bend. Hilir, Kecamatan Tanah Abang, Kota Jakarta Pusat, Daerah Khusus Ibukota Jakarta 10210, Indonesia

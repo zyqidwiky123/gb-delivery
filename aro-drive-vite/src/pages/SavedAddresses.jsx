@@ -12,8 +12,8 @@ function SavedAddresses() {
   };
 
   return (
-    <div className="bg-background min-h-screen pb-40 text-white font-body">
-      <header className="px-6 pt-8 pb-6 bg-surface-container-low border-b border-white/5 sticky top-0 z-20">
+    <div className="bg-background min-h-screen pb-40 text-on-background font-body">
+      <header className="px-6 pt-8 pb-6 bg-surface-container-low border-b border-outline sticky top-0 z-20">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="text-primary active:scale-95 transition-transform">
              <span className="material-symbols-outlined">arrow_back</span>
@@ -25,16 +25,16 @@ function SavedAddresses() {
       <main className="max-w-xl mx-auto px-6 mt-8 space-y-6">
         <div className="space-y-4">
           {savedAddresses.length === 0 ? (
-            <div className="text-center py-20 bg-surface-container-low rounded-[2.5rem] border border-dashed border-white/10">
+            <div className="text-center py-20 bg-surface-container-low rounded-[2.5rem] border border-dashed border-outline">
                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="material-symbols-outlined text-primary text-3xl">home_pin</span>
                </div>
                <p className="text-sm text-on-surface-variant font-medium">Belum ada alamat yang disimpan.</p>
-               <p className="text-[10px] uppercase font-bold tracking-widest text-[#f3ffca]/40 mt-1">Simpan Lokasi Rumah atau Kantor Anda</p>
+               <p className="text-[10px] uppercase font-bold tracking-widest text-primary/40 mt-1">Simpan Lokasi Rumah atau Kantor Anda</p>
             </div>
           ) : (
             savedAddresses.map(addr => (
-              <div key={addr.id} className="bg-surface-container-low p-5 rounded-[2rem] border border-white/5 flex items-center justify-between group">
+              <div key={addr.id} className="bg-surface-container-low p-5 rounded-[2rem] border border-outline flex items-center justify-between group">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
                     <span className="material-symbols-outlined">
@@ -42,7 +42,7 @@ function SavedAddresses() {
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm text-white uppercase tracking-tight">{addr.label || 'Lokasi'}</h3>
+                    <h3 className="font-bold text-sm text-on-surface uppercase tracking-tight">{addr.label || 'Lokasi'}</h3>
                     <p className="text-xs text-on-surface-variant line-clamp-1 italic">{addr.address}</p>
                   </div>
                 </div>
@@ -59,7 +59,7 @@ function SavedAddresses() {
 
         <button 
           onClick={handleAddAddress}
-          className="w-full py-5 rounded-[2rem] bg-gradient-to-br from-[#cafd00] to-[#f3ffca] text-black font-headline font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+          className="w-full py-5 rounded-[2rem] bg-primary text-on-primary font-headline font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
         >
           <span className="material-symbols-outlined font-black group-hover:rotate-90 transition-transform">add_circle</span>
           Tambah Alamat Baru

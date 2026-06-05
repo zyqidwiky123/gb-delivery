@@ -18,7 +18,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "/logo.png",
+    icon: "/logo.webp",
     // In background, sound is handled by the OS/Browser if supported, 
     // but some browsers allow custom sound in the options (limited)
   };

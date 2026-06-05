@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 import { useAdminStore } from '../store/adminStore';
+import { useThemeStore } from '../store/themeStore';
 
 function Profile() {
   const navigate = useNavigate();
   const { user, loyaltyPoints, redeemVoucher, vouchers, logout } = useUserStore();
+  const { theme, toggleTheme } = useThemeStore();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -43,7 +45,7 @@ function Profile() {
   };
 
   // Points needed to redeem voucher (default 100 points)
-  const pointsToRedeem = 100;
+  const { adminWhatsApp, pointsToRedeem } = useAdminStore();
 
   const handleRedeem = () => {
     if (loyaltyPoints >= pointsToRedeem) {
@@ -53,10 +55,11 @@ function Profile() {
       alert(`Poin belum cukup, Boss! Butuh ${pointsToRedeem} poin.`);
     }
   };
-
+  
   const handleCareCenterClick = () => {
     console.log('Chat with Admin...');
-    window.location.href = 'https://wa.me/6285748343842?text=Halo%20Admin%20Aro%20Drive,%20saya%20butuh%20bantuan.';
+    const waNumber = adminWhatsApp || "6285748343842";
+    window.location.href = `https://wa.me/${waNumber}?text=Halo%20Admin%20Aro%20Drive,%20saya%20butuh%20bantuan.`;
   };
 
   const handleLogout = () => {
@@ -67,7 +70,7 @@ function Profile() {
   };
 
   return (
-    <div className="bg-background min-h-screen pb-40 text-white font-body py-8">
+    <div className="bg-background min-h-screen pb-40 text-on-background font-body py-8">
       <main className="max-w-xl mx-auto px-6 space-y-6">
         
         <div className="flex items-center gap-5 p-2 mb-2">
@@ -87,7 +90,7 @@ function Profile() {
             </button>
           </div>
           <div>
-            <h1 className="font-headline font-bold text-lg text-white">{user?.displayName || 'User ARO'}</h1>
+            <h1 className="font-headline font-bold text-lg text-on-surface">{user?.displayName || 'User ARO'}</h1>
             <p className="text-[10px] text-primary font-bold uppercase tracking-widest">{user?.email || 'Bukan Member'}</p>
           </div>
         </div>
@@ -104,18 +107,18 @@ function Profile() {
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Loyalty Points</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-headline font-black text-white italic">{loyaltyPoints}</span>
+                  <span className="text-3xl font-headline font-black text-on-surface italic">{loyaltyPoints}</span>
                   <span className="text-xs font-bold text-primary">PTS</span>
                 </div>
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+            <div className="bg-surface-container-highest/30 backdrop-blur-md px-3 py-1.5 rounded-full border border-outline/20">
               <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tingkat: {loyaltyPoints > 500 ? 'Platinum' : loyaltyPoints > 100 ? 'Gold' : 'Basic'}</span>
             </div>
           </div>
 
           <div className="space-y-4">
-             <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+             <div className="w-full bg-surface-container-highest/20 h-2 rounded-full overflow-hidden border border-outline/20">
                 <div 
                   className="bg-primary h-full transition-all duration-700" 
                   style={{
@@ -133,7 +136,7 @@ function Profile() {
                 <button 
                   onClick={handleRedeem}
                   disabled={loyaltyPoints < pointsToRedeem}
-                  className={`px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg transition-all ${loyaltyPoints >= pointsToRedeem ? 'bg-primary text-black shadow-primary/20 active:scale-95' : 'bg-white/10 text-on-surface-variant grayscale cursor-not-allowed'}`}
+                  className={`px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg transition-all ${loyaltyPoints >= pointsToRedeem ? 'bg-primary text-black shadow-primary/20 active:scale-95' : 'bg-surface-container-highest text-on-surface-variant grayscale cursor-not-allowed'}`}
                 >
                   Tukar Poin
                 </button>
@@ -150,14 +153,14 @@ function Profile() {
              </h2>
              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
                 {vouchers.map(v => (
-                  <div key={v.id} className="flex-shrink-0 bg-surface-container-high border border-white/5 p-4 rounded-2xl flex items-center gap-4 w-48 relative overflow-hidden group">
+                  <div key={v.id} className="flex-shrink-0 bg-surface-container-high border border-outline/10 p-4 rounded-2xl flex items-center gap-4 w-48 relative overflow-hidden group shadow-sm">
                     <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 rounded-full -mr-6 -mt-6"></div>
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                       <span className="material-symbols-outlined text-sm">local_shipping</span>
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-white uppercase tracking-tighter">{v.title}</p>
-                      <p className="text-[9px] text-[#f3ffca] font-bold">Berlaku Se-Blitar</p>
+                      <p className="text-[10px] font-black text-on-surface uppercase tracking-tighter">{v.title}</p>
+                      <p className="text-[9px] text-primary font-bold">Berlaku Se-Blitar</p>
                     </div>
                   </div>
                 ))}
@@ -169,10 +172,10 @@ function Profile() {
         <section className="space-y-3">
           <h2 className="font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-2 mb-2">My Account</h2>
           
-          <div className="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
+          <div className="bg-surface-container-low rounded-2xl border border-outline/10 overflow-hidden shadow-sm">
             <div 
               onClick={() => navigate('/saved-addresses')}
-              className="flex items-center justify-between p-4 border-b border-white/5 hover:bg-surface-container-highest transition-colors cursor-pointer"
+              className="flex items-center justify-between p-4 border-b border-outline/10 hover:bg-surface-container-highest transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <span className="material-symbols-outlined text-primary">home_pin</span>
@@ -181,7 +184,7 @@ function Profile() {
               <span className="material-symbols-outlined text-outline text-sm">chevron_right</span>
             </div>
             
-            <div className="flex items-center justify-between p-4 border-b border-white/5 hover:bg-surface-container-highest transition-colors cursor-pointer">
+            <div className="flex items-center justify-between p-4 border-b border-outline/10 hover:bg-surface-container-highest transition-colors cursor-pointer">
               <div className="flex items-center gap-4">
                 <span className="material-symbols-outlined text-secondary">payments</span>
                 <span className="font-semibold text-sm">Metode Pembayaran</span>
@@ -206,11 +209,11 @@ function Profile() {
         <section className="space-y-3">
           <h2 className="font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-2 mb-2">Help & Settings</h2>
           
-          <div className="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
+          <div className="bg-surface-container-low rounded-2xl border border-outline/10 overflow-hidden shadow-sm">
             {/* CARE CENTER - Call To Action */}
             <div 
               onClick={handleCareCenterClick}
-              className="flex items-center justify-between p-5 border-b border-white/5 hover:bg-[#262626] transition-colors cursor-pointer group"
+              className="flex items-center justify-between p-5 border-b border-outline/10 hover:bg-surface-container-highest transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -222,6 +225,29 @@ function Profile() {
                 </div>
               </div>
               <span className="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">open_in_new</span>
+            </div>
+
+            {/* THEME TOGGLE */}
+            <div 
+              onClick={toggleTheme}
+              className="flex items-center justify-between p-5 border-b border-outline/10 hover:bg-surface-container-highest transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
+                  <span className="material-symbols-outlined text-on-surface/70">
+                    {theme === 'dark' ? 'dark_mode' : 'light_mode'}
+                  </span>
+                </div>
+                <div>
+                  <span className="block font-bold text-sm text-on-surface">Mode Tampilan</span>
+                  <span className="block text-xs text-on-surface-variant">
+                    {theme === 'dark' ? 'Mode Malam (Aktif)' : 'Mode Siang (Aktif)'}
+                  </span>
+                </div>
+              </div>
+              <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ${theme === 'dark' ? 'bg-primary' : 'bg-outline/50'}`}>
+                <div className={`w-4 h-4 rounded-full bg-surface transition-transform duration-300 ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`}></div>
+              </div>
             </div>
 
             <div 
@@ -255,11 +281,11 @@ function Profile() {
                   <span className="material-symbols-outlined text-primary">chevron_right</span>
                 </button>
               ) : isIOS ? (
-                <div className="p-5 bg-surface-container-low border border-white/5 rounded-2xl">
+                <div className="p-5 bg-surface-container-low border border-outline/10 rounded-2xl shadow-sm">
                   <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2 text-center">Install di iPhone</p>
                   <div className="flex items-center justify-center gap-2 text-xs font-medium text-textSecondary">
                     <span>Klik</span>
-                    <span className="bg-white/10 p-1 rounded">
+                    <span className="bg-on-background/10 p-1 rounded">
                       <svg width="16" height="16" viewBox="0 0 50 50" fill="currentColor" className="inline"><path d="M30.3,13.7L25,8.4l-5.3,5.3l-1.4-1.4L25,5.6l6.7,6.7L30.3,13.7z M24,30.3V10.7h2v19.7H24z M13,19h8v2h-8v21h24V21h-8v-2h8 c1.1,0,2,0.9,2,2v21c0,1.1-0.9,2-2,2H13c-1.1,0-2-0.9-2-2V21C11,19.9,11.9,19,13,19z"/></svg>
                     </span>
                     <span>lalu "Add to Home Screen"</span>

@@ -9,20 +9,20 @@ export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 // Libraries yang dibutuhkan Google Maps
 export const GOOGLE_MAPS_LIBRARIES = ['places'];
 
-// Pusat kota Blitar
+// Pusat kota Blitar (Tetap sebagai pusat operasional awal)
 export const BLITAR_CENTER = { lat: -8.0983, lng: 112.1681 };
 
-// Batas area operasional Blitar
-export const BLITAR_BOUNDS = {
-  north: -7.95,
-  south: -8.35,
-  east: 112.45,
-  west: 111.95,
+// Batas area operasional Jawa Timur
+export const JATIM_BOUNDS = {
+  north: -6.7,
+  south: -8.8,
+  east: 114.6,
+  west: 111.0,
 };
 
-// Restriction untuk peta (agar tidak keluar area)
-export const BLITAR_RESTRICTION = {
-  latLngBounds: BLITAR_BOUNDS,
+// Restriction untuk peta (agar tidak keluar area Jatim)
+export const JATIM_RESTRICTION = {
+  latLngBounds: JATIM_BOUNDS,
   strictBounds: false,
 };
 
@@ -46,6 +46,11 @@ export const MARKER_ICONS = {
     url: 'https://cdn1.iconfinder.com/data/icons/transport-set-1-3/100/Untitled-1-24-512.png',
     scaledSize: { width: 40, height: 40 },
     anchor: { x: 20, y: 20 },
+  },
+  driver_motor: {
+    url: "data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 38C20 38 34 26.5 34 16.5C34 8.5 27.5 3 20 3C12.5 3 6 8.5 6 16.5C6 26.5 20 38 20 38Z' fill='%230A0A0A' fill-opacity='0.95' stroke='%23cafd00' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='20' cy='16.5' r='10' fill='%23cafd00' fill-opacity='0.1' stroke='%23cafd00' stroke-width='1' stroke-dasharray='2,2'/%3E%3Cg transform='translate(10, 6.5) scale(0.8)'%3E%3Ccircle cx='6' cy='18' r='3' stroke='%23cafd00' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='3' stroke='%23cafd00' stroke-width='2'/%3E%3Cpath d='M6 15h12' stroke='%23cafd00' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M12 18v-6H7' stroke='%23cafd00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m15 6 3 3v3H9' stroke='%23cafd00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E",
+    scaledSize: { width: 40, height: 40 },
+    anchor: { x: 20, y: 38 },
   },
   user: {
     url: "data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234285F4' fill-opacity='0.2'/%3E%3Ccircle cx='16' cy='16' r='8' fill='white'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%234285F4'/%3E%3C/svg%3E",
@@ -92,17 +97,17 @@ export const calculateDistance = (p1, p2) => {
 const toRad = (deg) => deg * (Math.PI / 180);
 
 /**
- * Cek apakah koordinat berada di dalam area operasional Blitar
+ * Cek apakah koordinat berada di dalam area operasional Jawa Timur
  * @param {{lat: number, lng: number}} coords 
  * @returns {boolean}
  */
 export const isInsideBounds = (coords) => {
   if (!coords) return false;
   return (
-    coords.lat >= BLITAR_BOUNDS.south &&
-    coords.lat <= BLITAR_BOUNDS.north &&
-    coords.lng >= BLITAR_BOUNDS.west &&
-    coords.lng <= BLITAR_BOUNDS.east
+    coords.lat >= JATIM_BOUNDS.south &&
+    coords.lat <= JATIM_BOUNDS.north &&
+    coords.lng >= JATIM_BOUNDS.west &&
+    coords.lng <= JATIM_BOUNDS.east
   );
 };
 
@@ -196,20 +201,32 @@ export const darkMapStyles = [
 ];
 
 /**
- * Opsi default untuk GoogleMap component
+ * Google Maps Light Mode Style (Standard)
  */
-export const defaultMapOptions = {
+export const lightMapStyles = []; // Default Google Maps look for Light Mode
+
+/**
+ * Mendapatkan opsi peta berdasarkan tema
+ * @param {'light'|'dark'} theme 
+ * @returns {google.maps.MapOptions}
+ */
+export const getMapOptions = (theme) => ({
   disableDefaultUI: true,
   zoomControl: false,
   mapTypeControl: false,
   streetViewControl: false,
   fullscreenControl: false,
-  styles: darkMapStyles,
-  restriction: BLITAR_RESTRICTION,
+  styles: theme === 'dark' ? darkMapStyles : lightMapStyles,
+  restriction: JATIM_RESTRICTION,
   minZoom: MIN_ZOOM,
   gestureHandling: 'greedy',
   clickableIcons: false,
-};
+});
+
+/**
+ * Opsi default untuk GoogleMap component (Legacy support)
+ */
+export const defaultMapOptions = getMapOptions('dark');
 
 /**
  * Opsi untuk Autocomplete (batasi wilayah Indonesia / Jawa Timur)
@@ -218,9 +235,9 @@ export const autocompleteOptions = {
   componentRestrictions: { country: 'id' },
   fields: ['formatted_address', 'geometry', 'name'],
   bounds: {
-    north: BLITAR_BOUNDS.north,
-    south: BLITAR_BOUNDS.south,
-    east: BLITAR_BOUNDS.east,
-    west: BLITAR_BOUNDS.west,
+    north: JATIM_BOUNDS.north,
+    south: JATIM_BOUNDS.south,
+    east: JATIM_BOUNDS.east,
+    west: JATIM_BOUNDS.west,
   },
 };

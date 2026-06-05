@@ -5,6 +5,7 @@ import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { updateDriverLocation } from '../firebase/driverService';
 import { useDriverStore } from '../store/useDriverStore';
 import { Navigation } from 'lucide-react-native';
 
@@ -57,6 +58,11 @@ export default function MapComponent({ activeJob }) {
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }, 1000);
+          }
+
+          // Always sync driver location to drivers/{uid} for dispatch
+          if (user?.uid) {
+            updateDriverLocation(user.uid, { lat: newLoc.latitude, lng: newLoc.longitude });
           }
 
           if (user?.uid && activeJob?.id) {

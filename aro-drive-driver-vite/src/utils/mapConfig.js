@@ -4,15 +4,15 @@ export const GOOGLE_MAPS_LIBRARIES = ['places'];
 
 export const BLITAR_CENTER = { lat: -8.0983, lng: 112.1681 };
 
-export const BLITAR_BOUNDS = {
-  north: -7.95,
-  south: -8.35,
-  east: 112.45,
-  west: 111.95,
+export const JATIM_BOUNDS = {
+  north: -6.7,
+  south: -8.8,
+  east: 114.6,
+  west: 111.0,
 };
 
-export const BLITAR_RESTRICTION = {
-  latLngBounds: BLITAR_BOUNDS,
+export const JATIM_RESTRICTION = {
+  latLngBounds: JATIM_BOUNDS,
   strictBounds: false,
 };
 
@@ -81,7 +81,7 @@ export const defaultMapOptions = {
   streetViewControl: false,
   fullscreenControl: false,
   styles: darkMapStyles,
-  restriction: BLITAR_RESTRICTION,
+  restriction: JATIM_RESTRICTION,
   minZoom: MIN_ZOOM,
   gestureHandling: 'greedy',
   clickableIcons: false,
