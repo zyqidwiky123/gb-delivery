@@ -24,8 +24,8 @@ export default function RootLayout() {
     if (!user && inTabsGroup) {
       // Redirect to the sign-in page.
       router.replace('/');
-    } else if (user && !inTabsGroup) {
-      // Redirect to the home page.
+    } else if (user && (!segments[0] || segments[0] === 'index')) {
+      // Redirect to the home page only if they are on the login screen
       router.replace('/(tabs)/home');
     }
   }, [user, authLoading, segments, router]);
