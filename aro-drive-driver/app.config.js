@@ -11,6 +11,14 @@ export default {
     android: {
       package: "com.arodrivedriver",
       googleServicesFile: "./google-services.json",
+      permissions: [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS",
+      ],
       adaptiveIcon: {
         backgroundColor: "#000000",
         foregroundImage: "./assets/images/android-icon-foreground.png",

@@ -24,6 +24,7 @@ const BACKGROUND_OPTIONS = {
     name: 'ic_launcher',
     type: 'mipmap',
   },
+  foregroundServiceType: ['location'],
   color: '#a3e635',
   linkingURI: 'arodrivedriver://',
   parameters: {
