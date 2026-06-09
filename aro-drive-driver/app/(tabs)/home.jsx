@@ -25,7 +25,8 @@ import {
 import { updateDriverStatus, updateDriverLocation } from '../../src/firebase/driverService';
 import * as Location from 'expo-location';
 import { Bike, MapPin, CheckCircle2, XCircle, AlertCircle } from 'lucide-react-native';
-import { AudioPlayer } from 'expo-audio';
+import { createAudioPlayer } from 'expo-audio';
+import { playNotificationSound, showNewOrderNotification } from '../../src/hooks/usePushNotifications';
 import {
   startBackgroundService,
   stopBackgroundService,
@@ -59,7 +60,8 @@ export default function HomeScreen() {
   // Initialize AudioPlayer for incoming orders
   useEffect(() => {
     try {
-      const player = new AudioPlayer(require('../../assets/sounds/notif_driver.mp3'));
+      const player = createAudioPlayer(require('../../assets/sounds/notif_driver.mp3'));
+      player.volume = 1;
       audioPlayerRef.current = player;
       console.log("[HomeScreen] AudioPlayer successfully initialized");
     } catch (err) {
@@ -92,8 +94,12 @@ export default function HomeScreen() {
       
       if (hasNewOrder && orders.length > 0) {
         console.log("[HomeScreen] New order detected via Firestore! Playing sound.");
+        showNewOrderNotification(orders.find(o => !prevOrderIdsRef.current.includes(o.id)) || orders[0]);
         if (audioPlayerRef.current) {
+          audioPlayerRef.current.seekTo(0).catch(() => {});
           audioPlayerRef.current.play();
+        } else {
+          playNotificationSound();
         }
       }
       

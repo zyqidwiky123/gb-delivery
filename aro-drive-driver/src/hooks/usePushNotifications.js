@@ -1,139 +1,189 @@
-import { useState, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Platform, Vibration, AppState } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import notifee, { AndroidImportance, AndroidVisibility } from '@notifee/react-native';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { AudioPlayer } from 'expo-audio';
+import { createAudioPlayer } from 'expo-audio';
+import {
+  NEW_ORDER_CHANNEL_ID,
+  initializeNotificationChannels,
+} from '../notifications/setupNotifications';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+const NEW_ORDER_SOUND = require('../../assets/sounds/notif_driver.mp3');
+
+export { NEW_ORDER_CHANNEL_ID };
 
 // Helper to play notification sound
-const playNotificationSound = async () => {
+export const playNotificationSound = async () => {
   try {
-    const audioPlayer = new AudioPlayer(require('../../assets/sounds/notif_driver.mp3'));
-    await audioPlayer.play();
-    console.log("[Audio] Successfully played notification sound in foreground");
+    const audioPlayer = createAudioPlayer(NEW_ORDER_SOUND);
+    audioPlayer.volume = 1;
+    audioPlayer.play();
+    console.log('[Audio] Successfully played notification sound in foreground');
   } catch (e) {
-    console.warn("[Audio] Failed to play native sound in foreground:", e);
+    console.warn('[Audio] Failed to play native sound in foreground:', e);
   }
 };
 
+export const ensureNewOrderNotificationChannel = initializeNotificationChannels;
+
+export const showNewOrderNotification = async (order = {}) => {
+  try {
+    await initializeNotificationChannels();
+
+    await notifee.displayNotification({
+      id: `new-order-${order.id || Date.now()}`,
+      title: 'Ada Order Baru!',
+      body: `Ayo ambil orderan ARO-${String(order.id || '').slice(-5).toUpperCase() || 'BARU'}!`,
+      data: {
+        type: 'NEW_ORDER',
+        orderId: order.id || '',
+      },
+      android: {
+        channelId: NEW_ORDER_CHANNEL_ID,
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        },
+        smallIcon: 'ic_launcher',
+        color: '#cafd00',
+        sound: 'notif_driver',
+        vibrationPattern: [250, 250, 250],
+        visibility: AndroidVisibility.PUBLIC,
+      },
+    });
+
+    if (Platform.OS === 'android') {
+      Vibration.vibrate([0, 250, 250, 250]);
+    } else {
+      Vibration.vibrate();
+    }
+  } catch (e) {
+    console.warn('[PushNotifications] Failed to show local order notification:', e);
+  }
+};
+
+async function saveFcmToken(userUid, deviceToken) {
+  if (!userUid || !deviceToken) return;
+
+  const payload = {
+    fcmToken: deviceToken,
+    fcmTokenUpdatedAt: new Date().toISOString(),
+  };
+
+  await Promise.all([
+    setDoc(doc(db, 'drivers', userUid), payload, { merge: true }),
+    setDoc(doc(db, 'users', userUid), payload, { merge: true }),
+  ]);
+}
+
+async function registerForPushNotificationsAsync() {
+  console.log('[FCM] Memulai registrasi notifikasi...');
+  console.log('[FCM] isDevice:', Device.isDevice, '| OS:', Platform.OS);
+
+  await initializeNotificationChannels();
+
+  if (!Device.isDevice) {
+    console.warn('Must use physical device for Push Notifications');
+    return null;
+  }
+
+  await notifee.requestPermission();
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  console.log('[FCM] Status izin notifikasi saat ini:', existingStatus);
+
+  let finalStatus = existingStatus;
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync({
+      ios: {
+        allowAlert: true,
+        allowBadge: true,
+        allowSound: true,
+      },
+    });
+    finalStatus = status;
+    console.log('[FCM] Status izin setelah request:', finalStatus);
+  }
+
+  if (finalStatus !== 'granted') {
+    console.warn('[FCM] Izin notifikasi DITOLAK oleh user!');
+    return null;
+  }
+
+  let deviceToken = '';
+  try {
+    const devicePushToken = await Notifications.getDevicePushTokenAsync();
+    deviceToken = devicePushToken.data;
+    console.log('[FCM] Token type:', devicePushToken.type);
+    console.log('[FCM] Token berhasil didapat:', deviceToken.substring(0, 30) + '...');
+  } catch (e) {
+    console.warn('[FCM] Gagal mengambil device token:', e);
+    return null;
+  }
+
+  return { deviceToken };
+}
+
 export function usePushNotifications(userUid) {
-  const [expoPushToken, setExpoPushToken] = useState('');
   const [fcmToken, setFcmToken] = useState('');
   const notificationListener = useRef();
   const responseListener = useRef();
+  const appStateRef = useRef(AppState.currentState);
+
+  const syncPushToken = useCallback(async () => {
+    if (!userUid) return;
+
+    try {
+      const tokens = await registerForPushNotificationsAsync();
+      if (!tokens?.deviceToken) return;
+
+      setFcmToken(tokens.deviceToken);
+      await saveFcmToken(userUid, tokens.deviceToken);
+      console.log('[FCM] Token tersimpan ke Firestore');
+    } catch (err) {
+      console.error('[FCM] Error saat registrasi:', err);
+    }
+  }, [userUid]);
+
+  useEffect(() => {
+    initializeNotificationChannels().catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!userUid) return;
 
-    registerForPushNotificationsAsync().then(tokens => {
-      if (tokens) {
-        setExpoPushToken(tokens.expoToken);
-        setFcmToken(tokens.deviceToken);
-        
-        // Save FCM token to Firestore so Cloud Functions can dispatch to it
-        if (tokens.deviceToken) {
-          console.log("[FCM] ✅ Token berhasil didapat:", tokens.deviceToken.substring(0, 30) + "...");
-          setDoc(doc(db, 'drivers', userUid), {
-            fcmToken: tokens.deviceToken
-          }, { merge: true })
-            .then(() => console.log("[FCM] ✅ Token tersimpan ke Firestore"))
-            .catch(err => {
-              console.error("[FCM] ❌ Gagal simpan token ke Firestore:", err.code, err.message);
-            });
-        } else {
-          console.warn("[FCM] ⚠️ Token kosong, tidak disimpan");
-        }
-      } else {
-        console.warn("[FCM] ⚠️ registerForPushNotificationsAsync() mengembalikan null");
+    syncPushToken();
+
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      const wasBackground = appStateRef.current.match(/inactive|background/);
+      appStateRef.current = nextState;
+
+      if (wasBackground && nextState === 'active') {
+        syncPushToken();
       }
-    }).catch(err => {
-      console.error("[FCM] ❌ Error saat registrasi:", err);
     });
 
-    // This listener is fired whenever a notification is received while the app is foregrounded
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log("[PushNotifications] Received notification in foreground:", notification);
+    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+      console.log('[PushNotifications] Received notification in foreground:', notification);
       const data = notification.request?.content?.data;
-      if (data && data.type === 'NEW_ORDER') {
-        console.log("[PushNotifications] New order notification! Playing sound.");
+      if (data?.type === 'NEW_ORDER') {
         playNotificationSound();
       }
     });
 
-    // This listener is fired whenever a user taps on or interacts with a notification 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log("[PushNotifications] User interacted with notification:", response);
-      // Here we could route the user to a specific screen based on response.notification.request.content.data
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log('[PushNotifications] User interacted with notification:', response);
     });
 
     return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove();
-      }
-      if (responseListener.current) {
-        responseListener.current.remove();
-      }
+      appStateSubscription.remove();
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
-  }, [userUid]);
+  }, [userUid, syncPushToken]);
 
-  return { expoPushToken, fcmToken };
-}
-
-async function registerForPushNotificationsAsync() {
-  let expoToken = '';
-  let deviceToken = '';
-
-    console.log("[FCM] Memulai registrasi notifikasi...");
-    console.log("[FCM] isDevice:", Device.isDevice, "| OS:", Platform.OS);
-    
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('new-orders', {
-        name: 'Pesanan Masuk',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#cafd00',
-        sound: 'notif_driver',
-      });
-      console.log("[FCM] ✅ Notification channel 'new-orders' dibuat");
-    }
-
-    if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      console.log("[FCM] Status izin notifikasi saat ini:", existingStatus);
-      let finalStatus = existingStatus;
-      
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-        console.log("[FCM] Status izin setelah request:", finalStatus);
-      }
-      
-      if (finalStatus !== 'granted') {
-        console.warn('[FCM] ❌ Izin notifikasi DITOLAK oleh user!');
-        return null;
-      }
-
-      try {
-        // Get raw FCM device token (needed for direct Firebase Cloud Messaging)
-        console.log("[FCM] Mengambil device push token...");
-        const devicePushToken = await Notifications.getDevicePushTokenAsync();
-        deviceToken = devicePushToken.data;
-        console.log("[FCM] ✅ Token type:", devicePushToken.type);
-      } catch (e) {
-        console.warn('[FCM] ❌ Gagal mengambil device token:', e);
-      }
-    } else {
-      console.warn('Must use physical device for Push Notifications');
-    }
-
-  return { expoToken, deviceToken };
+  return { fcmToken };
 }
