@@ -95,6 +95,35 @@ const getCurrentPosition = () =>
 // ─── Helper: Sleep / delay ────────────────────────────────────────────────────
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// ─── Helper: Request izin notifikasi (Android 13+) ────────────────────────────
+export const requestNotificationPermission = async () => {
+  if (Platform.OS !== 'android') return true;
+
+  // Android 13+ (API 33) membutuhkan POST_NOTIFICATIONS runtime permission
+  try {
+    const status = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      {
+        title: 'Izin Notifikasi',
+        message:
+          'ARO DRIVE membutuhkan izin notifikasi untuk menampilkan notifikasi pesanan dan status layanan.',
+        buttonPositive: 'Izinkan',
+        buttonNegative: 'Tolak',
+      }
+    );
+    const granted = status === PermissionsAndroid.RESULTS.GRANTED;
+    if (!granted) {
+      console.warn(
+        '[BackgroundService] Izin notifikasi ditolak. Notifikasi mungkin tidak muncul.'
+      );
+    }
+    return granted;
+  } catch (err) {
+    console.error('[BackgroundService] Error saat request notifikasi:', err);
+    return false;
+  }
+};
+
 // ─── Helper: Request izin lokasi background (Android) ─────────────────────────
 export const requestBackgroundLocationPermission = async () => {
   if (Platform.OS !== 'android') return true;
@@ -156,6 +185,9 @@ export const startBackgroundService = async (driverId) => {
     console.log('[BackgroundService] Service sudah berjalan, skip.');
     return;
   }
+
+  // Request izin notifikasi dulu (wajib Android 13+ agar persistent notification muncul)
+  await requestNotificationPermission();
 
   try {
     await BackgroundActions.start(backgroundTask, {

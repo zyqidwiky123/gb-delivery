@@ -1,4 +1,5 @@
 // app/_layout.tsx
+import '../src/notifications/setupNotifications';
 import React from 'react';
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
