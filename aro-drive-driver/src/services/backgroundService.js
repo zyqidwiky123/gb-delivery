@@ -21,14 +21,14 @@ const BACKGROUND_OPTIONS = {
   taskTitle: 'ARO DRIVE Aktif',
   taskDesc: 'Lokasi Anda sedang dipantau untuk menerima pesanan.',
   taskIcon: {
-    name: 'ic_launcher',
-    type: 'mipmap',
+    name: 'notification_icon',
+    type: 'drawable',
   },
   foregroundServiceType: ['location'],
   color: '#a3e635',
   linkingURI: 'arodrivedriver://',
   parameters: {
-    delay: 10000, // interval update lokasi (ms)
+    delay: 10000,
   },
 };
 
@@ -186,8 +186,10 @@ export const startBackgroundService = async (driverId) => {
     return;
   }
 
-  // Request izin notifikasi dulu (wajib Android 13+ agar persistent notification muncul)
-  await requestNotificationPermission();
+  const notifGranted = await requestNotificationPermission();
+  if (!notifGranted) {
+    console.warn('[BackgroundService] Izin notifikasi ditolak — persistent notification mungkin tidak muncul.');
+  }
 
   try {
     await BackgroundActions.start(backgroundTask, {
@@ -197,9 +199,9 @@ export const startBackgroundService = async (driverId) => {
         driverId,
       },
     });
-    console.log('[BackgroundService] ✅ Foreground Service berhasil dimulai.');
+    console.log('[BackgroundService] Foreground Service berhasil dimulai.');
   } catch (err) {
-    console.error('[BackgroundService] ❌ Gagal memulai service:', err);
+    console.error('[BackgroundService] Gagal memulai service:', err);
   }
 };
 
