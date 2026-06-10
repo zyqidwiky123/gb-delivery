@@ -15,15 +15,13 @@ const NEW_ORDER_SOUND = require('../../assets/sounds/notif_driver.mp3');
 
 export { NEW_ORDER_CHANNEL_ID };
 
-// Helper to play notification sound
 export const playNotificationSound = async () => {
   try {
     const audioPlayer = createAudioPlayer(NEW_ORDER_SOUND);
     audioPlayer.volume = 1;
     audioPlayer.play();
-    console.log('[Audio] Successfully played notification sound in foreground');
   } catch (e) {
-    console.warn('[Audio] Failed to play native sound in foreground:', e);
+    console.warn('[Audio] Failed to play notification sound:', e);
   }
 };
 
@@ -31,8 +29,6 @@ export const ensureNewOrderNotificationChannel = initializeNotificationChannels;
 
 export const showNewOrderNotification = async (order = {}) => {
   try {
-    await initializeNotificationChannels();
-
     await notifee.displayNotification({
       id: `new-order-${order.id || Date.now()}`,
       title: 'Ada Order Baru!',
@@ -44,10 +40,8 @@ export const showNewOrderNotification = async (order = {}) => {
       android: {
         channelId: NEW_ORDER_CHANNEL_ID,
         importance: AndroidImportance.HIGH,
-        pressAction: {
-          id: 'default',
-        },
-        smallIcon: 'ic_launcher',
+        pressAction: { id: 'default' },
+        smallIcon: 'notification_icon',
         color: '#cafd00',
         sound: 'notif_driver',
         vibrationPattern: [250, 250, 250],
@@ -61,7 +55,7 @@ export const showNewOrderNotification = async (order = {}) => {
       Vibration.vibrate();
     }
   } catch (e) {
-    console.warn('[PushNotifications] Failed to show local order notification:', e);
+    console.warn('[PushNotifications] Failed to show notification:', e);
   }
 };
 
@@ -80,11 +74,6 @@ async function saveFcmToken(userUid, deviceToken) {
 }
 
 async function registerForPushNotificationsAsync() {
-  console.log('[FCM] Memulai registrasi notifikasi...');
-  console.log('[FCM] isDevice:', Device.isDevice, '| OS:', Platform.OS);
-
-  await initializeNotificationChannels();
-
   if (!Device.isDevice) {
     console.warn('Must use physical device for Push Notifications');
     return null;
@@ -93,9 +82,8 @@ async function registerForPushNotificationsAsync() {
   await notifee.requestPermission();
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  console.log('[FCM] Status izin notifikasi saat ini:', existingStatus);
-
   let finalStatus = existingStatus;
+
   if (existingStatus !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync({
       ios: {
@@ -105,26 +93,20 @@ async function registerForPushNotificationsAsync() {
       },
     });
     finalStatus = status;
-    console.log('[FCM] Status izin setelah request:', finalStatus);
   }
 
   if (finalStatus !== 'granted') {
-    console.warn('[FCM] Izin notifikasi DITOLAK oleh user!');
+    console.warn('[FCM] Izin notifikasi ditolak');
     return null;
   }
 
-  let deviceToken = '';
   try {
     const devicePushToken = await Notifications.getDevicePushTokenAsync();
-    deviceToken = devicePushToken.data;
-    console.log('[FCM] Token type:', devicePushToken.type);
-    console.log('[FCM] Token berhasil didapat:', deviceToken.substring(0, 30) + '...');
+    return { deviceToken: devicePushToken.data };
   } catch (e) {
     console.warn('[FCM] Gagal mengambil device token:', e);
     return null;
   }
-
-  return { deviceToken };
 }
 
 export function usePushNotifications(userUid) {
@@ -142,7 +124,6 @@ export function usePushNotifications(userUid) {
 
       setFcmToken(tokens.deviceToken);
       await saveFcmToken(userUid, tokens.deviceToken);
-      console.log('[FCM] Token tersimpan ke Firestore');
     } catch (err) {
       console.error('[FCM] Error saat registrasi:', err);
     }
@@ -167,7 +148,6 @@ export function usePushNotifications(userUid) {
     });
 
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      console.log('[PushNotifications] Received notification in foreground:', notification);
       const data = notification.request?.content?.data;
       if (data?.type === 'NEW_ORDER') {
         playNotificationSound();

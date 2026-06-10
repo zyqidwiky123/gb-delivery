@@ -87,6 +87,9 @@ export default {
           android: {
             buildArchs: ["arm64-v8a"],
             enableProguardInReleaseBuilds: false,
+            extraMavenRepos: [
+              "../node_modules/@notifee/react-native/android/libs",
+            ],
           },
         },
       ],
