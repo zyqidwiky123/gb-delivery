@@ -387,6 +387,7 @@ function Wallet() {
       )}
 
     </div>
+    </PullToRefresh>
   );
 }
 
