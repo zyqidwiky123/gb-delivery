@@ -320,8 +320,6 @@ function Wallet() {
           </div>
         </section>
 
-      </main>
-
       {/* Top Up Modal */}
       {showTopupModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
