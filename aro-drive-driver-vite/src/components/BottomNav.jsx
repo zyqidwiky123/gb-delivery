@@ -31,7 +31,7 @@ function BottomNav() {
           {currentPath === '/wallet' ? <span className="hidden">EARNINGS</span> : <span className="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-bold mt-1">EARNINGS</span>}
         </Link>
         
-<!-- Account -->
+{/* Account */}
         <Link to="/account" className={currentPath === '/account' ? activeClass : inactiveClass}>
           <span className="material-symbols-outlined" style={currentPath === '/account' ? { fontVariationSettings: "'FILL' 1" } : {}}>account_circle</span>
           {currentPath === '/account' ? <span className="hidden">ACCOUNT</span> : <span className="font-['Inter'] text-[10px] uppercase tracking-[0.05em] font-bold mt-1">ACCOUNT</span>}
