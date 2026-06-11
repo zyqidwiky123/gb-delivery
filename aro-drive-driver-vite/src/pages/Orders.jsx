@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import PullToRefresh from 'react-simple-pull-to-refresh';
-import { listenForAllDriverOrders, listenForCompletedOrders, observeDriverBalance } from '../firebase/orderService';
+import { listenForAllDriverOrders, listenForCompletedOrders } from '../firebase/orderService';
+import { observeDriverBalance } from '../firebase/walletService';
 import { useDriverStore } from '../store/useDriverStore';
 
 function Orders() {
