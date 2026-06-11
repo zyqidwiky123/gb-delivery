@@ -99,6 +99,9 @@ function Wallet() {
     setRefreshFlag(prev => prev + 1);
     toast.success('Data refreshed');
   };
+
+  const handleTopupSubmit = async (e) => {
+    e.preventDefault();
     if (topupAmount < 10000) {
       alert("Minimal top-up adalah Rp 10.000");
       return;
