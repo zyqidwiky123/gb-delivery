@@ -76,7 +76,13 @@ function getDriverOnlineSessionStartMillis(driver) {
 
 function isDriverOnlineSessionExpired(driver, now = Date.now()) {
     const sessionStart = getDriverOnlineSessionStartMillis(driver);
-    if (!sessionStart) return false;
+    if (!sessionStart) {
+        // Tidak ada timestamp sama sekali — kemungkinan data corrupt/set from old app
+        // Cek lastLocationUpdate sebagai fallback; jika tidak ada, anggap expired
+        const lastLoc = getTimestampMillis(driver.lastLocationUpdate);
+        if (!lastLoc) return true;
+        return now - lastLoc >= MAX_DRIVER_ONLINE_SESSION_MS;
+    }
     return now - sessionStart >= MAX_DRIVER_ONLINE_SESSION_MS;
 }
 
@@ -403,14 +409,15 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
                 },
                 data: {
                     type: "NEW_ORDER",
-                    orderId: orderId,
+                    orderId: String(orderId),
                 },
-                android: { 
-                    priority: "high", 
-                    notification: { 
-                        sound: "notif_driver.mp3",
-                        channelId: "new-orders"
-                    } 
+                android: {
+                    priority: "high",
+                    notification: {
+                        channelId: "driver-orders-notifee-v1",
+                        sound: "notif_driver",
+                        priority: "high",
+                    },
                 },
             };
             await admin.messaging().send(message);
@@ -481,7 +488,7 @@ async function getOnlineAvailableDriversCount() {
         const now = Date.now();
         driversSnapshot.forEach(doc => {
             const driver = doc.data();
-            if (!isDriverOnlineSessionExpired(driver, now) && isDriverLocationFresh(driver, now)) {
+            if (!isDriverOnlineSessionExpired(driver, now)) {
                 count += 1;
             }
         });
@@ -536,8 +543,51 @@ exports.onOrderUpdate = onDocumentUpdated("orders/{orderId}", async (event) => {
     const newValue = event.data.after.data();
     const previousValue = event.data.before.data();
 
-    // Check if status changed
-    if (newValue.status === previousValue.status) return null;
+    // Watch for immediate dispatch rejection
+    const dispatchChangedToRejected = newValue.dispatch?.status === "rejected" && previousValue.dispatch?.status !== "rejected";
+
+    // Check if outer status changed
+    if (newValue.status === previousValue.status && !dispatchChangedToRejected) return null;
+
+    if (dispatchChangedToRejected && newValue.status === "searching") {
+        console.log(`[Reject] Order ${event.params.orderId} was rejected by driver. Rotating immediately...`);
+        const dispatch = newValue.dispatch;
+        const rejectedDrivers = dispatch.rejectedDrivers || [];
+        if (dispatch.offeredTo && !rejectedDrivers.includes(dispatch.offeredTo)) {
+            rejectedDrivers.push(dispatch.offeredTo);
+        }
+
+        const updatedDispatch = {
+            ...dispatch,
+            offeredTo: null,
+            offerExpiresAt: null,
+            rejectedDrivers,
+        };
+
+        // Clear the current offer first
+        await admin.firestore().collection("orders").doc(event.params.orderId).update({
+            "dispatch.offeredTo": admin.firestore.FieldValue.delete(),
+            "dispatch.offerExpiresAt": admin.firestore.FieldValue.delete(),
+            "dispatch.rejectedDrivers": rejectedDrivers,
+        });
+
+        const driverFound = await dispatchOrder(event.params.orderId, newValue, updatedDispatch);
+
+        if (!driverFound) {
+            const regionConfig = getDispatchRegionConfig(dispatch.regionType);
+            const startedAt = dispatch.startedSearchingAt ? dispatch.startedSearchingAt.toDate() : (newValue.createdAt?.toDate() || new Date());
+            const elapsedMinutes = (Date.now() - startedAt.getTime()) / 60000;
+            const onlineDriversCount = await getOnlineAvailableDriversCount();
+            
+            if (dispatch.currentRadius >= regionConfig.maxRadius || elapsedMinutes >= regionConfig.maxSearchMinutes || (onlineDriversCount === 0 || rejectedDrivers.length >= onlineDriversCount)) {
+                console.log(`[Reject] Immediate exhaustion/timeout check after rejection for ${event.params.orderId}.`);
+                await setNoDriverStatus(event.params.orderId, newValue);
+            }
+        }
+        
+        // If outer status didn't change, return early since remaining logic depends on outer status
+        if (newValue.status === previousValue.status) return null;
+    }
 
     const { status, customerId, driverId } = newValue;
     const orderId = event.params.orderId;

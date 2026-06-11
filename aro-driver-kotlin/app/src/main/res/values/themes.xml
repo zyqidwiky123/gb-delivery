@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.AroDriver" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/aro_black</item>
+        <item name="android:statusBarColor">@color/aro_black</item>
+    </style>
+</resources>
