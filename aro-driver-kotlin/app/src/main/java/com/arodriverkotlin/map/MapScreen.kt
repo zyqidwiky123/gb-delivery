@@ -3,6 +3,9 @@ package com.arodriverkotlin.map
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +47,7 @@ import com.arodriverkotlin.service.LocationData
 import com.arodriverkotlin.ui.theme.AroGreen
 import com.arodriverkotlin.ui.theme.GlassBg
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -58,6 +62,10 @@ import kotlinx.coroutines.launch
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.tasks.await
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 @Composable
 fun MapScreen(
@@ -74,6 +82,7 @@ fun MapScreen(
     ) { _ -> }
 
     var autoFollow by remember { mutableStateOf(true) }
+    var lastCameraLatLng by remember { mutableStateOf<LatLng?>(null) }
 
     val cameraState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
@@ -82,12 +91,18 @@ fun MapScreen(
         )
     }
 
-    // Auto-follow when driver location updates
+    // Auto-follow when driver location updates (15m threshold to avoid jitter)
     LaunchedEffect(driverLocation) {
         if (driverLocation != null && autoFollow) {
-            cameraState.animate(CameraUpdateFactory.newLatLngZoom(
-                LatLng(driverLocation.lat, driverLocation.lng), 16f
-            ))
+            val current = LatLng(driverLocation.lat, driverLocation.lng)
+            val shouldAnimate = lastCameraLatLng == null || distanceMeters(
+                lastCameraLatLng!!.latitude, lastCameraLatLng!!.longitude,
+                driverLocation.lat, driverLocation.lng
+            ) > 15.0
+            if (shouldAnimate) {
+                cameraState.animate(CameraUpdateFactory.newLatLngZoom(current, 16f))
+                lastCameraLatLng = current
+            }
         }
     }
 
@@ -119,26 +134,42 @@ fun MapScreen(
                 myLocationButtonEnabled = false,
             ),
         ) {
-            if (activeOrder != null) {
-                activeOrder.pickupLat?.let { lat ->
-                    activeOrder.pickupLng?.let { lng ->
-                        Marker(
-                            state = MarkerState(position = LatLng(lat, lng)),
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
-                            title = "Ambil: ${activeOrder.pickupAddress}",
-                            zIndex = 5f,
-                        )
+            val order = activeOrder
+            if (order != null) {
+                val pickups = order.pickups
+                val pickupsDone = order.pickupsDone.toInt()
+                val isPickedUp = order.status == "picked_up"
+
+                if (pickups.isNotEmpty()) {
+                    pickups.forEachIndexed { index, pickup ->
+                        if (pickup.lat != null && pickup.lng != null) {
+                            val isDone = index < pickupsDone
+                            val isActive = index == pickupsDone
+                            Marker(
+                                state = MarkerState(position = LatLng(pickup.lat, pickup.lng)),
+                                icon = createPickupMarkerIcon(index + 1, isActive, isDone),
+                                title = if (isActive) "Ambil: ${pickup.address}" else "Titik ${index + 1}: ${pickup.address}",
+                                snippet = if (isDone) "Sudah dijemput" else if (isActive) "Tujuan anda" else "Menunggu",
+                                zIndex = if (isActive) 6f else 5f,
+                            )
+                        }
                     }
+                } else if (order.pickupLat != null && order.pickupLng != null && !isPickedUp) {
+                    Marker(
+                        state = MarkerState(position = LatLng(order.pickupLat, order.pickupLng)),
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
+                        title = "Ambil: ${order.pickupAddress}",
+                        zIndex = 5f,
+                    )
                 }
-                activeOrder.dropLat?.let { lat ->
-                    activeOrder.dropLng?.let { lng ->
-                        Marker(
-                            state = MarkerState(position = LatLng(lat, lng)),
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
-                            title = "Antar: ${activeOrder.destinationAddress}",
-                            zIndex = 5f,
-                        )
-                    }
+
+                if (isPickedUp && order.dropLat != null && order.dropLng != null) {
+                    Marker(
+                        state = MarkerState(position = LatLng(order.dropLat, order.dropLng)),
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
+                        title = "Antar: ${order.destinationAddress}",
+                        zIndex = 5f,
+                    )
                 }
             }
             if (routePoints.size > 1) {
@@ -181,7 +212,12 @@ fun MapScreen(
                 val dest = when {
                     activeOrder.status == "picked_up" && activeOrder.dropLat != null ->
                         "${activeOrder.dropLat},${activeOrder.dropLng}"
+                    activeOrder.pickups.isNotEmpty() -> {
+                        val target = activeOrder.pickups.getOrNull(activeOrder.pickupsDone.toInt())
+                        if (target?.lat != null && target?.lng != null) "${target.lat},${target.lng}" else null
+                    }
                     activeOrder.pickupLat != null -> "${activeOrder.pickupLat},${activeOrder.pickupLng}"
+                    activeOrder.dropLat != null -> "${activeOrder.dropLat},${activeOrder.dropLng}"
                     else -> null
                 }
                 if (dest != null) {
@@ -204,4 +240,51 @@ fun MapScreen(
             }
         }
     }
+}
+
+private fun createPickupMarkerIcon(number: Int, isActive: Boolean, isDone: Boolean): BitmapDescriptor {
+    val size = 96
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val bgColor = when {
+        isDone -> android.graphics.Color.rgb(120, 120, 120)
+        isActive -> android.graphics.Color.rgb(76, 175, 80)
+        else -> android.graphics.Color.rgb(255, 152, 0)
+    }
+
+    val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = bgColor
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 2f, circlePaint)
+
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, borderPaint)
+
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        textSize = 42f
+        textAlign = Paint.Align.CENTER
+        isFakeBoldText = true
+    }
+    val y = size / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
+    canvas.drawText(number.toString(), size / 2f, y, textPaint)
+
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+private fun distanceMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+    val R = 6371000.0
+    val dLat = Math.toRadians(lat2 - lat1)
+    val dLng = Math.toRadians(lng2 - lng1)
+    val a = sin(dLat / 2) * sin(dLat / 2) +
+            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+            sin(dLng / 2) * sin(dLng / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
 }
