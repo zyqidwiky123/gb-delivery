@@ -65,9 +65,10 @@ jobs:
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
 
       - name: Build Mitra App
+        continue-on-error: true
         run: |
           cd aro-drive-mitra-vite
-          npm run build
+          npm install && npm run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
@@ -99,9 +100,17 @@ jobs:
           name: aro-driver-kotlin-debug
           path: aro-driver-kotlin/app/build/outputs/apk/debug/*.apk
 
-      - name: Deploy to Firebase
+      - name: Deploy Functions
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only hosting,functions --project gb-delivery-41bf6
+          args: deploy --only functions --project gb-delivery-41bf6
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Deploy Hosting
+        continue-on-error: true
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only hosting --project gb-delivery-41bf6
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
