@@ -153,15 +153,11 @@ class ForegroundService : Service() {
 
     private fun ensureIncomingChannel(nm: NotificationManager, soundUri: Uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val existing = nm.getNotificationChannel("aro_drive_incoming")
-            if (existing != null && existing.sound != soundUri) {
-                nm.deleteNotificationChannel("aro_drive_incoming")
-            }
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
             val channel = NotificationChannel(
-                "aro_drive_incoming",
+                "aro_drive_orders",
                 "Pesanan Masuk",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
@@ -194,7 +190,7 @@ class ForegroundService : Service() {
     }
 
     companion object {
-        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming"
+        private const val INCOMING_CHANNEL_ID = "aro_drive_orders"
         private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val NOTIFICATION_ID = 1001
         private const val INCOMING_NOTIFICATION_ID = 1002

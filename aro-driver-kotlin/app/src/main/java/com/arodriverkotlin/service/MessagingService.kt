@@ -39,7 +39,7 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun showHeadsUpNotification(title: String, body: String, orderId: String) {
-        val channelId = "aro_drive_incoming"
+        val channelId = "aro_drive_orders"
         val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
@@ -82,15 +82,11 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun ensureIncomingChannel(nm: NotificationManager, soundUri: Uri) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val existing = nm.getNotificationChannel("aro_drive_incoming")
-            if (existing != null && existing.sound != soundUri) {
-                nm.deleteNotificationChannel("aro_drive_incoming")
-            }
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
             val channel = NotificationChannel(
-                "aro_drive_incoming",
+                "aro_drive_orders",
                 "Pesanan Masuk",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
