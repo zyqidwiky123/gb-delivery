@@ -152,7 +152,8 @@ class ForegroundService : Service() {
     }
 
     private fun ensureIncomingChannel(nm: NotificationManager, soundUri: Uri) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        try {
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
@@ -167,7 +168,7 @@ class ForegroundService : Service() {
                 enableLights(true)
             }
             nm.createNotificationChannel(channel)
-        }
+        } catch (_: Exception) {}
     }
 
     private fun buildNotification(): Notification {
