@@ -76,6 +76,10 @@ import com.arodriverkotlin.ui.theme.SurfaceHigh
 import com.arodriverkotlin.ui.theme.SurfaceLow
 import com.arodriverkotlin.ui.theme.Warning
 import com.arodriverkotlin.viewmodel.DriverViewModel
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 @Composable
 fun HomeScreen(vm: DriverViewModel, state: UiState) {
@@ -91,24 +95,41 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
 
     // Notification sound on new incoming order is now handled by ForegroundService
 
-    // Route polyline from Directions API
+    // Route polyline from Directions API (30m origin / 5m dest throttle)
     var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+    var lastRouteOrigin by remember { mutableStateOf<LatLng?>(null) }
+    var lastRouteDest by remember { mutableStateOf<LatLng?>(null) }
     LaunchedEffect(activeJob?.id, activeJob?.status, loc) {
-        routePoints = emptyList()
         if (activeJob != null && loc != null) {
+            val origin = LatLng(loc.lat, loc.lng)
             val dest = when (activeJob.status) {
                 "picked_up" -> if (activeJob.dropLat != null && activeJob.dropLng != null)
                     LatLng(activeJob.dropLat, activeJob.dropLng) else null
-                else -> if (activeJob.pickupLat != null && activeJob.pickupLng != null)
-                    LatLng(activeJob.pickupLat, activeJob.pickupLng) else null
+                else -> {
+                    val pickups = activeJob.pickups
+                    if (pickups.isNotEmpty()) {
+                        val target = pickups.getOrNull(activeJob.pickupsDone.toInt())
+                        if (target?.lat != null && target?.lng != null) LatLng(target.lat, target.lng) else null
+                    } else if (activeJob.pickupLat != null && activeJob.pickupLng != null)
+                        LatLng(activeJob.pickupLat, activeJob.pickupLng) else null
+                }
             }
-            if (dest != null) {
+            val shouldFetch = dest != null && (
+                routePoints.isEmpty() ||
+                lastRouteOrigin == null || lastRouteDest == null ||
+                distanceMeters(origin.latitude, origin.longitude, lastRouteOrigin!!.latitude, lastRouteOrigin!!.longitude) > 30.0 ||
+                distanceMeters(dest.latitude, dest.longitude, lastRouteDest!!.latitude, lastRouteDest!!.longitude) > 5.0
+            )
+            if (shouldFetch) {
+                routePoints = emptyList()
                 val ai = ctx.packageManager.getApplicationInfo(ctx.packageName, PackageManager.GET_META_DATA)
                 val apiKey = ai.metaData.getString("com.google.android.geo.API_KEY") ?: ""
-                routePoints = DirectionsService.fetchRoute(
-                    LatLng(loc.lat, loc.lng), dest, apiKey
-                )
+                routePoints = DirectionsService.fetchRoute(origin, dest!!, apiKey)
+                lastRouteOrigin = origin
+                lastRouteDest = dest
             }
+        } else {
+            routePoints = emptyList()
         }
     }
 
@@ -466,4 +487,15 @@ private fun ActiveOrderCard(order: DriverOrder, vm: DriverViewModel, onPickupCli
             else -> null
         }
     )
+}
+
+private fun distanceMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+    val R = 6371000.0
+    val dLat = Math.toRadians(lat2 - lat1)
+    val dLng = Math.toRadians(lng2 - lng1)
+    val a = sin(dLat / 2) * sin(dLat / 2) +
+            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+            sin(dLng / 2) * sin(dLng / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
 }
