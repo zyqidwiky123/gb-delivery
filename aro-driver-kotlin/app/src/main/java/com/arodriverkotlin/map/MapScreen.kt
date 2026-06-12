@@ -128,8 +128,8 @@ fun MapScreen(
             properties = MapProperties(
                 isMyLocationEnabled = true,
                 latLngBoundsForCameraTarget = LatLngBounds(
-                    southwest = LatLng(-8.8, 111.0),
-                    northeast = LatLng(-6.7, 114.6),
+                    LatLng(-8.8, 111.0),
+                    LatLng(-6.7, 114.6),
                 ),
             ),
             uiSettings = MapUiSettings(
