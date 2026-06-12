@@ -116,7 +116,14 @@ object OrderService {
         val nextDone = pickupsDone + 1
         val updates = mutableMapOf<String, Any>("pickupsDone" to nextDone)
         if (actualCost > 0) {
-            updates["actualShoppingCost"] = actualCost
+            val snap = db.collection("orders").document(orderId).get().await()
+            val currentShoppingCost = snap.getLong("actualShoppingCost") ?: 0
+            val newShoppingCost = currentShoppingCost + actualCost
+            updates["actualShoppingCost"] = newShoppingCost
+
+            val deliveryFee = snap.getLong("deliveryFee") ?: 0
+            val pickupFee = snap.getLong("pickupFee") ?: 0
+            updates["total"] = newShoppingCost + deliveryFee + pickupFee
         }
         if (nextDone >= kotlin.math.max(1, pickupCount).toLong()) {
             updates["status"] = "picked_up"
