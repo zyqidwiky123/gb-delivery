@@ -270,8 +270,44 @@ exports.onOrderCreated = onDocumentCreated("orders/{orderId}", async (event) => 
     return null;
 });
 
-exports.autoOfflineLongOnlineDrivers = onSchedule("every 5 minutes", async () => {
+exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () => {
     const now = Date.now();
+
+    // 1. Handle stuck "busy" drivers: if busy > 30 min without active order, reset to online
+    const busyDrivers = await admin.firestore().collection("drivers")
+        .where("status", "==", "busy")
+        .get();
+    const stuckBusy = [];
+    for (const doc of busyDrivers.docs) {
+        const driver = doc.data();
+        const updatedAt = getTimestampMillis(driver.updatedAt) || getTimestampMillis(driver.statusChangedAt) || 0;
+        if (updatedAt > 0 && (now - updatedAt) > 30 * 60 * 1000) {
+            // Check if this driver actually has active orders
+            const activeOrders = await admin.firestore().collection("orders")
+                .where("driverId", "==", doc.id)
+                .where("status", "in", ["accepted", "picked_up"])
+                .limit(1)
+                .get();
+            if (activeOrders.empty) {
+                stuckBusy.push(doc.ref);
+            }
+        } else if (updatedAt === 0) {
+            stuckBusy.push(doc.ref);
+        }
+    }
+    if (stuckBusy.length > 0) {
+        const busyBatch = admin.firestore().batch();
+        stuckBusy.forEach(ref => {
+            busyBatch.update(ref, {
+                status: "online",
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        });
+        await busyBatch.commit();
+        console.log(`[AutoOffline] Reset ${stuckBusy.length} stuck busy drivers to online.`);
+    }
+
+    // 2. Handle expired online sessions
     const driversSnapshot = await admin.firestore().collection("drivers")
         .where("status", "==", "online")
         .get();
@@ -286,7 +322,7 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 5 minutes", async () =>
     });
 
     if (expiredDrivers.length === 0) {
-        console.log("[AutoOffline] No long-online drivers found.");
+        if (stuckBusy.length === 0) console.log("[AutoOffline] No long-online drivers found.");
         return null;
     }
 
