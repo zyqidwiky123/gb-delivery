@@ -238,6 +238,19 @@ class DriverViewModel : ViewModel() {
                 val profile = snap.toProfile()
                 _state.value = _state.value.copy(profile = profile, loading = false)
                 listenIncoming(uid, profile.isOnline)
+                if (profile.isOnline && profile.status == "busy") {
+                    db.collection("orders")
+                        .whereEqualTo("driverId", uid)
+                        .whereIn("status", listOf("accepted", "picked_up"))
+                        .get().addOnSuccessListener { orderSnap ->
+                            if (orderSnap.isEmpty) {
+                                db.collection("drivers").document(uid).update(
+                                    "status", "online",
+                                    "updatedAt", FieldValue.serverTimestamp(),
+                                )
+                            }
+                        }
+                }
             }
 
         activeListener = db.collection("orders")
