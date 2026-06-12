@@ -120,7 +120,7 @@ class ForegroundService : Service() {
     private fun showIncomingRingtoneNotification() {
         try {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
+            val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/${R.raw.notifdriver}")
             ensureIncomingChannel(nm, soundUri)
 
             val intent = Intent(this, MainActivity::class.java).apply {

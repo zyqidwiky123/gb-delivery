@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
             } catch (_: Exception) {}
 
             try {
-                val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
+                val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/${R.raw.notifdriver}")
                 val audioAttributes = AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                     .build()
