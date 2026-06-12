@@ -32,12 +32,12 @@ class AroDriverApplication : Application() {
         } catch (_: Exception) {}
 
         try {
-            val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
+            val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
             val incomingChannel = NotificationChannel(
-                "aro_drive_incoming_v2",
+                "aro_drive_incoming_v3",
                 "Pesanan Masuk",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {

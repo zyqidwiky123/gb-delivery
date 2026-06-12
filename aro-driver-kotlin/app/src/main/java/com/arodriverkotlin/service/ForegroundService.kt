@@ -131,7 +131,7 @@ class ForegroundService : Service() {
         try {
             playNotificationSound()
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
+            val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
             ensureIncomingChannel(nm, soundUri)
 
             val intent = Intent(this, MainActivity::class.java).apply {
@@ -164,7 +164,7 @@ class ForegroundService : Service() {
 
     private fun playNotificationSound() {
         try {
-            val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
+            val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
             MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
@@ -188,7 +188,7 @@ class ForegroundService : Service() {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
             val channel = NotificationChannel(
-                "aro_drive_incoming_v2",
+                INCOMING_CHANNEL_ID,
                 "Pesanan Masuk",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
@@ -225,7 +225,7 @@ class ForegroundService : Service() {
         var latestLat: Double? = null
         var latestLng: Double? = null
 
-        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v2"
+        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v3"
         private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val NOTIFICATION_ID = 1001
         private const val INCOMING_NOTIFICATION_ID = 1002
