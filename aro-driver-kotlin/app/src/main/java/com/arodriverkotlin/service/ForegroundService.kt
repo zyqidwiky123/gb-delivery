@@ -2,14 +2,12 @@ package com.arodriverkotlin.service
 
 import android.Manifest
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
@@ -46,7 +44,6 @@ class ForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         
         locationCallback = object : LocationCallback() {
@@ -121,6 +118,8 @@ class ForegroundService : Service() {
     private fun showIncomingRingtoneNotification() {
         try {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
+
             val intent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             }
@@ -128,49 +127,25 @@ class ForegroundService : Service() {
                 this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            val fullScreenPendingIntent = PendingIntent.getActivity(
+                this, 1, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
             val notification = NotificationCompat.Builder(this, INCOMING_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("ARO DRIVE")
                 .setContentText("Ada pesanan baru!")
                 .setAutoCancel(true)
+                .setSound(soundUri)
+                .setVibrate(longArrayOf(0, 300, 150, 300, 150, 300))
                 .setContentIntent(pendingIntent)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .build()
-            nm.notify(System.currentTimeMillis().toInt(), notification)
+            nm.notify(INCOMING_NOTIFICATION_ID, notification)
         } catch (_: Exception) {}
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-            val fgChannel = NotificationChannel(
-                FOREGROUND_CHANNEL_ID,
-                "ARO DRIVE",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Layanan latar belakang ARO DRIVE"
-                setShowBadge(false)
-            }
-            nm.createNotificationChannel(fgChannel)
-
-            val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .build()
-            val incomingChannel = NotificationChannel(
-                INCOMING_CHANNEL_ID,
-                "Pesanan Masuk",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifikasi pesanan baru ARO DRIVE"
-                enableVibration(true)
-                setSound(soundUri, audioAttributes)
-                enableLights(true)
-            }
-            nm.createNotificationChannel(incomingChannel)
-        }
     }
 
     private fun buildNotification(): Notification {
@@ -193,9 +168,10 @@ class ForegroundService : Service() {
     }
 
     companion object {
-        private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val INCOMING_CHANNEL_ID = "aro_drive_incoming"
+        private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val NOTIFICATION_ID = 1001
+        private const val INCOMING_NOTIFICATION_ID = 1002
 
         fun start(ctx: Context, uid: String) {
             val intent = Intent(ctx, ForegroundService::class.java).apply {

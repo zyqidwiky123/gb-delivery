@@ -1,12 +1,9 @@
 package com.arodriverkotlin.service
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.media.AudioAttributes
 import android.net.Uri
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.arodriverkotlin.MainActivity
 import com.arodriverkotlin.R
@@ -42,23 +39,6 @@ class MessagingService : FirebaseMessagingService() {
         val channelId = "aro_drive_incoming"
         val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .build()
-            val channel = NotificationChannel(
-                channelId,
-                "Pesanan Masuk",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifikasi pesanan baru ARO DRIVE"
-                enableVibration(true)
-                setSound(soundUri, audioAttributes)
-                enableLights(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
