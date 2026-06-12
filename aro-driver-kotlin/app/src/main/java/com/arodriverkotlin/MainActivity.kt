@@ -36,35 +36,40 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        try {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-            val fgChannel = NotificationChannel(
-                "aro_drive_foreground_service",
-                "ARO DRIVE",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Layanan latar belakang ARO DRIVE"
-                setShowBadge(false)
-            }
-            nm.createNotificationChannel(fgChannel)
+            try {
+                val fgChannel = NotificationChannel(
+                    "aro_drive_foreground_service",
+                    "ARO DRIVE",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "Layanan latar belakang ARO DRIVE"
+                    setShowBadge(false)
+                }
+                nm.createNotificationChannel(fgChannel)
+            } catch (_: Exception) {}
 
-            val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .build()
-            val incomingChannel = NotificationChannel(
-                "aro_drive_orders",
-                "Pesanan Masuk",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifikasi pesanan baru ARO DRIVE"
-                enableVibration(true)
-                setSound(soundUri, audioAttributes)
-                enableLights(true)
-            }
-            nm.createNotificationChannel(incomingChannel)
-        }
+            try {
+                val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .build()
+                val incomingChannel = NotificationChannel(
+                    "aro_drive_orders",
+                    "Pesanan Masuk",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Notifikasi pesanan baru ARO DRIVE"
+                    enableVibration(true)
+                    setSound(soundUri, audioAttributes)
+                    enableLights(true)
+                }
+                nm.createNotificationChannel(incomingChannel)
+            } catch (_: Exception) {}
+        } catch (_: Exception) {}
     }
 
     private fun requestNotificationPermission() {
