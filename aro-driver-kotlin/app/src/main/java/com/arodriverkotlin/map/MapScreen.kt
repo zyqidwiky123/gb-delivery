@@ -51,6 +51,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
@@ -126,6 +127,10 @@ fun MapScreen(
             cameraPositionState = cameraState,
             properties = MapProperties(
                 isMyLocationEnabled = true,
+                latLngBoundsForCameraTarget = LatLngBounds(
+                    southwest = LatLng(-8.8, 111.0),
+                    northeast = LatLng(-6.7, 114.6),
+                ),
             ),
             uiSettings = MapUiSettings(
                 compassEnabled = false,
