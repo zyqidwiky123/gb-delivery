@@ -124,7 +124,9 @@ class ForegroundService : Service() {
             if (mediaPlayer?.isPlaying == true) return
             mediaPlayer?.release()
             mediaPlayer = MediaPlayer.create(this, R.raw.notifdriver).apply {
-                setOnCompletionListener { it.release() }
+                setOnCompletionListener {
+                    mediaPlayer = null
+                }
                 start()
             }
         } catch (_: Exception) {}
