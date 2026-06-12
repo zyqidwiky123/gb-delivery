@@ -1,9 +1,12 @@
 package com.arodriverkotlin.service
 
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.media.AudioAttributes
 import android.net.Uri
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.arodriverkotlin.MainActivity
 import com.arodriverkotlin.R
@@ -40,6 +43,8 @@ class MessagingService : FirebaseMessagingService() {
         val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
+        ensureIncomingChannel(notificationManager, soundUri)
+
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             putExtra("orderId", orderId)
@@ -73,6 +78,29 @@ class MessagingService : FirebaseMessagingService() {
             .build()
 
         notificationManager.notify(Random.nextInt(), notification)
+    }
+
+    private fun ensureIncomingChannel(nm: NotificationManager, soundUri: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val existing = nm.getNotificationChannel("aro_drive_incoming")
+            if (existing != null && existing.sound != soundUri) {
+                nm.deleteNotificationChannel("aro_drive_incoming")
+            }
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build()
+            val channel = NotificationChannel(
+                "aro_drive_incoming",
+                "Pesanan Masuk",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifikasi pesanan baru ARO DRIVE"
+                enableVibration(true)
+                setSound(soundUri, audioAttributes)
+                enableLights(true)
+            }
+            nm.createNotificationChannel(channel)
+        }
     }
 
     private fun saveToken(token: String) {

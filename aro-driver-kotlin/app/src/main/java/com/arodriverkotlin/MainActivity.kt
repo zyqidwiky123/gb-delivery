@@ -50,6 +50,10 @@ class MainActivity : ComponentActivity() {
             nm.createNotificationChannel(fgChannel)
 
             val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
+            val existing = nm.getNotificationChannel("aro_drive_incoming")
+            if (existing != null && existing.sound != soundUri) {
+                nm.deleteNotificationChannel("aro_drive_incoming")
+            }
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
