@@ -65,6 +65,7 @@ import com.arodriverkotlin.service.rupiah
 import com.google.android.gms.maps.model.LatLng
 import com.arodriverkotlin.R
 import com.arodriverkotlin.ui.components.OrderCard
+import com.arodriverkotlin.ui.components.currentPickupAddress
 import com.arodriverkotlin.ui.components.SummaryCard
 import com.arodriverkotlin.ui.theme.AroBlack
 import com.arodriverkotlin.ui.theme.AroGreen
@@ -425,7 +426,7 @@ private fun IncomingOrderCard(
                 )
             }
             Spacer(Modifier.height(6.dp))
-            Text(order.pickupAddress, color = Muted, fontSize = 11.sp, maxLines = 1)
+            Text(currentPickupAddress(order), color = Muted, fontSize = 11.sp, maxLines = 1)
             Text(order.destinationAddress, color = Muted, fontSize = 11.sp, maxLines = 1)
 
             // Incoming payment detail

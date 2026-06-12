@@ -111,7 +111,7 @@ fun OrderCard(
         }
 
         Spacer(Modifier.height(6.dp))
-        RouteLine(order.pickupAddress, order.destinationAddress)
+        RouteLine(currentPickupAddress(order), order.destinationAddress)
 
         if (order.note.isNotBlank()) {
             Spacer(Modifier.height(6.dp))
@@ -380,4 +380,13 @@ private fun RouteLine(pickup: String, dropoff: String) {
             )
         }
     }
+}
+
+fun currentPickupAddress(order: DriverOrder): String {
+    if (order.pickups.size > 1) {
+        val parts = order.pickupAddress.split(", ")
+        val idx = order.pickupsDone.toInt()
+        if (idx < parts.size) return parts[idx]
+    }
+    return order.pickupAddress
 }

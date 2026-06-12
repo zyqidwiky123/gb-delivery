@@ -35,6 +35,12 @@ object DriverService {
         ).await()
     }
 
+    suspend fun updateOrderLocation(orderId: String, lat: Double, lng: Double) {
+        db.collection("orders").document(orderId).update(
+            "driverLocation", mapOf("lat" to lat, "lng" to lng)
+        ).await()
+    }
+
     suspend fun updateProfile(uid: String, data: Map<String, Any>) {
         db.collection("drivers").document(uid).update(data).await()
     }
