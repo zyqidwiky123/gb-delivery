@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -38,11 +39,14 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun showHeadsUpNotification(title: String, body: String, orderId: String) {
-        val channelId = "aro_driver_orders"
+        val channelId = "aro_drive_incoming"
         val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build()
             val channel = NotificationChannel(
                 channelId,
                 "Pesanan Masuk",
@@ -50,7 +54,7 @@ class MessagingService : FirebaseMessagingService() {
             ).apply {
                 description = "Notifikasi pesanan baru ARO DRIVE"
                 enableVibration(true)
-                setSound(soundUri, null)
+                setSound(soundUri, audioAttributes)
                 enableLights(true)
             }
             notificationManager.createNotificationChannel(channel)

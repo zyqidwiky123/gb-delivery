@@ -9,7 +9,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaPlayer
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
@@ -39,7 +40,6 @@ class ForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var incomingListener: ListenerRegistration? = null
-    private var mediaPlayer: MediaPlayer? = null
     private var currentIncomingCount = 0
 
     private var driverUid: String? = null
@@ -86,7 +86,6 @@ class ForegroundService : Service() {
     override fun onDestroy() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
         incomingListener?.remove()
-        mediaPlayer?.release()
         serviceScope.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         super.onDestroy()
@@ -113,37 +112,64 @@ class ForegroundService : Service() {
                 val docs = snap?.documents ?: emptyList()
                 val count = docs.size
                 if (count > currentIncomingCount) {
-                    playRingtone()
+                    showIncomingRingtoneNotification()
                 }
                 currentIncomingCount = count
             }
     }
 
-    private fun playRingtone() {
+    private fun showIncomingRingtoneNotification() {
         try {
-            if (mediaPlayer?.isPlaying == true) return
-            mediaPlayer?.release()
-            mediaPlayer = MediaPlayer.create(this, R.raw.notifdriver).apply {
-                setOnCompletionListener {
-                    mediaPlayer = null
-                }
-                start()
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             }
+            val pendingIntent = PendingIntent.getActivity(
+                this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val notification = NotificationCompat.Builder(this, INCOMING_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("ARO DRIVE")
+                .setContentText("Ada pesanan baru!")
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .build()
+            nm.notify(System.currentTimeMillis().toInt(), notification)
         } catch (_: Exception) {}
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+            val fgChannel = NotificationChannel(
+                FOREGROUND_CHANNEL_ID,
                 "ARO DRIVE",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Layanan latar belakang ARO DRIVE"
                 setShowBadge(false)
             }
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            nm.createNotificationChannel(channel)
+            nm.createNotificationChannel(fgChannel)
+
+            val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build()
+            val incomingChannel = NotificationChannel(
+                INCOMING_CHANNEL_ID,
+                "Pesanan Masuk",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifikasi pesanan baru ARO DRIVE"
+                enableVibration(true)
+                setSound(soundUri, audioAttributes)
+                enableLights(true)
+            }
+            nm.createNotificationChannel(incomingChannel)
         }
     }
 
@@ -156,7 +182,7 @@ class ForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, FOREGROUND_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("ARO DRIVE")
             .setContentText("Menjalankan layanan latar belakang...")
@@ -167,7 +193,8 @@ class ForegroundService : Service() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "aro_drive_foreground"
+        private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
+        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming"
         private const val NOTIFICATION_ID = 1001
 
         fun start(ctx: Context, uid: String) {
