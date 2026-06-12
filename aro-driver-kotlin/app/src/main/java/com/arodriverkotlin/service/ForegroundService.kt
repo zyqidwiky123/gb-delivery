@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
@@ -119,6 +120,7 @@ class ForegroundService : Service() {
 
     private fun showIncomingRingtoneNotification() {
         try {
+            playNotificationSound()
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
             ensureIncomingChannel(nm, soundUri)
@@ -148,6 +150,25 @@ class ForegroundService : Service() {
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .build()
             nm.notify(INCOMING_NOTIFICATION_ID, notification)
+        } catch (_: Exception) {}
+    }
+
+    private fun playNotificationSound() {
+        try {
+            val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
+            MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                setDataSource(this@ForegroundService, soundUri)
+                setOnPreparedListener { start() }
+                setOnCompletionListener { release() }
+                setOnErrorListener { _, _, _ -> release(); true }
+                prepareAsync()
+            }
         } catch (_: Exception) {}
     }
 
