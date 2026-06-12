@@ -439,21 +439,14 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         try {
             const message = {
                 token: selectedDriver.fcmToken,
-                notification: {
-                    title: "Ada Order Baru! 🛵",
-                    body: `Ayo ambil orderan ARO-${orderId.slice(-5).toUpperCase()}! Jarak: ${selectedDriver.distance.toFixed(1)}km. Kamu punya 60 detik!`,
-                },
                 data: {
                     type: "NEW_ORDER",
                     orderId: String(orderId),
+                    title: "Ada Order Baru! 🛵",
+                    body: `Ayo ambil orderan ARO-${orderId.slice(-5).toUpperCase()}! Jarak: ${selectedDriver.distance.toFixed(1)}km. Kamu punya 60 detik!`,
                 },
                 android: {
                     priority: "high",
-                    notification: {
-                        channelId: "driver-orders-notifee-v1",
-                        sound: "notif_driver",
-                        priority: "high",
-                    },
                 },
             };
             await admin.messaging().send(message);
