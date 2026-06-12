@@ -158,7 +158,7 @@ class ForegroundService : Service() {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
             val channel = NotificationChannel(
-                "aro_drive_orders",
+                "aro_drive_incoming_v2",
                 "Pesanan Masuk",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
@@ -191,7 +191,7 @@ class ForegroundService : Service() {
     }
 
     companion object {
-        private const val INCOMING_CHANNEL_ID = "aro_drive_orders"
+        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v2"
         private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val NOTIFICATION_ID = 1001
         private const val INCOMING_NOTIFICATION_ID = 1002

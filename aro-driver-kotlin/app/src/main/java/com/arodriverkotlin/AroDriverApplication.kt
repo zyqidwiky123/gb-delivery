@@ -37,7 +37,7 @@ class AroDriverApplication : Application() {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
             val incomingChannel = NotificationChannel(
-                "aro_drive_orders",
+                "aro_drive_incoming_v2",
                 "Pesanan Masuk",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
