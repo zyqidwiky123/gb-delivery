@@ -1,6 +1,7 @@
 package com.arodriverkotlin.service
 
 import com.arodriverkotlin.models.BankAccount
+import com.google.firebase.firestore.GeoPoint
 import com.arodriverkotlin.models.CustomerInfo
 import com.arodriverkotlin.models.DriverOrder
 import com.arodriverkotlin.models.DriverProfile
@@ -85,10 +86,8 @@ fun DocumentSnapshot.toOrder(): DriverOrder {
     val sender = get("sender") as? Map<String, Any?>
     val receiver = get("receiver") as? Map<String, Any?>
 
-    val pickupLoc = get("pickupLocation") as? Map<String, Double>
-    val dropLoc = get("destinationLocation") as? Map<String, Double>
-    val merchantLoc = get("merchantLocation") as? Map<String, Double>
-    val sourceLoc = pickupLoc ?: merchantLoc
+    val pickupLoc = extractLocation(get("pickup") ?: get("pickupLocation") ?: get("merchantLocation"))
+    val dropLoc = extractLocation(get("dropoff") ?: get("destinationLocation"))
 
     return DriverOrder(
         id = id,
@@ -127,8 +126,8 @@ fun DocumentSnapshot.toOrder(): DriverOrder {
         items = items,
         itemsRaw = (get("items") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList(),
         note = getString("note") ?: getString("instructions") ?: getString("notes") ?: "",
-        pickupLat = sourceLoc?.get("lat") ?: sourceLoc?.get("latitude"),
-        pickupLng = sourceLoc?.get("lng") ?: sourceLoc?.get("longitude"),
+        pickupLat = pickupLoc?.get("lat") ?: pickupLoc?.get("latitude"),
+        pickupLng = pickupLoc?.get("lng") ?: pickupLoc?.get("longitude"),
         dropLat = dropLoc?.get("lat") ?: dropLoc?.get("latitude"),
         dropLng = dropLoc?.get("lng") ?: dropLoc?.get("longitude"),
         paymentMethod = getString("paymentMethod") ?: "TUNAI",
@@ -150,3 +149,20 @@ fun DocumentSnapshot.toTransaction(): Transaction {
 }
 
 fun Long.rupiah(): String = "Rp %,d".format(this).replace(',', '.')
+
+private fun extractLocation(data: Any?): Map<String, Double>? {
+    return when (data) {
+        is GeoPoint -> mapOf("lat" to data.latitude, "lng" to data.longitude)
+        is Map<*, *> -> {
+            val lat = (data["lat"] as? Number)?.toDouble() ?: (data["latitude"] as? Number)?.toDouble()
+            val lng = (data["lng"] as? Number)?.toDouble() ?: (data["longitude"] as? Number)?.toDouble()
+            if (lat != null && lng != null) mapOf("lat" to lat, "lng" to lng) else null
+        }
+        is List<*> -> {
+            val lat = (data.getOrNull(0) as? Number)?.toDouble()
+            val lng = (data.getOrNull(1) as? Number)?.toDouble()
+            if (lat != null && lng != null) mapOf("lat" to lat, "lng" to lng) else null
+        }
+        else -> null
+    }
+}
