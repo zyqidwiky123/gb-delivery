@@ -85,10 +85,9 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
     }
     val activeJob = state.active.firstOrNull()
 
-    // Cost Input Modal state
-    var showCostModal by remember { mutableStateOf(false) }
-    var costModalOrderId by remember { mutableStateOf("") }
-    var costAmount by remember { mutableStateOf("") }
+        var showCostModal by remember { mutableStateOf(false) }
+        var costModalOrderId by remember { mutableStateOf("") }
+        var costAmount by remember { mutableStateOf("") }
 
     // Notification sound on new incoming order is now handled by ForegroundService
 
@@ -127,6 +126,10 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
         val tabs = listOf("BARU", "AKTIF")
         val incoming = state.incoming
         val activeList = state.active
+
+        LaunchedEffect(activeList.isNotEmpty()) {
+            if (activeList.isNotEmpty()) tab = 1
+        }
 
         Column(
             Modifier
