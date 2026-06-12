@@ -58,9 +58,15 @@ class ForegroundService : Service() {
                 // Update firestore max once every 20 seconds
                 if (now - lastLocationWrite >= 20_000) {
                     lastLocationWrite = now
+                    val lat = loc.latitude
+                    val lng = loc.longitude
                     serviceScope.launch {
                         try {
-                            DriverService.updateLocation(uid, loc.latitude, loc.longitude)
+                            DriverService.updateLocation(uid, lat, lng)
+                            val orderId = currentOrderId
+                            if (orderId != null) {
+                                DriverService.updateOrderLocation(orderId, lat, lng)
+                            }
                         } catch (_: Exception) {}
                     }
                 }
@@ -212,6 +218,8 @@ class ForegroundService : Service() {
     }
 
     companion object {
+        var currentOrderId: String? = null
+
         private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v2"
         private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val NOTIFICATION_ID = 1001

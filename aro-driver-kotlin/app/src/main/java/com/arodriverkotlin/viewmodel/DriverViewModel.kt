@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.arodriverkotlin.models.UiState
 import com.arodriverkotlin.service.AuthService
 import com.arodriverkotlin.service.DriverService
+import com.arodriverkotlin.service.ForegroundService
 import com.arodriverkotlin.service.OrderService
 import com.arodriverkotlin.service.WalletService
 import com.arodriverkotlin.service.toOrder
@@ -89,6 +90,10 @@ class DriverViewModel : ViewModel() {
         lastLocationWrite = now
         try {
             DriverService.updateLocation(uid, lat, lng)
+            val activeOrderId = _state.value.active.firstOrNull()?.id
+            if (activeOrderId != null) {
+                DriverService.updateOrderLocation(activeOrderId, lat, lng)
+            }
         } catch (_: Exception) {}
     }
 
@@ -259,6 +264,7 @@ class DriverViewModel : ViewModel() {
             .addSnapshotListener { snap, _ ->
                 val list = snap?.documents?.map { it.toOrder() } ?: emptyList()
                 _state.value = _state.value.copy(active = list)
+                ForegroundService.currentOrderId = list.firstOrNull()?.id
             }
 
         todayListener = db.collection("orders")
