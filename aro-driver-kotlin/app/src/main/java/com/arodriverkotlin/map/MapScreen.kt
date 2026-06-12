@@ -107,6 +107,27 @@ fun MapScreen(
         }
     }
 
+    // Fit bounds when route first appears to show all points
+    var didFitBounds by remember { mutableStateOf(false) }
+    LaunchedEffect(routePoints, activeOrder) {
+        if (!didFitBounds && routePoints.size > 1 && activeOrder != null && driverLocation != null) {
+            val builder = LatLngBounds.builder()
+            builder.include(LatLng(driverLocation.lat, driverLocation.lng))
+            routePoints.forEach { builder.include(it) }
+            activeOrder.pickups.forEach { p ->
+                if (p.lat != null && p.lng != null) builder.include(LatLng(p.lat, p.lng))
+            }
+            if (activeOrder.pickupLat != null && activeOrder.pickupLng != null)
+                builder.include(LatLng(activeOrder.pickupLat, activeOrder.pickupLng))
+            if (activeOrder.dropLat != null && activeOrder.dropLng != null)
+                builder.include(LatLng(activeOrder.dropLat, activeOrder.dropLng))
+            try {
+                cameraState.animate(CameraUpdateFactory.newLatLngBounds(builder.build(), 120))
+                didFitBounds = true
+            } catch (_: Exception) {}
+        }
+    }
+
     // Request single location update if location is null
     suspend fun requestSingleLocation() {
         try {

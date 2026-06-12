@@ -49,11 +49,14 @@ class ForegroundService : Service() {
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         
-        locationCallback = object : LocationCallback() {
+            locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val loc = result.lastLocation ?: return
                 val uid = driverUid ?: return
                 
+                latestLat = loc.latitude
+                latestLng = loc.longitude
+
                 val now = System.currentTimeMillis()
                 // Update firestore max once every 20 seconds
                 if (now - lastLocationWrite >= 20_000) {
@@ -219,6 +222,8 @@ class ForegroundService : Service() {
 
     companion object {
         var currentOrderId: String? = null
+        var latestLat: Double? = null
+        var latestLng: Double? = null
 
         private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v2"
         private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
