@@ -1,7 +1,11 @@
 package com.arodriverkotlin
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,6 +24,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        createNotificationChannels()
         requestNotificationPermission()
         getFcmToken()
 
@@ -27,6 +32,38 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 AroDriverApp()
             }
+        }
+    }
+
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+            val fgChannel = NotificationChannel(
+                "aro_drive_foreground_service",
+                "ARO DRIVE",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Layanan latar belakang ARO DRIVE"
+                setShowBadge(false)
+            }
+            nm.createNotificationChannel(fgChannel)
+
+            val soundUri = Uri.parse("android.resource://$packageName/${R.raw.notifdriver}")
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build()
+            val incomingChannel = NotificationChannel(
+                "aro_drive_incoming",
+                "Pesanan Masuk",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifikasi pesanan baru ARO DRIVE"
+                enableVibration(true)
+                setSound(soundUri, audioAttributes)
+                enableLights(true)
+            }
+            nm.createNotificationChannel(incomingChannel)
         }
     }
 
