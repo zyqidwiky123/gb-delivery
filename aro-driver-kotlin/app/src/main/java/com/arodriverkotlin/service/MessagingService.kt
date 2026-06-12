@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -39,6 +40,7 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun showHeadsUpNotification(title: String, body: String, orderId: String) {
+        playNotificationSound()
         val channelId = "aro_drive_incoming_v2"
         val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -97,6 +99,25 @@ class MessagingService : FirebaseMessagingService() {
                 enableLights(true)
             }
             nm.createNotificationChannel(channel)
+        } catch (_: Exception) {}
+    }
+
+    private fun playNotificationSound() {
+        try {
+            val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
+            MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                setDataSource(this@MessagingService, soundUri)
+                setOnPreparedListener { start() }
+                setOnCompletionListener { release() }
+                setOnErrorListener { _, _, _ -> release(); true }
+                prepareAsync()
+            }
         } catch (_: Exception) {}
     }
 
