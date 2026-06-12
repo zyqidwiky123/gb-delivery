@@ -40,7 +40,7 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun showHeadsUpNotification(title: String, body: String, orderId: String) {
         val channelId = "aro_drive_incoming_v2"
-        val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/${R.raw.notifdriver}")
+        val soundUri = Uri.parse("android.resource://${resources.getResourcePackageName(R.raw.notifdriver)}/raw/notifdriver")
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         ensureIncomingChannel(notificationManager, soundUri)
