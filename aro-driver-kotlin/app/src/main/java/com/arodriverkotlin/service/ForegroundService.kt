@@ -15,7 +15,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
-import java.io.File
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.arodriverkotlin.MainActivity
@@ -200,17 +199,7 @@ class ForegroundService : Service() {
     }
 
     private fun getNotificationSoundUri(): Uri {
-        val soundFile = File(filesDir, "notifdriver.mp3")
-        if (!soundFile.exists()) {
-            try {
-                resources.openRawResource(R.raw.notifdriver).use { input ->
-                    soundFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-        return Uri.fromFile(soundFile)
+        return Uri.parse("android.resource://${packageName}/${R.raw.notifdriver}")
     }
 
     private fun buildNotification(): Notification {
