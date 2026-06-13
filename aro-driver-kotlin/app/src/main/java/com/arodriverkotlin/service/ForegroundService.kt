@@ -15,6 +15,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import java.io.File
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.arodriverkotlin.MainActivity
@@ -131,7 +132,7 @@ class ForegroundService : Service() {
         try {
             playNotificationSound()
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
+            val soundUri = getNotificationSoundUri()
             ensureIncomingChannel(nm, soundUri)
 
             val intent = Intent(this, MainActivity::class.java).apply {
@@ -164,19 +165,16 @@ class ForegroundService : Service() {
 
     private fun playNotificationSound() {
         try {
-            val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
-            MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                setDataSource(this@ForegroundService, soundUri)
-                setOnPreparedListener { start() }
+            MediaPlayer.create(
+                this,
+                R.raw.notifdriver,
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .build(),
+                0
+            ).apply {
                 setOnCompletionListener { release() }
-                setOnErrorListener { _, _, _ -> release(); true }
-                prepareAsync()
+                start()
             }
         } catch (_: Exception) {}
     }
@@ -199,6 +197,20 @@ class ForegroundService : Service() {
             }
             nm.createNotificationChannel(channel)
         } catch (_: Exception) {}
+    }
+
+    private fun getNotificationSoundUri(): Uri {
+        val soundFile = File(filesDir, "notifdriver.mp3")
+        if (!soundFile.exists()) {
+            try {
+                resources.openRawResource(R.raw.notifdriver).use { input ->
+                    soundFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return Uri.fromFile(soundFile)
     }
 
     private fun buildNotification(): Notification {

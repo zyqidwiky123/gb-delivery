@@ -9,6 +9,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import java.io.File
 import com.arodriverkotlin.MainActivity
 import com.arodriverkotlin.R
 import com.google.firebase.firestore.FieldValue
@@ -42,7 +43,7 @@ class MessagingService : FirebaseMessagingService() {
     private fun showHeadsUpNotification(title: String, body: String, orderId: String) {
         playNotificationSound()
         val channelId = "aro_drive_incoming_v3"
-        val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
+        val soundUri = getNotificationSoundUri()
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         ensureIncomingChannel(notificationManager, soundUri)
@@ -104,21 +105,32 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun playNotificationSound() {
         try {
-            val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
-            MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                setDataSource(this@MessagingService, soundUri)
-                setOnPreparedListener { start() }
+            MediaPlayer.create(
+                this,
+                R.raw.notifdriver,
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .build(),
+                0
+            ).apply {
                 setOnCompletionListener { release() }
-                setOnErrorListener { _, _, _ -> release(); true }
-                prepareAsync()
+                start()
             }
         } catch (_: Exception) {}
+    }
+
+    private fun getNotificationSoundUri(): Uri {
+        val soundFile = File(filesDir, "notifdriver.mp3")
+        if (!soundFile.exists()) {
+            try {
+                resources.openRawResource(R.raw.notifdriver).use { input ->
+                    soundFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return Uri.fromFile(soundFile)
     }
 
     private fun saveToken(token: String) {

@@ -6,12 +6,27 @@ import android.app.NotificationManager
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import java.io.File
 
 class AroDriverApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+    }
+
+    private fun getNotificationSoundUri(): Uri {
+        val soundFile = File(filesDir, "notifdriver.mp3")
+        if (!soundFile.exists()) {
+            try {
+                resources.openRawResource(R.raw.notifdriver).use { input ->
+                    soundFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return Uri.fromFile(soundFile)
     }
 
     private fun createNotificationChannels() {
@@ -32,7 +47,7 @@ class AroDriverApplication : Application() {
         } catch (_: Exception) {}
 
         try {
-            val soundUri = Uri.parse("android.resource://${packageName}/raw/notifdriver")
+            val soundUri = getNotificationSoundUri()
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
