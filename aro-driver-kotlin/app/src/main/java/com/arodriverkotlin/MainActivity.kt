@@ -13,7 +13,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.google.firebase.messaging.FirebaseMessaging
+import java.io.File
 
 class MainActivity : ComponentActivity() {
 
@@ -73,7 +75,17 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun getNotificationSoundUri(): Uri {
-        return Uri.parse("android.resource://${packageName}/${R.raw.notifdriver}")
+        val soundFile = File(filesDir, "notifdriver.mp3")
+        if (!soundFile.exists()) {
+            try {
+                resources.openRawResource(R.raw.notifdriver).use { input ->
+                    soundFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return FileProvider.getUriForFile(this, "${packageName}.fileprovider", soundFile)
     }
 
     private fun requestNotificationPermission() {

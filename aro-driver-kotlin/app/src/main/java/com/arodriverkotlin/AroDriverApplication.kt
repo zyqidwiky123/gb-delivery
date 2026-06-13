@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import androidx.core.content.FileProvider
+import java.io.File
 
 class AroDriverApplication : Application() {
 
@@ -15,7 +17,17 @@ class AroDriverApplication : Application() {
     }
 
     private fun getNotificationSoundUri(): Uri {
-        return Uri.parse("android.resource://${packageName}/${R.raw.notifdriver}")
+        val soundFile = File(filesDir, "notifdriver.mp3")
+        if (!soundFile.exists()) {
+            try {
+                resources.openRawResource(R.raw.notifdriver).use { input ->
+                    soundFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return FileProvider.getUriForFile(this, "${packageName}.fileprovider", soundFile)
     }
 
     private fun createNotificationChannels() {

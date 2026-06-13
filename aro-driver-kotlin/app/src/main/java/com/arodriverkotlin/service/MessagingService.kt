@@ -9,7 +9,9 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.FileProvider
 import com.arodriverkotlin.MainActivity
+import java.io.File
 import com.arodriverkotlin.R
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -119,7 +121,17 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun getNotificationSoundUri(): Uri {
-        return Uri.parse("android.resource://${packageName}/${R.raw.notifdriver}")
+        val soundFile = File(filesDir, "notifdriver.mp3")
+        if (!soundFile.exists()) {
+            try {
+                resources.openRawResource(R.raw.notifdriver).use { input ->
+                    soundFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return FileProvider.getUriForFile(this, "${packageName}.fileprovider", soundFile)
     }
 
     private fun saveToken(token: String) {
