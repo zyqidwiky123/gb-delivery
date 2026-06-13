@@ -3,31 +3,13 @@ package com.arodriverkotlin
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.media.AudioAttributes
-import android.net.Uri
 import android.os.Build
-import androidx.core.content.FileProvider
-import java.io.File
 
 class AroDriverApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
-    }
-
-    private fun getNotificationSoundUri(): Uri {
-        val soundFile = File(filesDir, "notifdriver.mp3")
-        if (!soundFile.exists()) {
-            try {
-                resources.openRawResource(R.raw.notifdriver).use { input ->
-                    soundFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-        return FileProvider.getUriForFile(this, "${packageName}.fileprovider", soundFile)
     }
 
     private fun createNotificationChannels() {
@@ -48,10 +30,6 @@ class AroDriverApplication : Application() {
         } catch (_: Exception) {}
 
         try {
-            val soundUri = getNotificationSoundUri()
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .build()
             val incomingChannel = NotificationChannel(
                 "aro_drive_incoming_v3",
                 "Pesanan Masuk",
@@ -59,7 +37,7 @@ class AroDriverApplication : Application() {
             ).apply {
                 description = "Notifikasi pesanan baru ARO DRIVE"
                 enableVibration(true)
-                setSound(soundUri, audioAttributes)
+                setSound(null, null)
                 enableLights(true)
             }
             nm.createNotificationChannel(incomingChannel)
