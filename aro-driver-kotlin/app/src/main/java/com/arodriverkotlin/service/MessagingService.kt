@@ -6,12 +6,9 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.content.FileProvider
 import com.arodriverkotlin.MainActivity
-import java.io.File
 import com.arodriverkotlin.R
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -44,10 +41,9 @@ class MessagingService : FirebaseMessagingService() {
     private fun showHeadsUpNotification(title: String, body: String, orderId: String) {
         playNotificationSound()
         val channelId = "aro_drive_incoming_v3"
-        val soundUri = getNotificationSoundUri()
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        ensureIncomingChannel(notificationManager, soundUri)
+        ensureIncomingChannel(notificationManager)
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
@@ -73,7 +69,6 @@ class MessagingService : FirebaseMessagingService() {
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)
-            .setSound(soundUri)
             .setVibrate(longArrayOf(0, 300, 150, 300, 150, 300))
             .setContentIntent(pendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true)
@@ -84,12 +79,9 @@ class MessagingService : FirebaseMessagingService() {
         notificationManager.notify(Random.nextInt(), notification)
     }
 
-    private fun ensureIncomingChannel(nm: NotificationManager, soundUri: Uri) {
+    private fun ensureIncomingChannel(nm: NotificationManager) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         try {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .build()
             val channel = NotificationChannel(
                 "aro_drive_incoming_v3",
                 "Pesanan Masuk",
@@ -97,7 +89,7 @@ class MessagingService : FirebaseMessagingService() {
             ).apply {
                 description = "Notifikasi pesanan baru ARO DRIVE"
                 enableVibration(true)
-                setSound(soundUri, audioAttributes)
+                setSound(null, null)
                 enableLights(true)
             }
             nm.createNotificationChannel(channel)
@@ -118,20 +110,6 @@ class MessagingService : FirebaseMessagingService() {
                 start()
             }
         } catch (_: Exception) {}
-    }
-
-    private fun getNotificationSoundUri(): Uri {
-        val soundFile = File(filesDir, "notifdriver.mp3")
-        if (!soundFile.exists()) {
-            try {
-                resources.openRawResource(R.raw.notifdriver).use { input ->
-                    soundFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-        return FileProvider.getUriForFile(this, "${packageName}.fileprovider", soundFile)
     }
 
     private fun saveToken(token: String) {
