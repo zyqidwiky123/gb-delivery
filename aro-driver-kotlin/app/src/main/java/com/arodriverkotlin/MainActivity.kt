@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import java.io.File
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
@@ -74,17 +73,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun getNotificationSoundUri(): Uri {
-        val soundFile = File(filesDir, "notifdriver.mp3")
-        if (!soundFile.exists()) {
-            try {
-                resources.openRawResource(R.raw.notifdriver).use { input ->
-                    soundFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-        return Uri.fromFile(soundFile)
+        return Uri.parse("android.resource://${packageName}/${R.raw.notifdriver}")
     }
 
     private fun requestNotificationPermission() {
