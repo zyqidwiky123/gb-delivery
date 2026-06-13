@@ -17,6 +17,8 @@ import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
 import com.arodriverkotlin.MainActivity
 import com.arodriverkotlin.R
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -199,7 +201,17 @@ class ForegroundService : Service() {
     }
 
     private fun getNotificationSoundUri(): Uri {
-        return Uri.parse("android.resource://${packageName}/${R.raw.notifdriver}")
+        val soundFile = File(filesDir, "notifdriver.mp3")
+        if (!soundFile.exists()) {
+            try {
+                resources.openRawResource(R.raw.notifdriver).use { input ->
+                    soundFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return FileProvider.getUriForFile(this, "${packageName}.fileprovider", soundFile)
     }
 
     private fun buildNotification(): Notification {
