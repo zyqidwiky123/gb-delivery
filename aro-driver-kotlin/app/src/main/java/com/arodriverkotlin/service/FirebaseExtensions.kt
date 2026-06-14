@@ -55,11 +55,16 @@ fun DocumentSnapshot.toOrder(): DriverOrder {
     val dispatch = get("dispatch") as? Map<String, Any?>
     val pickupsRaw = get("pickups") as? List<Map<String, Any?>>
     val pickups = pickupsRaw?.map { p ->
-        val loc = p["location"] as? Map<String, Double>
+        val lat = (p["lat"] as? Number)?.toDouble()
+            ?: (p["latitude"] as? Number)?.toDouble()
+            ?: ((p["location"] as? Map<*, *>)?.get("lat") as? Number)?.toDouble()
+        val lng = (p["lng"] as? Number)?.toDouble()
+            ?: (p["longitude"] as? Number)?.toDouble()
+            ?: ((p["location"] as? Map<*, *>)?.get("lng") as? Number)?.toDouble()
         PickupPoint(
             address = p["address"] as? String ?: "",
-            lat = loc?.get("lat") ?: loc?.get("latitude"),
-            lng = loc?.get("lng") ?: loc?.get("longitude"),
+            lat = lat,
+            lng = lng,
         )
     } ?: emptyList()
     val pickupCount = (pickupsRaw ?: (get("shopLocations") as? List<*>))?.size ?: 1

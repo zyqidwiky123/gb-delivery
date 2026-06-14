@@ -106,17 +106,16 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
     LaunchedEffect(activeJob?.id, activeJob?.status, loc) {
         if (activeJob != null && loc != null) {
             val origin = LatLng(loc.lat, loc.lng)
+            val pickupTarget = if (activeJob.pickups.isNotEmpty()) {
+                    val idx = activeJob.pickupsDone.toInt()
+                    val target = activeJob.pickups.getOrNull(idx)
+                    if (target?.lat != null && target?.lng != null) LatLng(target.lat, target.lng) else null
+                } else if (activeJob.pickupLat != null && activeJob.pickupLng != null)
+                    LatLng(activeJob.pickupLat, activeJob.pickupLng) else null
             val dest = when (activeJob.status) {
                 "picked_up" -> if (activeJob.dropLat != null && activeJob.dropLng != null)
                     LatLng(activeJob.dropLat, activeJob.dropLng) else null
-                else -> {
-                    val pickups = activeJob.pickups
-                    if (pickups.isNotEmpty()) {
-                        val target = pickups.getOrNull(activeJob.pickupsDone.toInt())
-                        if (target?.lat != null && target?.lng != null) LatLng(target.lat, target.lng) else null
-                    } else if (activeJob.pickupLat != null && activeJob.pickupLng != null)
-                        LatLng(activeJob.pickupLat, activeJob.pickupLng) else null
-                }
+                else -> pickupTarget
             }
             val shouldFetch = dest != null && (
                 routePoints.isEmpty() ||
