@@ -74,6 +74,15 @@ object OrderService {
         }
     }
 
+    suspend fun arriveAtPickup(orderId: String) {
+        db.collection("orders").document(orderId).update(
+            mapOf(
+                "status" to "arriving",
+                "arrivingAt" to FieldValue.serverTimestamp(),
+            )
+        ).await()
+    }
+
     suspend fun rejectOrder(orderId: String) {
         db.collection("orders").document(orderId).update(
             mapOf(

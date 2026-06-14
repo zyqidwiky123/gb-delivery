@@ -478,6 +478,16 @@ private fun ActiveOrderCard(order: DriverOrder, vm: DriverViewModel, onPickupCli
         order = order,
         primary = when (order.status) {
             "accepted" -> {
+                val isArriving = order.pickupsDone == 0L && order.status == "accepted"
+                if (isArriving) "TIBA" to { vm.arriveOrder(order.id) }
+                else {
+                    val multiPickupText = if (order.pickupCount > 1)
+                        "KONFIRMASI JEMPUT (${order.pickupsDone + 1}/${order.pickupCount})"
+                    else "AMBIL"
+                    multiPickupText to onPickupClick
+                }
+            }
+            "arriving" -> {
                 val multiPickupText = if (order.pickupCount > 1)
                     "KONFIRMASI JEMPUT (${order.pickupsDone + 1}/${order.pickupCount})"
                 else "AMBIL"
@@ -488,6 +498,7 @@ private fun ActiveOrderCard(order: DriverOrder, vm: DriverViewModel, onPickupCli
         },
         secondary = when (order.status) {
             "accepted" -> "BATAL" to { vm.cancelOrder(order.id, "Batal oleh driver") }
+            "arriving" -> "BATAL" to { vm.cancelOrder(order.id, "Batal oleh driver") }
             else -> null
         }
     )

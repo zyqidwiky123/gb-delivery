@@ -108,6 +108,13 @@ class DriverViewModel : ViewModel() {
         }
     }
 
+    fun arriveOrder(orderId: String) = viewModelScope.launch {
+        try {
+            OrderService.arriveAtPickup(orderId)
+            postMessage("Status tiba diperbarui.")
+        } catch (_: Exception) {}
+    }
+
     fun cancelOrder(orderId: String, reason: String) = viewModelScope.launch {
         val uid = _state.value.userId ?: return@launch
         val profile = _state.value.profile ?: return@launch
@@ -246,7 +253,7 @@ class DriverViewModel : ViewModel() {
                 if (profile.isOnline && profile.status == "busy") {
                     db.collection("orders")
                         .whereEqualTo("driverId", uid)
-                        .whereIn("status", listOf("accepted", "picked_up"))
+                        .whereIn("status", listOf("accepted", "arriving", "picked_up"))
                         .get().addOnSuccessListener { orderSnap ->
                             if (orderSnap.isEmpty) {
                                 db.collection("drivers").document(uid).update(
@@ -260,7 +267,7 @@ class DriverViewModel : ViewModel() {
 
         activeListener = db.collection("orders")
             .whereEqualTo("driverId", uid)
-            .whereIn("status", listOf("accepted", "picked_up"))
+            .whereIn("status", listOf("accepted", "arriving", "picked_up"))
             .addSnapshotListener { snap, _ ->
                 val list = snap?.documents?.map { it.toOrder() } ?: emptyList()
                 _state.value = _state.value.copy(active = list)
