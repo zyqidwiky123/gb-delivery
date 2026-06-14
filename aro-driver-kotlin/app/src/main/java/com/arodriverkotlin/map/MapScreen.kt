@@ -166,19 +166,18 @@ fun MapScreen(
                 val pickupsDone = order.pickupsDone.toInt()
                 val isPickedUp = order.status == "picked_up"
 
-                if (pickups.isNotEmpty()) {
-                    pickups.forEachIndexed { index, pickup ->
-                        if (pickup.lat != null && pickup.lng != null) {
-                            val isDone = index < pickupsDone
-                            val isActive = index == pickupsDone
-                            Marker(
-                                state = MarkerState(position = LatLng(pickup.lat, pickup.lng)),
-                                icon = createPickupMarkerIcon(index + 1, isActive, isDone),
-                                title = if (isActive) "Ambil: ${pickup.address}" else "Titik ${index + 1}: ${pickup.address}",
-                                snippet = if (isDone) "Sudah dijemput" else if (isActive) "Tujuan anda" else "Menunggu",
-                                zIndex = if (isActive) 6f else 5f,
-                            )
-                        }
+                val validPickups = pickups.filter { it.lat != null && it.lng != null }
+                if (validPickups.isNotEmpty()) {
+                    validPickups.forEachIndexed { index, pickup ->
+                        val isDone = index < pickupsDone
+                        val isActive = index == pickupsDone
+                        Marker(
+                            state = MarkerState(position = LatLng(pickup.lat!!, pickup.lng!!)),
+                            icon = createPickupMarkerIcon(index + 1, isActive, isDone),
+                            title = if (isActive) "Ambil: ${pickup.address}" else "Titik ${index + 1}: ${pickup.address}",
+                            snippet = if (isDone) "Sudah dijemput" else if (isActive) "Tujuan anda" else "Menunggu",
+                            zIndex = if (isActive) 6f else 5f,
+                        )
                     }
                 } else if (order.pickupLat != null && order.pickupLng != null && !isPickedUp) {
                     Marker(
@@ -235,13 +234,15 @@ fun MapScreen(
             }
 
             if (activeOrder != null && driverLocation != null) {
+                val pickupTarget = if (activeOrder.pickups.isNotEmpty()) {
+                    val idx = activeOrder.pickupsDone.toInt()
+                    val target = activeOrder.pickups.getOrNull(idx)
+                    if (target?.lat != null && target?.lng != null) "${target.lat},${target.lng}" else null
+                } else null
                 val dest = when {
                     activeOrder.status == "picked_up" && activeOrder.dropLat != null ->
                         "${activeOrder.dropLat},${activeOrder.dropLng}"
-                    activeOrder.pickups.isNotEmpty() -> {
-                        val target = activeOrder.pickups.getOrNull(activeOrder.pickupsDone.toInt())
-                        if (target?.lat != null && target?.lng != null) "${target.lat},${target.lng}" else null
-                    }
+                    pickupTarget != null -> pickupTarget
                     activeOrder.pickupLat != null -> "${activeOrder.pickupLat},${activeOrder.pickupLng}"
                     activeOrder.dropLat != null -> "${activeOrder.dropLat},${activeOrder.dropLng}"
                     else -> null
