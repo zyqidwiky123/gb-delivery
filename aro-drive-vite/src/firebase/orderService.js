@@ -45,8 +45,12 @@ export const createOrder = async (orderData) => {
 
 
 // 2. Listen for Incoming Orders (Driver)
-export const listenForAvailableOrders = (callback) => {
-  const q = query(collection(db, "orders"), where("status", "==", "searching"));
+export const listenForAvailableOrders = (driverId, callback) => {
+  const q = query(
+    collection(db, "orders"),
+    where("status", "==", "searching"),
+    where("dispatch.offeredTo", "==", driverId)
+  );
   return onSnapshot(q, (snapshot) => {
     const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(orders);
