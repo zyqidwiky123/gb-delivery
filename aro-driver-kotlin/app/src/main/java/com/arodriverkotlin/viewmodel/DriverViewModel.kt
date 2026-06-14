@@ -340,8 +340,8 @@ class DriverViewModel : ViewModel() {
                         } catch (_: Exception) {}
                     }
                     // Location heartbeat: ensure lastLocationUpdate stays fresh
-                    val lat = _state.value.currentLat
-                    val lng = _state.value.currentLng
+                    val lat = _state.value.currentLat ?: ForegroundService.latestLat
+                    val lng = _state.value.currentLng ?: ForegroundService.latestLng
                     if (lat != null && lng != null) {
                         try {
                             DriverService.updateLocation(uid, lat, lng)
