@@ -27,11 +27,12 @@ object DriverService {
     }
 
     suspend fun updateLocation(uid: String, lat: Double, lng: Double) {
-        db.collection("drivers").document(uid).update(
+        db.collection("drivers").document(uid).set(
             mapOf(
                 "location" to mapOf("lat" to lat, "lng" to lng),
                 "lastLocationUpdate" to FieldValue.serverTimestamp(),
-            )
+            ),
+            com.google.firebase.firestore.SetOptions.merge()
         ).await()
     }
 
