@@ -73,7 +73,7 @@ function DriverHome() {
       return;
     }
 
-    const unsubscribe = listenForAvailableOrders((data) => {
+    const unsubscribe = listenForAvailableOrders(user.id, (data) => {
       setOrders(data);
     });
 
