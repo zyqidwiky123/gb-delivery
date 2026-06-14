@@ -318,7 +318,7 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
             // Check if this driver actually has active orders
             const activeOrders = await admin.firestore().collection("orders")
                 .where("driverId", "==", doc.id)
-                .where("status", "in", ["accepted", "picked_up"])
+                .where("status", "in", ["accepted", "arriving", "picked_up"])
                 .limit(1)
                 .get();
             if (activeOrders.empty) {
