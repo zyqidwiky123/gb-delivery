@@ -7,6 +7,7 @@ export const useAdminStore = create((set, get) => ({
   // Pricing Settings
   baseFare: 10000,
   ratePerKm: 2500,
+  minDistance: 3.5,
   weightFareRate: 2000, // Tarif per kelipatan 2 KG (setelah 1 KG pertama)
   adminWhatsApp: "6285748343842",
   categories: ['All', 'Makanan', 'Minuman', 'Camilan', 'Nasi', 'Mie', 'Bakso', 'Seblak', 'Ayam', 'Bebek', 'Cafe', 'Pecel', 'Lesehan', 'Pentol', 'Lalapan'],
@@ -163,6 +164,7 @@ export const useAdminStore = create((set, get) => ({
         set({ 
           baseFare: jek.baseFare || 10000,
           ratePerKm: jek.ratePerKm || 2500,
+          minDistance: jek.minDistance || 3.5,
           weightFareRate: send.weightFareRate || 2000,
           serviceFeePercent: 0 // Explicitly set to 0 as per previous user request
         });
@@ -175,26 +177,21 @@ export const useAdminStore = create((set, get) => ({
     };
   },
 
-  updatePricing: async (base, rate, serviceFee, weightFare) => {
+  updatePricing: async (base, rate, serviceFee, weightFare, minDistance = 3.5) => {
     set({ isLoading: true });
     try {
-      // Update settings/pricing document to match Admin Dashboard structure
       await updateDoc(doc(db, "settings", "pricing"), {
         jek: {
           baseFare: base,
           ratePerKm: rate,
-          minDistance: 3.5 // Default for Motor
+          minDistance
         },
         send: {
-          baseFare: 8000, 
-          ratePerKm: 2000,
           weightFareRate: weightFare
         },
         tip: {
-          ratePerKm: 3000, // Preserve current if possible, but store.js uses it
           weightFareRate: weightFare
         },
-        // Optionally update other services or leave as is if not part of this "Global" UI
         updatedAt: new Date()
       });
       set({ baseFare: base, ratePerKm: rate, serviceFeePercent: serviceFee, weightFareRate: weightFare });
