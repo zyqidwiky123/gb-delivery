@@ -4,10 +4,11 @@ import { useAdminStore } from '../store/adminStore';
 
 function AdminSettings() {
   const navigate = useNavigate();
-  const { baseFare, ratePerKm, weightFareRate, serviceFeePercent, updatePricing, isLoading } = useAdminStore();
+  const { baseFare, ratePerKm, minDistance, weightFareRate, serviceFeePercent, updatePricing, isLoading } = useAdminStore();
   
   const [newBaseFare, setNewBaseFare] = useState(baseFare);
   const [newRatePerKm, setNewRatePerKm] = useState(ratePerKm);
+  const [newMinDistance, setNewMinDistance] = useState(minDistance);
   const [newWeightFareRate, setNewWeightFareRate] = useState(weightFareRate);
   const [newServiceFeePercent, setNewServiceFeePercent] = useState(serviceFeePercent);
   const [saved, setSaved] = useState(false);
@@ -16,9 +17,10 @@ function AdminSettings() {
   useEffect(() => {
     setNewBaseFare(baseFare);
     setNewRatePerKm(ratePerKm);
+    setNewMinDistance(minDistance);
     setNewWeightFareRate(weightFareRate);
     setNewServiceFeePercent(serviceFeePercent);
-  }, [baseFare, ratePerKm, weightFareRate, serviceFeePercent]);
+  }, [baseFare, ratePerKm, minDistance, weightFareRate, serviceFeePercent]);
 
   const handleSave = async () => {
     try {
@@ -26,7 +28,8 @@ function AdminSettings() {
         Number(newBaseFare), 
         Number(newRatePerKm), 
         Number(newServiceFeePercent),
-        Number(newWeightFareRate)
+        Number(newWeightFareRate),
+        Number(newMinDistance)
       );
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -89,14 +92,30 @@ function AdminSettings() {
                     placeholder="10000"
                  />
               </div>
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 leading-relaxed">Dikenakan untuk 3.5 KM pertama perjalanan.</p>
-           </div>
+<p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 leading-relaxed">Dikenakan untuk {newMinDistance || 3.5} KM pertama perjalanan.</p>
+            </div>
 
-           <div className="space-y-4 pt-4">
-              <div className="flex justify-between items-center px-2">
-                 <h3 className="text-sm font-black uppercase tracking-widest text-[#f3ffca]">Tarif Tambahan / KM</h3>
-                 <span className="material-symbols-outlined text-zinc-600">trending_up</span>
-              </div>
+            <div className="space-y-4 pt-4">
+               <div className="flex justify-between items-center px-2">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-[#f3ffca]">Jarak Minimal (KM)</h3>
+                  <span className="material-symbols-outlined text-zinc-600">straighten</span>
+               </div>
+               <input 
+                  type="number" 
+                  value={newMinDistance} 
+                  onChange={e => setNewMinDistance(e.target.value)}
+                  className="w-full bg-background border border-on-background/10 rounded-3xl py-6 px-6 font-headline font-black text-2xl italic text-on-background focus:border-primary/50 focus:ring-0 transition-all" 
+                  placeholder="3.5"
+                  step="0.5"
+               />
+               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 leading-relaxed">Kilometer pertama yang dikenakan base fare. Minimum 1 KM.</p>
+            </div>
+
+            <div className="space-y-4 pt-4">
+               <div className="flex justify-between items-center px-2">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-[#f3ffca]">Tarif Tambahan / KM</h3>
+                  <span className="material-symbols-outlined text-zinc-600">trending_up</span>
+               </div>
               <div className="relative group">
                  <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
                     <span className="text-zinc-500 font-bold text-sm tracking-widest">Rp</span>
@@ -109,7 +128,7 @@ function AdminSettings() {
                     placeholder="2500"
                  />
               </div>
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 leading-relaxed">Dikenakan untuk setiap kilometer tambahan setelah 3.5 KM pertama.</p>
+              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 leading-relaxed">Dikenakan untuk setiap kilometer tambahan setelah {newMinDistance || 3.5} KM pertama.</p>
            </div>
 
            <div className="space-y-4 pt-4">
@@ -186,9 +205,9 @@ function AdminSettings() {
               <div>
                  <p className="text-xs text-on-background/60 font-bold">Simulasi 10 KM:</p>
                  <div className="space-y-1">
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase">Subtotal + Ongkir: Rp {(Number(newBaseFare) + (10 - 3.5) * Number(newRatePerKm)).toLocaleString()}</p>
-                    <p className="text-[10px] text-red-400/40 font-bold uppercase line-through">Biaya Layanan ({newServiceFeePercent}%): Rp {Math.round(((Number(newBaseFare) + (10 - 3.5) * Number(newRatePerKm)) * (Number(newServiceFeePercent) / 100)) / 1000) * 1000}</p>
-                    <p className="text-xl font-headline font-black italic text-on-background">TOTAL: Rp {( (Number(newBaseFare) + (10 - 3.5) * Number(newRatePerKm)) ).toLocaleString()}</p>
+                     <p className="text-[10px] text-zinc-500 font-bold uppercase">Subtotal + Ongkir: Rp {(Number(newBaseFare) + Math.max(0, 10 - (newMinDistance || 3.5)) * Number(newRatePerKm)).toLocaleString()}</p>
+                     <p className="text-[10px] text-red-400/40 font-bold uppercase line-through">Biaya Layanan ({newServiceFeePercent}%): Rp {Math.round(((Number(newBaseFare) + Math.max(0, 10 - (newMinDistance || 3.5)) * Number(newRatePerKm)) * (Number(newServiceFeePercent) / 100)) / 1000) * 1000}</p>
+                     <p className="text-xl font-headline font-black italic text-on-background">TOTAL: Rp {( (Number(newBaseFare) + Math.max(0, 10 - (newMinDistance || 3.5)) * Number(newRatePerKm)) ).toLocaleString()}</p>
                  </div>
               </div>
               <div className="bg-primary px-4 py-1.5 rounded-lg text-black font-black text-[10px] tracking-widest uppercase">
