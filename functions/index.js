@@ -264,7 +264,40 @@ exports.onOrderCreated = onDocumentCreated("orders/{orderId}", async (event) => 
         });
 
         // 4. First Dispatch attempt
-        await dispatchOrder(orderId, orderData, dispatchInit);
+        const driverFound = await dispatchOrder(orderId, orderData, dispatchInit);
+
+        // If no driver found in initial radius, retry with expanded radius after 15s delay
+        if (!driverFound) {
+            console.log(`[Dispatch] No driver found in initial ${dispatchInit.currentRadius}km radius for ${orderId}. Will retry with expanded radius after delay.`);
+            await new Promise(resolve => setTimeout(resolve, 15_000));
+            try {
+                const refreshedSnap = await admin.firestore().collection("orders").doc(orderId).get();
+                if (!refreshedSnap.exists) return null;
+                const refreshedData = refreshedSnap.data();
+                const refreshedDispatch = refreshedData.dispatch;
+                if (!refreshedDispatch || refreshedDispatch.status !== "searching" || refreshedData.status !== "searching") return null;
+                if (refreshedDispatch.offeredTo) {
+                    console.log(`[Dispatch] Order ${orderId} already has an active offer (driver ${refreshedDispatch.offeredTo}), skipping retry.`);
+                    return null;
+                }
+                const regionConfig = getDispatchRegionConfig(refreshedDispatch.regionType);
+                const newRadius = Math.min(regionConfig.maxRadius, (refreshedDispatch.currentRadius || dispatchInit.currentRadius) + regionConfig.radiusIncrement);
+                const retryDispatch = {
+                    ...refreshedDispatch,
+                    currentRadius: newRadius,
+                    iteration: (refreshedDispatch.iteration || 1) + 1,
+                };
+                console.log(`[Dispatch] Accelerated retry for ${orderId} | Radius: ${newRadius}km | Iteration: ${retryDispatch.iteration}`);
+                const retryFound = await dispatchOrder(orderId, refreshedData, retryDispatch);
+                if (retryFound) {
+                    console.log(`[Dispatch] Driver found on accelerated retry for ${orderId}.`);
+                } else {
+                    console.log(`[Dispatch] Accelerated retry also failed for ${orderId}. Will rely on expansionTrigger.`);
+                }
+            } catch (retryErr) {
+                console.error(`[Dispatch] Error in accelerated retry for ${orderId}:`, retryErr);
+            }
+        }
     }
 
     return null;
