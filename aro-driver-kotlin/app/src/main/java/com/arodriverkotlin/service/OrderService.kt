@@ -41,7 +41,6 @@ object OrderService {
     }
 
     fun listenCompletedToday(uid: String, onResult: (List<DriverOrder>) -> Unit): ListenerRegistration {
-        val startOfDay = com.google.firebase.Timestamp.now()
         return db.collection("orders")
             .whereEqualTo("driverId", uid)
             .whereEqualTo("status", "completed")
