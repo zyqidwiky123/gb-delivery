@@ -24,3 +24,4 @@ debug.keystore
 load_debug_alart_tool
 *.log
 *.hprof
+keystore.properties
