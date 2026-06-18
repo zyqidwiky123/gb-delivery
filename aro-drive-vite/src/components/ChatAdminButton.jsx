@@ -19,7 +19,7 @@ const ChatAdminButton = () => {
         Pesan Lewat Admin
       </span>
       <svg
-        className="w-8 h-8 fill-current"
+        className="w-6 h-6 fill-current"
         viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg"
       >
