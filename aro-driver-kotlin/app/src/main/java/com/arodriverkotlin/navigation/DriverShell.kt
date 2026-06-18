@@ -84,7 +84,7 @@ fun DriverShell(vm: DriverViewModel, state: UiState, onLogout: () -> Unit) {
     } else {
         Box(Modifier.fillMaxSize().background(Surface)) {
             Column(Modifier.fillMaxSize()) {
-                TopBar(state)
+                TopBar(state, vm::toggleOnline)
                 Box(Modifier.weight(1f)) {
                     navTabs[selected].screen(vm, state)
                 }
@@ -95,7 +95,7 @@ fun DriverShell(vm: DriverViewModel, state: UiState, onLogout: () -> Unit) {
 }
 
 @Composable
-private fun TopBar(state: UiState) {
+private fun TopBar(state: UiState, onToggleOnline: () -> Unit) {
     val name = state.profile?.displayName ?: state.profile?.email?.takeWhile { it != '@' } ?: "Driver"
     Row(
         Modifier
@@ -132,6 +132,7 @@ private fun TopBar(state: UiState) {
             Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .background(bg)
+                .clickable { onToggleOnline() }
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
             Text(

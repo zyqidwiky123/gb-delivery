@@ -79,7 +79,10 @@ class DriverViewModel : ViewModel() {
         val online = _state.value.profile?.isOnline ?: false
         try {
             DriverService.toggleOnline(uid, online)
-        } catch (_: Exception) {}
+            _state.value = _state.value.copy(message = if (online) "Online" else "Offline")
+        } catch (e: Exception) {
+            _state.value = _state.value.copy(message = "Gagal: ${e.localizedMessage ?: "Error tidak dikenal"}")
+        }
     }
 
     fun updateLocation(lat: Double, lng: Double) = viewModelScope.launch {
