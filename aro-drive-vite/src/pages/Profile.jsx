@@ -145,14 +145,14 @@ function Profile() {
         </div>
 
         {/* Voucher Collection Row */}
-        {vouchers.length > 0 && (
+        {vouchers.filter(v => !v.used).length > 0 && (
           <div className="px-2">
              <h2 className="font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3 flex items-center gap-2">
                <span className="material-symbols-outlined text-sm">confirmation_number</span>
-               Voucher Saya ({vouchers.length})
+               Voucher Saya ({vouchers.filter(v => !v.used).length})
              </h2>
              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-                {vouchers.map(v => (
+                {vouchers.filter(v => !v.used).map(v => (
                   <div key={v.id} className="flex-shrink-0 bg-surface-container-high border border-outline/10 p-4 rounded-2xl flex items-center gap-4 w-48 relative overflow-hidden group shadow-sm">
                     <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 rounded-full -mr-6 -mt-6"></div>
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
