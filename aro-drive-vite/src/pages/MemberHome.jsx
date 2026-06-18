@@ -171,49 +171,49 @@ function MemberHome() {
         <section className="grid grid-cols-2 gap-4">
           <div 
             onClick={() => navigate('/food')}
-            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[160px] active:scale-95 transition-all group border border-transparent hover:border-primary/20 cursor-pointer"
+            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[136px] active:scale-95 transition-all group border border-transparent hover:border-primary/20 cursor-pointer"
           >
             <div className="w-12 h-12 rounded-2xl bg-primary-container/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
               <span className="material-symbols-outlined text-primary text-3xl">restaurant</span>
             </div>
             <div>
-              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-primary transition-colors">🍔 ARO FOOD</h3>
+              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-primary transition-colors">ARO FOOD</h3>
               <p className="text-xs text-on-surface-variant font-medium mt-1">Laper? Sini Makan</p>
             </div>
           </div>
           <div 
             onClick={() => navigate('/ride')}
-            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[160px] active:scale-95 transition-all group border border-transparent hover:border-secondary/20 cursor-pointer"
+            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[136px] active:scale-95 transition-all group border border-transparent hover:border-secondary/20 cursor-pointer"
           >
             <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
               <span className="material-symbols-outlined text-secondary text-3xl">moped</span>
             </div>
             <div>
-              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-secondary transition-colors">🛵 ARO JEK</h3>
+              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-secondary transition-colors">ARO JEK</h3>
               <p className="text-xs text-on-surface-variant font-medium mt-1">Gas Tipis-tipis</p>
             </div>
           </div>
           <div 
             onClick={() => navigate('/send')}
-            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[160px] active:scale-95 transition-all group border border-transparent hover:border-primary-dim/20 cursor-pointer"
+            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[136px] active:scale-95 transition-all group border border-transparent hover:border-primary-dim/20 cursor-pointer"
           >
             <div className="w-12 h-12 rounded-2xl bg-primary-dim/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
               <span className="material-symbols-outlined text-primary-dim text-3xl">package_2</span>
             </div>
             <div>
-              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-primary-dim transition-colors">📦 ARO SEND</h3>
+              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-primary-dim transition-colors">ARO SEND</h3>
               <p className="text-xs text-on-surface-variant font-medium mt-1">Kirim Paket Satset</p>
             </div>
           </div>
           <div 
             onClick={() => navigate('/shop')}
-            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[160px] active:scale-95 transition-all group border border-transparent hover:border-tertiary-fixed/20 cursor-pointer"
+            className="bg-surface-container-highest p-6 rounded-[2rem] shadow-sm flex flex-col justify-between min-h-[136px] active:scale-95 transition-all group border border-transparent hover:border-tertiary-fixed/20 cursor-pointer"
           >
             <div className="w-12 h-12 rounded-2xl bg-tertiary-fixed/10 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
               <span className="material-symbols-outlined text-tertiary-fixed text-3xl">shopping_cart</span>
             </div>
             <div>
-              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-tertiary-fixed transition-colors">🛒 ARO TIP (JASTIP)</h3>
+              <h3 className="font-headline font-extrabold text-xl tracking-tight text-on-surface group-hover:text-tertiary-fixed transition-colors">ARO TIP (JASTIP)</h3>
               <p className="text-xs text-on-surface-variant font-medium mt-1">Belanja Bulanan</p>
             </div>
           </div>

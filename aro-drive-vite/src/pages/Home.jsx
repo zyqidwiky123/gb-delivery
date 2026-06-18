@@ -128,10 +128,9 @@ function Home() {
         <section className="grid grid-cols-2 gap-4">
           <div 
             onClick={() => navigate('/food')}
-            className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
+            className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-[1/0.85] active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
           >
             <div className="z-10">
-              <span className="text-3xl">🍔</span>
               <h3 className="font-plus-jakarta font-bold text-xl mt-2 tracking-tight text-on-surface">{homeUI.foodLabel}</h3>
             </div>
             <div className="z-10 bg-primary/10 w-fit px-3 py-1 rounded-full">
@@ -144,10 +143,9 @@ function Home() {
 
         <div 
           onClick={() => navigate('/ride')}
-          className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
+          className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-[1/0.85] active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
         >
           <div className="z-10">
-            <span className="text-3xl">🛵</span>
             <h3 className="font-plus-jakarta font-bold text-xl mt-2 tracking-tight text-on-surface">{homeUI.rideLabel}</h3>
           </div>
           <div className="z-10 bg-primary/10 w-fit px-3 py-1 rounded-full">
@@ -160,10 +158,9 @@ function Home() {
 
         <div 
           onClick={() => navigate('/send')}
-          className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
+          className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-[1/0.85] active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
         >
           <div className="z-10">
-            <span className="text-3xl">📦</span>
             <h3 className="font-plus-jakarta font-bold text-xl mt-2 tracking-tight text-on-surface">{homeUI.sendLabel}</h3>
           </div>
           <div className="z-10 bg-primary/10 w-fit px-3 py-1 rounded-full">
@@ -176,10 +173,9 @@ function Home() {
 
         <div 
           onClick={() => navigate('/shop')}
-          className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-square active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
+          className="bg-surface-container shadow-sm rounded-[2rem] p-5 flex flex-col justify-between aspect-[1/0.85] active:scale-95 transition-transform cursor-pointer relative overflow-hidden group border border-outline/10"
         >
           <div className="z-10">
-            <span className="text-3xl">🛒</span>
             <h3 className="font-plus-jakarta font-bold text-xl mt-2 tracking-tight text-on-surface">{homeUI.shopLabel}</h3>
             </div>
             <div className="z-10 bg-primary/10 w-fit px-3 py-1 rounded-full">
