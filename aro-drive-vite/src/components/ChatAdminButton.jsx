@@ -12,7 +12,7 @@ const ChatAdminButton = () => {
       href={waLink}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-32 right-6 z-[60] flex items-center justify-center w-14 h-14 bg-[#25D366] text-on-background rounded-full shadow-[0_4px_15px_rgba(37,211,102,0.4)] transition-all hover:scale-110 active:scale-95 group"
+      className="fixed bottom-24 right-6 z-[60] flex items-center justify-center w-14 h-14 bg-[#25D366] text-on-background rounded-full shadow-[0_4px_15px_rgba(37,211,102,0.4)] transition-all hover:scale-110 active:scale-95 group"
       id="chat-admin-btn"
     >
       <span className="absolute right-full mr-3 px-3 py-1 bg-black/80 text-on-background text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-on-background/10 backdrop-blur-sm">
