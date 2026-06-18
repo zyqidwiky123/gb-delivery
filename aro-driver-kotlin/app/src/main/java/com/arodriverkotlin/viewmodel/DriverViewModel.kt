@@ -13,6 +13,7 @@ import com.arodriverkotlin.service.toProfile
 import com.arodriverkotlin.service.toTransaction
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.delay
@@ -388,9 +389,14 @@ class DriverViewModel : ViewModel() {
     }
 
     private fun saveFcmToken(uid: String) {
-        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
-            FirebaseFirestore.getInstance().collection("drivers").document(uid)
-                .update("fcmToken", token, "updatedAt", FieldValue.serverTimestamp())
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                FirebaseFirestore.getInstance().collection("drivers").document(uid)
+                    .set(mapOf("fcmToken" to token, "updatedAt" to FieldValue.serverTimestamp()), SetOptions.merge())
+            } else {
+                android.util.Log.w("FCM", "Gagal ambil token", task.exception)
+            }
         }
     }
 
