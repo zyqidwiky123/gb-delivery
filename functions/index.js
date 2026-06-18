@@ -191,35 +191,10 @@ exports.onOrderCreated = onDocumentCreated("orders/{orderId}", async (event) => 
         }
     }
 
-    // 2. Send WhatsApp Notification to Group & Customer (if Manual)
+    // Send WhatsApp Notification to Customer (if Manual Order)
     try {
-        const configDoc = await admin.firestore().collection("settings").doc("configs").get();
-        const config = configDoc.exists ? configDoc.data() : {};
-        const groupId = config.fonnte?.groupId || "120363426243689003@g.us"; 
-
-        let merchantName = pickupAddress || "N/A"; 
-        if (merchantId) {
-            const mDoc = await admin.firestore().collection("merchants").doc(merchantId).get();
-            if (mDoc.exists) merchantName = mDoc.data().name;
-        }
-
-        let itemsText = "";
-        if (serviceType === "food" && Array.isArray(items)) {
-            itemsText = items.map(item => `- ${item.desc || item.name} (${item.qty}x)`).join("\n");
-        } else if (typeof items === "string") {
-            itemsText = items;
-        }
-
-        const waTemplates = require("./templates");
-        
-        // Notify Group
-        if (waTemplates.system && typeof waTemplates.system.newOrder === "function") {
-            const groupMsg = waTemplates.system.newOrder(orderId, serviceType, total, merchantName, itemsText);
-            await sendWAFonnte(groupId, groupMsg);
-        }
-
-        // Notify Customer if Manual Order
         if (orderData.customer?.isManual && orderData.customer?.wa) {
+            const waTemplates = require("./templates");
             if (waTemplates.system && typeof waTemplates.system.manualOrderCustomer === "function") {
                 const customerMsg = waTemplates.system.manualOrderCustomer(
                     orderData.customer.name,

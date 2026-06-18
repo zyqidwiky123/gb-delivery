@@ -1,7 +1,7 @@
 const formatReceipt = (data) => {
     const { 
         customerName, shortId, timestamp, merchantName, driverName, 
-        itemsText, subtotal, deliveryFee, serviceFee, total, pickupFee 
+        itemsText, subtotal, deliveryFee, total, pickupFee 
     } = data;
     
     return `✅ *PESANAN SELESAI* ✅\n` +
@@ -14,10 +14,9 @@ const formatReceipt = (data) => {
            `${itemsText || '- No details -'}\n` +
            `---------------------------\n` +
            `${subtotal > 0 ? `Subtotal:         Rp ${subtotal.toLocaleString()}\n` : ''}` +
-           `Biaya Antar:      Rp ${deliveryFee.toLocaleString()}\n` +
-           `${pickupFee > 0 ? `Biaya Jemput:     Rp ${pickupFee.toLocaleString()}\n` : ''}` +
-           `Biaya Layanan:    Rp ${serviceFee.toLocaleString()}\n` +
-           `---------------------------\n` +
+            `Biaya Antar:      Rp ${deliveryFee.toLocaleString()}\n` +
+            `${pickupFee > 0 ? `Biaya Jemput:     Rp ${pickupFee.toLocaleString()}\n` : ''}` +
+            `---------------------------\n` +
            `*TOTAL BAYAR:     Rp ${total.toLocaleString()}*\n` +
            `---------------------------\n\n` +
            `Makasih udah pake ARO DRIVE! Sampai jumpa di orderan berikutnya. 🚀`;
