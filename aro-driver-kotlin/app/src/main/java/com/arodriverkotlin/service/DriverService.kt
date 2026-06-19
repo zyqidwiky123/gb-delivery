@@ -22,7 +22,7 @@ object DriverService {
         )
         if (online) {
             update["onlineAt"] = FieldValue.serverTimestamp()
-            update["offlineAt"] = null
+            update["offlineAt"] = FieldValue.delete()
             update["onlineSessionStartAt"] = FieldValue.serverTimestamp()
         } else {
             update["offlineAt"] = FieldValue.serverTimestamp()
@@ -36,7 +36,7 @@ object DriverService {
                     update["todayOnlineMs"] = todayMs + elapsed
                 }
             } catch (_: Exception) {}
-            update["onlineSessionStartAt"] = null
+            update["onlineSessionStartAt"] = FieldValue.delete()
         }
         db.collection("drivers").document(uid).set(
             update,
