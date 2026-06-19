@@ -71,6 +71,11 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
 
     var requested by remember { mutableStateOf(permissionsStepDone && (android.os.Build.VERSION.SDK_INT < 30 || bgLocationGranted)) }
 
+    // Step 2: Background location (API 30+ only, must be requested separately)
+    val bgLocationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { requested = true }
+
     // Step 1: Foreground permissions (location + notif)
     val foregroundLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -90,11 +95,6 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
             }
         }
     }
-
-    // Step 2: Background location (API 30+ only, must be requested separately)
-    val bgLocationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { requested = true }
 
     if (requested && batteryExempt) {
         onAllGranted()
