@@ -144,6 +144,7 @@ fun DocumentSnapshot.toOrder(): DriverOrder {
         balanceBefore = getLong("balanceBefore") ?: 0,
         balanceAfter = getLong("balanceAfter") ?: 0,
         completedAt = getTimestamp("completedAt"),
+        acceptedAt = getTimestamp("acceptedAt"),
     )
 }
 

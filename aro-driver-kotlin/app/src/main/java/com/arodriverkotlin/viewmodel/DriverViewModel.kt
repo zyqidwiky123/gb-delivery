@@ -282,28 +282,36 @@ class DriverViewModel : ViewModel() {
             .whereEqualTo("driverId", uid)
             .whereEqualTo("status", "completed")
             .addSnapshotListener { snap, _ ->
-                val list = snap?.documents?.map { it.toOrder() } ?: emptyList()
-                val todayEarnings = list.sumOf { it.deliveryFee }
+                val allCompleted = snap?.documents?.map { it.toOrder() } ?: emptyList()
                 val cal = Calendar.getInstance()
-                val currentMonth = cal.get(Calendar.MONTH)
+                val currentDay = cal.get(Calendar.DAY_OF_YEAR)
                 val currentYear = cal.get(Calendar.YEAR)
-                val monthlyEarnings = list.filter { order ->
+                val todayOrders = allCompleted.filter { order ->
+                    order.completedAt?.toDate()?.let { date ->
+                        val c = Calendar.getInstance().apply { time = date }
+                        c.get(Calendar.DAY_OF_YEAR) == currentDay && c.get(Calendar.YEAR) == currentYear
+                    } ?: false
+                }
+                val currentMonth = cal.get(Calendar.MONTH)
+                val monthlyOrders = allCompleted.filter { order ->
                     order.completedAt?.toDate()?.let { date ->
                         val c = Calendar.getInstance().apply { time = date }
                         c.get(Calendar.MONTH) == currentMonth && c.get(Calendar.YEAR) == currentYear
                     } ?: false
-                }.sumOf { it.deliveryFee }
+                }
                 _state.value = _state.value.copy(
-                    completedToday = list,
-                    todayEarnings = todayEarnings,
-                    monthlyEarnings = monthlyEarnings,
+                    completedToday = todayOrders,
+                    todayEarnings = todayOrders.sumOf { it.deliveryFee },
+                    monthlyEarnings = monthlyOrders.sumOf { it.deliveryFee },
                 )
             }
 
         allOrdersListener = db.collection("orders")
             .whereEqualTo("driverId", uid)
             .addSnapshotListener { snap, _ ->
-                val list = snap?.documents?.map { it.toOrder() } ?: emptyList()
+                val list = snap?.documents?.map { it.toOrder() }
+                    ?.sortedByDescending { it.acceptedAt?.toDate()?.time ?: 0L }
+                    ?: emptyList()
                 _state.value = _state.value.copy(allOrders = list)
             }
 
