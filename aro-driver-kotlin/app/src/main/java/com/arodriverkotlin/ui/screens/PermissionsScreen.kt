@@ -33,8 +33,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -65,7 +69,18 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
     else true
 
     val powerManager = ctx.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
-    val batteryExempt = powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
+    var batteryExempt by remember { mutableStateOf(powerManager.isIgnoringBatteryOptimizations(ctx.packageName)) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                batteryExempt = powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val permissionsStepDone = locationGranted && notifGranted
 
