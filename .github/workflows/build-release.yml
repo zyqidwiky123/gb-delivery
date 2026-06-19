@@ -28,7 +28,7 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > aro_partner.jks
+          echo "$KEYSTORE_BASE64" | base64 -d > ../aro_partner.jks
 
       - name: Create keystore.properties
         env:
@@ -40,11 +40,13 @@ jobs:
           storePassword=$STORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=aro_partner.jks
+          storeFile=../aro_partner.jks
           EOF
 
       - name: Build Release APK
         run: ./gradlew assembleRelease
+        env:
+          GRADLE_OPTS: -Dorg.gradle.daemon=false
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -58,5 +60,5 @@ jobs:
             - Inactivity auto-offline setelah 2 jam
             - Batas online 12 jam per hari (reset jam 00:00)
             - Perbaikan location heartbeat
-          files: aro-driver-kotlin/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: aro-driver-kotlin/app/build/outputs/apk/release/app-release.apk
           generate_release_notes: true
