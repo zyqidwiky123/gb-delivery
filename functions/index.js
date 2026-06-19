@@ -460,6 +460,10 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
             console.log(`[Dispatch] Skipping driver ${driverId} — over daily online limit.`);
             return;
         }
+        if ((driver.balance || 0) < 0) {
+            console.log(`[Dispatch] Skipping driver ${driverId} — negative balance.`);
+            return;
+        }
         if (!isDriverLocationFresh(driver)) {
             console.log(`[Dispatch] Skipping stale or missing location for driver ${driverId}.`);
             return;
@@ -598,7 +602,7 @@ async function getOnlineAvailableDriversCount() {
         const now = Date.now();
         driversSnapshot.forEach(doc => {
             const driver = doc.data();
-            if (!isDriverInactive(driver, now) && !isDriverOverDailyLimit(driver, now)) {
+            if (!isDriverInactive(driver, now) && !isDriverOverDailyLimit(driver, now) && (driver.balance || 0) >= 0) {
                 count += 1;
             }
         });
