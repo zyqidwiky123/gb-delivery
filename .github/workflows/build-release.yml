@@ -61,4 +61,3 @@ jobs:
             - Batas online 12 jam per hari (reset jam 00:00)
             - Perbaikan location heartbeat
           files: aro-driver-kotlin/app/build/outputs/apk/release/app-release.apk
-          generate_release_notes: true
