@@ -101,6 +101,7 @@ export const completeOrder = async (orderId, driverId, totalAmount) => {
       statusChangedAt: serverTimestamp(),
       offlineAt: null,
       lastJobAt: serverTimestamp(),
+      lastActive: serverTimestamp(),
       updatedAt: serverTimestamp(),
       // Pembayaran tunai ke driver. Tidak ada pemotongan saldo digital.
     });
@@ -117,23 +118,34 @@ export const updateDriverStatus = async (driverId, data) => {
     const driverRef = doc(db, "drivers", driverId);
     const nextData = {
       ...data,
+      lastActive: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
 
     if (nextData.status === "online") {
       nextData.isOnline = true;
       nextData.onlineAt = serverTimestamp();
+      nextData.onlineSessionStartAt = serverTimestamp();
       nextData.statusChangedAt = serverTimestamp();
       nextData.offlineAt = null;
     } else if (nextData.status === "offline") {
       nextData.isOnline = false;
       nextData.offlineAt = serverTimestamp();
       nextData.statusChangedAt = serverTimestamp();
+      // Akumulasi todayOnlineMs saat offline
+      const snap = await getDoc(driverRef);
+      if (snap.exists()) {
+        const d = snap.data();
+        const sessionStart = d.onlineSessionStartAt?.toMillis?.() || d.onlineAt?.toMillis?.() || 0;
+        if (sessionStart > 0) {
+          const elapsed = Date.now() - sessionStart;
+          nextData.todayOnlineMs = (d.todayOnlineMs || 0) + elapsed;
+        }
+      }
+      nextData.onlineSessionStartAt = null;
     }
 
-    await updateDoc(driverRef, {
-      ...nextData
-    });
+    await updateDoc(driverRef, { ...nextData });
   } catch (e) {
     console.error("Error updating driver: ", e);
   }
@@ -195,6 +207,7 @@ export const cancelOrder = async (orderId, reason, cancelledBy = 'user') => {
         onlineAt: serverTimestamp(),
         statusChangedAt: serverTimestamp(),
         offlineAt: null,
+        lastActive: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
     }

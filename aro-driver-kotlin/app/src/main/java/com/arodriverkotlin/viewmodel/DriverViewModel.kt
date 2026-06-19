@@ -342,14 +342,26 @@ class DriverViewModel : ViewModel() {
                 val now = System.currentTimeMillis()
 
                 if (profile.isOnline) {
-                    // Auto-offline after 12 hours continuous online
-                    val onlineSince = profile.onlineTimestamp
-                    if (onlineSince != null && (now - onlineSince) > 12 * 3600_000L) {
+                    // Inactivity check: >2 jam tanpa lastActive
+                    val lastActive = profile.lastActiveTimestamp
+                        ?: profile.lastLocationUpdateTimestamp
+                    if (lastActive != null && (now - lastActive) > 2 * 3600_000L) {
                         try {
                             DriverService.toggleOnline(uid, true)
-                            postMessage("Sesi online 12 jam, otomatis offline.")
+                            postMessage("Tidak ada aktivitas 2 jam, otomatis offline.")
                         } catch (_: Exception) {}
+                        continue
                     }
+
+                    // Daily limit check: >=12 jam hari ini
+                    if (profile.todayOnlineMs >= 12 * 3600_000L) {
+                        try {
+                            DriverService.toggleOnline(uid, true)
+                            postMessage("Batas online 12 jam hari ini tercapai.")
+                        } catch (_: Exception) {}
+                        continue
+                    }
+
                     // Location heartbeat: ensure lastLocationUpdate stays fresh
                     val lat = _state.value.currentLat ?: ForegroundService.latestLat
                     val lng = _state.value.currentLng ?: ForegroundService.latestLng

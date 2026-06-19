@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import { listenForAvailableOrders, acceptOrder, updateDriverStatus, getDriverData } from '../firebase/orderService';
 import { useUserStore } from '../store/userStore';
-
-const MAX_ONLINE_SESSION_MS = 12 * 60 * 60 * 1000;
 
 const toMillis = (value) => {
   if (!value) return null;
@@ -20,7 +20,7 @@ function DriverHome() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
-  const autoOfflineHandledRef = React.useRef(null);
+  const lastKnownLocationRef = useRef(null);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -35,36 +35,74 @@ function DriverHome() {
     fetchStatus();
   }, [user?.id]);
 
+  // Location sending when online
   useEffect(() => {
-    if (!user?.id || !isOnline) {
-      autoOfflineHandledRef.current = null;
-      return;
-    }
+    if (!user?.id || !isOnline) return;
+    if (!navigator.geolocation) return;
 
-    const checkExpiredSession = async () => {
-      const data = await getDriverData(user.id);
-      const onlineSince = toMillis(data?.onlineAt) || toMillis(data?.statusChangedAt);
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        lastKnownLocationRef.current = loc;
+        updateDoc(doc(db, "drivers", user.id), {
+          location: loc,
+          lastLocationUpdate: serverTimestamp(),
+          lastActive: serverTimestamp(),
+        }).catch(e => console.error("Location update error:", e));
+      },
+      (err) => console.error("Location error:", err),
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 20000 }
+    );
 
-      if (!onlineSince) return;
-      if (Date.now() - onlineSince < MAX_ONLINE_SESSION_MS) {
-        autoOfflineHandledRef.current = null;
-        return;
+    const heartbeat = setInterval(() => {
+      if (lastKnownLocationRef.current) {
+        updateDoc(doc(db, "drivers", user.id), {
+          location: lastKnownLocationRef.current,
+          lastLocationUpdate: serverTimestamp(),
+          lastActive: serverTimestamp(),
+        }).catch(e => console.error("Heartbeat error:", e));
       }
+    }, 60000);
 
-      if (autoOfflineHandledRef.current === onlineSince) return;
-      autoOfflineHandledRef.current = onlineSince;
-
-      try {
-        await updateDriverStatus(user.id, { status: 'offline' });
-        setIsOnline(false);
-        alert("Status online kamu otomatis dimatikan karena sudah lebih dari 12 jam.");
-      } catch (e) {
-        console.error("Gagal auto-offline driver:", e);
-        autoOfflineHandledRef.current = null;
-      }
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+      clearInterval(heartbeat);
     };
+  }, [user?.id, isOnline]);
 
-    checkExpiredSession();
+  // Inactivity + daily limit watcher
+  useEffect(() => {
+    if (!user?.id || !isOnline) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const data = await getDriverData(user.id);
+        if (!data || !data.isOnline) return;
+
+        const now = Date.now();
+        const lastActive = toMillis(data.lastActive)
+          || toMillis(data.lastLocationUpdate)
+          || toMillis(data.updatedAt);
+
+        if (lastActive && (now - lastActive) > 2 * 60 * 60 * 1000) {
+          await updateDriverStatus(user.id, { status: 'offline' });
+          setIsOnline(false);
+          alert("Kamu otomatis offline karena tidak ada aktivitas selama 2 jam.");
+          return;
+        }
+
+        if ((data.todayOnlineMs || 0) >= 12 * 60 * 60 * 1000) {
+          await updateDriverStatus(user.id, { status: 'offline' });
+          setIsOnline(false);
+          alert("Batas online 12 jam hari ini sudah tercapai. Silakan lanjut besok!");
+          return;
+        }
+      } catch (e) {
+        console.error("Gagal cek status driver:", e);
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [user?.id, isOnline]);
 
   useEffect(() => {

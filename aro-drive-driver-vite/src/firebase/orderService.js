@@ -99,7 +99,7 @@ export const acceptOrder = async (orderId, driverId, driverProfile = {}) => {
       });
 
       // Also update driver status to busy
-      transaction.update(driverRef, { status: "busy" });
+      transaction.update(driverRef, { status: "busy", lastActive: serverTimestamp() });
     });
   } catch (e) {
     console.error("Error accepting order: ", e);
@@ -238,6 +238,7 @@ export const completeOrder = async (orderId, total) => {
       offlineAt: null,
       balance: newBalance,
       lastJobAt: serverTimestamp(),
+      lastActive: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
 
