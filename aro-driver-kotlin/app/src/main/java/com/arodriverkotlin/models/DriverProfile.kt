@@ -25,6 +25,10 @@ data class DriverProfile(
     val bankAccounts: List<BankAccount> = emptyList(),
     val onlineTimestamp: Long? = null,
     val offlineTimestamp: Long? = null,
+    val lastActiveTimestamp: Long? = null,
+    val lastLocationUpdateTimestamp: Long? = null,
+    val todayOnlineMs: Long = 0,
+    val onlineSessionStartTimestamp: Long? = null,
 )
 
 data class Transaction(

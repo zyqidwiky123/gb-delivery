@@ -15,8 +15,6 @@ import EditProfile from './pages/EditProfile'
 import Orders from './pages/Orders'
 import BottomNav from './components/BottomNav'
 
-const MAX_ONLINE_SESSION_MS = 12 * 60 * 60 * 1000;
-
 const toMillis = (value) => {
   if (!value) return null;
   if (typeof value.toMillis === 'function') return value.toMillis();
@@ -74,41 +72,43 @@ function App() {
     }
   }, [user]);
 
-  // Force drivers offline when a single online session exceeds 12 hours.
+  // Periodic watcher: cek inactivity (2 jam) + daily limit (12 jam)
   useEffect(() => {
     if (!user?.uid || !profile?.isOnline) {
       autoOfflineHandledRef.current = null;
       return;
     }
 
-    const onlineSince = toMillis(profile.onlineAt) || toMillis(profile.statusChangedAt);
-    if (!onlineSince) return;
-
-    if (Date.now() - onlineSince < MAX_ONLINE_SESSION_MS) {
-      autoOfflineHandledRef.current = null;
-      return;
-    }
-
-    if (autoOfflineHandledRef.current === onlineSince) return;
-    autoOfflineHandledRef.current = onlineSince;
-
-    let cancelled = false;
-    (async () => {
+    const interval = setInterval(async () => {
       try {
-        const ok = await updateDriverStatus(user.uid, false);
-        if (ok && !cancelled) {
-          alert("Status online kamu otomatis dimatikan karena sudah lebih dari 12 jam.");
+        const freshProfile = await getDriverProfile(user.uid);
+        if (!freshProfile || !freshProfile.isOnline) return;
+
+        const now = Date.now();
+
+        // Inactivity check (>2 jam tanpa lastActive)
+        const lastActive = toMillis(freshProfile.lastActive)
+          || toMillis(freshProfile.lastLocationUpdate)
+          || toMillis(freshProfile.updatedAt);
+        if (lastActive && (now - lastActive) > 2 * 60 * 60 * 1000) {
+          await updateDriverStatus(user.uid, false);
+          alert("Kamu otomatis offline karena tidak ada aktivitas selama 2 jam.");
+          return;
+        }
+
+        // Daily limit check (>=12 jam hari ini)
+        if ((freshProfile.todayOnlineMs || 0) >= 12 * 60 * 60 * 1000) {
+          await updateDriverStatus(user.uid, false);
+          alert("Batas online 12 jam hari ini sudah tercapai. Silakan lanjut besok!");
+          return;
         }
       } catch (err) {
-        console.error("Gagal mematikan status online otomatis:", err);
-        autoOfflineHandledRef.current = null;
+        console.error("Gagal cek status driver:", err);
       }
-    })();
+    }, 60_000);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.uid, profile?.isOnline, profile?.onlineAt, profile?.statusChangedAt]);
+    return () => clearInterval(interval);
+  }, [user?.uid, profile?.isOnline]);
 
   // Real-time Profile Listener
   useEffect(() => {

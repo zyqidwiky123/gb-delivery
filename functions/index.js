@@ -36,10 +36,11 @@ function deg2rad(deg) {
     return deg * (Math.PI / 180);
 }
 
-const MAX_DRIVER_ONLINE_SESSION_MS = 12 * 60 * 60 * 1000;
 const MAX_DRIVER_LOCATION_AGE_MS = 5 * 60 * 1000;
 const DRIVER_OFFER_TIMEOUT_MS = 60 * 1000;
 const RADIUS_EXPANSION_INTERVAL_MS = 60 * 1000;
+const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+const MAX_DAILY_ONLINE_MS = 12 * 60 * 60 * 1000;
 const DISPATCH_REGION_CONFIG = {
     kota: {
         initialRadius: 3,
@@ -68,22 +69,17 @@ function getTimestampMillis(value) {
     return Number.isNaN(parsed) ? null : parsed;
 }
 
-function getDriverOnlineSessionStartMillis(driver) {
-    return getTimestampMillis(driver.onlineAt)
-        || getTimestampMillis(driver.statusChangedAt)
+function isDriverInactive(driver, now = Date.now()) {
+    const lastActive = getTimestampMillis(driver.lastActive)
+        || getTimestampMillis(driver.lastLocationUpdate)
         || getTimestampMillis(driver.updatedAt);
+    if (!lastActive) return true;
+    return now - lastActive >= INACTIVITY_TIMEOUT_MS;
 }
 
-function isDriverOnlineSessionExpired(driver, now = Date.now()) {
-    const sessionStart = getDriverOnlineSessionStartMillis(driver);
-    if (!sessionStart) {
-        // Tidak ada timestamp sama sekali — kemungkinan data corrupt/set from old app
-        // Cek lastLocationUpdate sebagai fallback; jika tidak ada, anggap expired
-        const lastLoc = getTimestampMillis(driver.lastLocationUpdate);
-        if (!lastLoc) return true;
-        return now - lastLoc >= MAX_DRIVER_ONLINE_SESSION_MS;
-    }
-    return now - sessionStart >= MAX_DRIVER_ONLINE_SESSION_MS;
+function isDriverOverDailyLimit(driver, now = Date.now()) {
+    const todayMs = driver.todayOnlineMs || 0;
+    return todayMs >= MAX_DAILY_ONLINE_MS;
 }
 
 function isDriverLocationFresh(driver, now = Date.now()) {
@@ -315,43 +311,116 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
         console.log(`[AutoOffline] Reset ${stuckBusy.length} stuck busy drivers to online.`);
     }
 
-    // 2. Handle expired online sessions
+    // 2. Handle inactive + over daily limit drivers
     const driversSnapshot = await admin.firestore().collection("drivers")
-        .where("status", "==", "online")
+        .where("isOnline", "==", true)
         .get();
 
-    const expiredDrivers = [];
+    const inactiveDrivers = [];
+    const overLimitDrivers = [];
 
     driversSnapshot.forEach(doc => {
         const driver = doc.data();
-        if (isDriverOnlineSessionExpired(driver, now)) {
-            expiredDrivers.push(doc.ref);
+
+        // Cek inactivity (>2 jam tanpa lastActive)
+        if (isDriverInactive(driver, now)) {
+            inactiveDrivers.push({ ref: doc.ref, driver });
+            return;
+        }
+
+        // Cek daily limit (>=12 jam hari ini)
+        if (isDriverOverDailyLimit(driver, now)) {
+            overLimitDrivers.push({ ref: doc.ref, driver });
+            return;
         }
     });
 
-    if (expiredDrivers.length === 0) {
-        if (stuckBusy.length === 0) console.log("[AutoOffline] No long-online drivers found.");
-        return null;
+    const batchSize = 400;
+
+    // Process inactive drivers
+    if (inactiveDrivers.length > 0) {
+        for (let i = 0; i < inactiveDrivers.length; i += batchSize) {
+            const batch = admin.firestore().batch();
+            const chunk = inactiveDrivers.slice(i, i + batchSize);
+            chunk.forEach(({ ref, driver }) => {
+                const updates = {
+                    status: "offline",
+                    isOnline: false,
+                    offlineAt: admin.firestore.FieldValue.serverTimestamp(),
+                    autoOfflineAt: admin.firestore.FieldValue.serverTimestamp(),
+                    statusChangedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                };
+                // Akumulasi todayOnlineMs saat offline
+                const onlineSince = getTimestampMillis(driver.onlineSessionStartAt) || getTimestampMillis(driver.onlineAt);
+                if (onlineSince) {
+                    updates.todayOnlineMs = (driver.todayOnlineMs || 0) + (now - onlineSince);
+                }
+                batch.update(ref, updates);
+            });
+            await batch.commit();
+        }
+        console.log(`[AutoOffline] Set ${inactiveDrivers.length} inactive drivers offline.`);
+    }
+
+    // Process over-limit drivers
+    if (overLimitDrivers.length > 0) {
+        for (let i = 0; i < overLimitDrivers.length; i += batchSize) {
+            const batch = admin.firestore().batch();
+            const chunk = overLimitDrivers.slice(i, i + batchSize);
+            chunk.forEach(({ ref, driver }) => {
+                const updates = {
+                    status: "offline",
+                    isOnline: false,
+                    offlineAt: admin.firestore.FieldValue.serverTimestamp(),
+                    autoOfflineAt: admin.firestore.FieldValue.serverTimestamp(),
+                    statusChangedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                };
+                const onlineSince = getTimestampMillis(driver.onlineSessionStartAt) || getTimestampMillis(driver.onlineAt);
+                if (onlineSince) {
+                    updates.todayOnlineMs = (driver.todayOnlineMs || 0) + (now - onlineSince);
+                }
+                batch.update(ref, updates);
+            });
+            await batch.commit();
+        }
+        console.log(`[AutoOffline] Set ${overLimitDrivers.length} over-limit drivers offline.`);
+    }
+
+    if (inactiveDrivers.length === 0 && overLimitDrivers.length === 0) {
+        if (stuckBusy.length === 0) console.log("[AutoOffline] No inactive or over-limit drivers found.");
+    }
+    return null;
+});
+
+// Reset daily online time for all drivers at midnight
+exports.resetDailyOnlineTime = onSchedule("every day 00:00", async () => {
+    const driversSnapshot = await admin.firestore().collection("drivers")
+        .select()
+        .get();
+
+    if (driversSnapshot.empty) {
+        console.log("[DailyReset] No drivers to reset.");
+        return;
     }
 
     const batchSize = 400;
-    for (let i = 0; i < expiredDrivers.length; i += batchSize) {
+    const refs = driversSnapshot.docs.map(doc => doc.ref);
+    for (let i = 0; i < refs.length; i += batchSize) {
         const batch = admin.firestore().batch();
-        const chunk = expiredDrivers.slice(i, i + batchSize);
+        const chunk = refs.slice(i, i + batchSize);
         chunk.forEach(ref => {
             batch.update(ref, {
-                status: "offline",
-                isOnline: false,
-                offlineAt: admin.firestore.FieldValue.serverTimestamp(),
-                autoOfflineAt: admin.firestore.FieldValue.serverTimestamp(),
-                statusChangedAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                todayOnlineMs: 0,
+                onlineSessionStartAt: admin.firestore.FieldValue.serverTimestamp(),
+                todayOnlineResetAt: admin.firestore.FieldValue.serverTimestamp(),
             });
         });
         await batch.commit();
     }
 
-    console.log(`[AutoOffline] Set ${expiredDrivers.length} long-online drivers offline.`);
+    console.log(`[DailyReset] Reset todayOnlineMs for ${refs.length} drivers.`);
     return null;
 });
 
@@ -383,8 +452,12 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         if (rejectedDrivers.includes(driverId)) return;
         // Also skip previously notified (for radius expansion compatibility)
         if (notifiedDrivers.includes(driverId)) return;
-        if (isDriverOnlineSessionExpired(driver)) {
-            console.log(`[Dispatch] Skipping expired online session for driver ${driverId}.`);
+        if (isDriverInactive(driver)) {
+            console.log(`[Dispatch] Skipping inactive driver ${driverId}.`);
+            return;
+        }
+        if (isDriverOverDailyLimit(driver)) {
+            console.log(`[Dispatch] Skipping driver ${driverId} — over daily online limit.`);
             return;
         }
         if (!isDriverLocationFresh(driver)) {
@@ -525,7 +598,7 @@ async function getOnlineAvailableDriversCount() {
         const now = Date.now();
         driversSnapshot.forEach(doc => {
             const driver = doc.data();
-            if (!isDriverOnlineSessionExpired(driver, now)) {
+            if (!isDriverInactive(driver, now) && !isDriverOverDailyLimit(driver, now)) {
                 count += 1;
             }
         });

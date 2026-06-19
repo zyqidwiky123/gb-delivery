@@ -47,6 +47,10 @@ fun DocumentSnapshot.toProfile(): DriverProfile {
         bankAccounts = accounts,
         onlineTimestamp = getTimestamp("onlineAt")?.toDate()?.time,
         offlineTimestamp = getTimestamp("offlineAt")?.toDate()?.time,
+        lastActiveTimestamp = getTimestamp("lastActive")?.toDate()?.time,
+        lastLocationUpdateTimestamp = getTimestamp("lastLocationUpdate")?.toDate()?.time,
+        todayOnlineMs = getLong("todayOnlineMs") ?: 0,
+        onlineSessionStartTimestamp = getTimestamp("onlineSessionStartAt")?.toDate()?.time,
     )
 }
 

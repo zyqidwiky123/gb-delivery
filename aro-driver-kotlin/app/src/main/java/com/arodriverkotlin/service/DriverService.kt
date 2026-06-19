@@ -13,15 +13,33 @@ object DriverService {
 
     suspend fun toggleOnline(uid: String, currentOnline: Boolean) {
         val online = !currentOnline
+        val update = mutableMapOf<String, Any>(
+            "isOnline" to online,
+            "status" to if (online) "online" else "offline",
+            "statusChangedAt" to FieldValue.serverTimestamp(),
+            "updatedAt" to FieldValue.serverTimestamp(),
+            "lastActive" to FieldValue.serverTimestamp(),
+        )
+        if (online) {
+            update["onlineAt"] = FieldValue.serverTimestamp()
+            update["offlineAt"] = null
+            update["onlineSessionStartAt"] = FieldValue.serverTimestamp()
+        } else {
+            update["offlineAt"] = FieldValue.serverTimestamp()
+            // Akumulasi todayOnlineMs saat offline
+            try {
+                val doc = db.collection("drivers").document(uid).get().await()
+                val todayMs = doc.getLong("todayOnlineMs") ?: 0L
+                val sessionStartTs = doc.getTimestamp("onlineSessionStartAt") ?: doc.getTimestamp("onlineAt")
+                if (sessionStartTs != null) {
+                    val elapsed = System.currentTimeMillis() - sessionStartTs.toDate().time
+                    update["todayOnlineMs"] = todayMs + elapsed
+                }
+            } catch (_: Exception) {}
+            update["onlineSessionStartAt"] = null
+        }
         db.collection("drivers").document(uid).set(
-            mapOf(
-                "isOnline" to online,
-                "status" to if (online) "online" else "offline",
-                "statusChangedAt" to FieldValue.serverTimestamp(),
-                "updatedAt" to FieldValue.serverTimestamp(),
-                (if (online) "onlineAt" else "offlineAt") to FieldValue.serverTimestamp(),
-                (if (online) "offlineAt" else "onlineAt") to null,
-            ),
+            update,
             com.google.firebase.firestore.SetOptions.merge()
         ).await()
     }
@@ -31,6 +49,7 @@ object DriverService {
             mapOf(
                 "location" to mapOf("lat" to lat, "lng" to lng),
                 "lastLocationUpdate" to FieldValue.serverTimestamp(),
+                "lastActive" to FieldValue.serverTimestamp(),
             ),
             com.google.firebase.firestore.SetOptions.merge()
         ).await()

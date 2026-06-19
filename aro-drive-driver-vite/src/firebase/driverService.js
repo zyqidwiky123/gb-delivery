@@ -70,15 +70,34 @@ export const createDriverProfile = async (uid, email) => {
 export const updateDriverStatus = async (uid, isOnline) => {
   try {
     const driverRef = doc(db, 'drivers', uid);
-    await setDoc(driverRef, { 
+    const updates = {
       isOnline,
       status: isOnline ? "online" : "offline",
-      ...(isOnline
-        ? { onlineAt: serverTimestamp(), offlineAt: null }
-        : { offlineAt: serverTimestamp() }),
+      lastActive: serverTimestamp(),
       statusChangedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    }, { merge: true });
+    };
+
+    if (isOnline) {
+      updates.onlineAt = serverTimestamp();
+      updates.offlineAt = null;
+      updates.onlineSessionStartAt = serverTimestamp();
+    } else {
+      updates.offlineAt = serverTimestamp();
+      // Akumulasi todayOnlineMs saat offline
+      const snap = await getDoc(driverRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        const sessionStart = data.onlineSessionStartAt?.toMillis?.() || data.onlineAt?.toMillis?.() || 0;
+        if (sessionStart > 0) {
+          const elapsed = Date.now() - sessionStart;
+          updates.todayOnlineMs = (data.todayOnlineMs || 0) + elapsed;
+        }
+      }
+      updates.onlineSessionStartAt = null;
+    }
+
+    await setDoc(driverRef, updates, { merge: true });
     return true;
   } catch (err) {
     console.error("Error updating online status:", err);
@@ -90,7 +109,8 @@ export const updateDriverLocation = async (uid, location) => {
     const driverRef = doc(db, 'drivers', uid);
     await updateDoc(driverRef, { 
       location,
-      lastLocationUpdate: serverTimestamp() 
+      lastLocationUpdate: serverTimestamp(),
+      lastActive: serverTimestamp(),
     });
     return true;
   } catch (err) {
