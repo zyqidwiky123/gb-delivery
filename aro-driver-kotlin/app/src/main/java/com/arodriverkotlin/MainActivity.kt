@@ -51,14 +51,18 @@ class MainActivity : ComponentActivity() {
             } catch (_: Exception) {}
 
             try {
+                val soundUri = android.net.Uri.parse("android.resource://${packageName}/raw/notifdriver")
+                val audioAttrs = android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
                 val incomingChannel = NotificationChannel(
-                    "aro_drive_incoming_v3",
+                    "aro_drive_incoming_v4",
                     "Pesanan Masuk",
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = "Notifikasi pesanan baru ARO DRIVE"
                     enableVibration(true)
-                    setSound(null, null)
+                    setSound(soundUri, audioAttrs)
                     enableLights(true)
                 }
                 nm.createNotificationChannel(incomingChannel)

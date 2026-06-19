@@ -9,8 +9,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioAttributes
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
@@ -128,7 +126,6 @@ class ForegroundService : Service() {
 
     private fun showIncomingRingtoneNotification() {
         try {
-            playNotificationSound()
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             ensureIncomingChannel(nm)
 
@@ -144,11 +141,13 @@ class ForegroundService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            val soundUri = android.net.Uri.parse("android.resource://${packageName}/raw/notifdriver")
             val notification = NotificationCompat.Builder(this, INCOMING_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("ARO DRIVE")
                 .setContentText("Ada pesanan baru!")
                 .setAutoCancel(true)
+                .setSound(soundUri)
                 .setVibrate(longArrayOf(0, 300, 150, 300, 150, 300))
                 .setContentIntent(pendingIntent)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
@@ -159,25 +158,13 @@ class ForegroundService : Service() {
         } catch (_: Exception) {}
     }
 
-    private fun playNotificationSound() {
-        try {
-            MediaPlayer.create(
-                this,
-                R.raw.notifdriver,
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                    .build(),
-                0
-            ).apply {
-                setOnCompletionListener { release() }
-                start()
-            }
-        } catch (_: Exception) {}
-    }
-
     private fun ensureIncomingChannel(nm: NotificationManager) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         try {
+            val soundUri = android.net.Uri.parse("android.resource://${packageName}/raw/notifdriver")
+            val audioAttrs = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                .build()
             val channel = NotificationChannel(
                 INCOMING_CHANNEL_ID,
                 "Pesanan Masuk",
@@ -185,7 +172,7 @@ class ForegroundService : Service() {
             ).apply {
                 description = "Notifikasi pesanan baru ARO DRIVE"
                 enableVibration(true)
-                setSound(null, null)
+                setSound(soundUri, audioAttrs)
                 enableLights(true)
             }
             nm.createNotificationChannel(channel)
@@ -216,7 +203,7 @@ class ForegroundService : Service() {
         var latestLat: Double? = null
         var latestLng: Double? = null
 
-        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v3"
+        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v4"
         private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val NOTIFICATION_ID = 1001
         private const val INCOMING_NOTIFICATION_ID = 1002
