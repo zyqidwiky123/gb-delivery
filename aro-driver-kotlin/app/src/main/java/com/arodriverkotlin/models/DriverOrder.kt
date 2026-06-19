@@ -73,4 +73,5 @@ data class DriverOrder(
     val balanceBefore: Long = 0,
     val balanceAfter: Long = 0,
     val completedAt: Timestamp? = null,
+    val acceptedAt: Timestamp? = null,
 )
