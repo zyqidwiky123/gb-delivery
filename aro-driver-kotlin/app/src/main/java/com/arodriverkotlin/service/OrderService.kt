@@ -55,6 +55,9 @@ object OrderService {
                 val orderRef = db.collection("orders").document(orderId)
                 val driverRef = db.collection("drivers").document(uid)
                 val snap = tx.get(orderRef)
+                val driverSnap = tx.get(driverRef)
+                val balance = driverSnap.getLong("balance") ?: 0
+                if (balance < 0) error("Saldo tidak mencukupi. Silakan top up.")
                 if (snap.getString("status") != "searching") error("Order sudah diambil.")
                 if (snap.getString("dispatch.offeredTo") != uid) error("Order ini bukan untuk Anda.")
                 tx.update(orderRef, mapOf(
