@@ -67,30 +67,34 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
     val powerManager = ctx.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
     val batteryExempt = powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
 
-    val allGranted = locationGranted && bgLocationGranted && notifGranted
+    val permissionsStepDone = locationGranted && notifGranted
 
-    var requested by remember { mutableStateOf(allGranted) }
+    var requested by remember { mutableStateOf(permissionsStepDone && (android.os.Build.VERSION.SDK_INT < 30 || bgLocationGranted)) }
 
-    val launcher = rememberLauncherForActivityResult(
+    // Step 1: Foreground permissions (location + notif)
+    val foregroundLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
         val locOk = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true
-        val bgOk = if (android.os.Build.VERSION.SDK_INT >= 30)
-            granted[Manifest.permission.ACCESS_BACKGROUND_LOCATION] == true
-        else true
         val notifOk = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
             granted[Manifest.permission.POST_NOTIFICATIONS] == true
         else true
-        if (locOk && bgOk && notifOk) {
-            val pm = ctx.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
-            if (pm.isIgnoringBatteryOptimizations(ctx.packageName)) {
-                onAllGranted()
+        if (locOk && notifOk) {
+            // After foreground granted, request background location on API 30+
+            if (android.os.Build.VERSION.SDK_INT >= 30 &&
+                ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
+            ) {
+                bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            } else {
+                requested = true
             }
-            // If battery not exempt, user needs to tap the button below
         }
     }
 
-    val permissionsStepDone = locationGranted && bgLocationGranted && notifGranted
+    // Step 2: Background location (API 30+ only, must be requested separately)
+    val bgLocationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { requested = true }
 
     if (requested && batteryExempt) {
         onAllGranted()
@@ -177,13 +181,10 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                             Manifest.permission.ACCESS_FINE_LOCATION,
                             Manifest.permission.ACCESS_COARSE_LOCATION,
                         )
-                        if (android.os.Build.VERSION.SDK_INT >= 30) {
-                            perms.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                        }
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                             perms.add(Manifest.permission.POST_NOTIFICATIONS)
                         }
-                        launcher.launch(perms.toTypedArray())
+                        foregroundLauncher.launch(perms.toTypedArray())
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
