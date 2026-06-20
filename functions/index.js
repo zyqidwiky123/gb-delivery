@@ -17,6 +17,7 @@ const admin = require("firebase-admin");
 // const vision = require("@google-cloud/vision"); // Lazy load inside functions
 
 admin.initializeApp();
+const rtdb = admin.database();
 
 // Helper to calculate distance in KM using Haversine formula
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -61,7 +62,8 @@ function getDispatchRegionConfig(regionType) {
 }
 
 function getTimestampMillis(value) {
-    if (!value) return null;
+    if (!value && value !== 0) return null;
+    if (typeof value === "number") return value;
     if (typeof value.toMillis === "function") return value.toMillis();
     if (typeof value.seconds === "number") return value.seconds * 1000;
     if (value instanceof Date) return value.getTime();
@@ -317,26 +319,52 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
         console.log(`[AutoOffline] Reset ${stuckBusy.length} stuck busy drivers to online.`);
     }
 
-    // 2. Handle inactive + over daily limit drivers
-    const driversSnapshot = await admin.firestore().collection("drivers")
-        .where("isOnline", "==", true)
-        .get();
+    // 2. Handle inactive + over daily limit drivers (via RTDB)
+    const rtdbSnap = await rtdb.ref('drivers').once('value');
+    const onlineRtdbDrivers = [];
+    rtdbSnap.forEach(child => {
+        const data = child.val();
+        if (data && data.isOnline) {
+            onlineRtdbDrivers.push({ id: child.key, ...data });
+        }
+    });
+
+    if (onlineRtdbDrivers.length === 0) {
+        if (stuckBusy.length === 0) console.log("[AutoOffline] No online drivers found in RTDB.");
+        return null;
+    }
+
+    // Read Firestore docs for these drivers (for ref + balance)
+    const driverRefs = {};
+    const fsSnap = await admin.firestore().collection('drivers').get();
+    fsSnap.forEach(doc => {
+        if (rtdbSnap.hasChild(doc.id)) {
+            driverRefs[doc.id] = { ref: doc.ref, data: doc.data() };
+        }
+    });
 
     const inactiveDrivers = [];
     const overLimitDrivers = [];
 
-    driversSnapshot.forEach(doc => {
-        const driver = doc.data();
+    onlineRtdbDrivers.forEach(driver => {
+        const fsData = driverRefs[driver.id]?.data || {};
+        const merged = {
+            ...fsData,
+            isOnline: true,
+            status: driver.status,
+            lastActive: driver.lastActive,
+            todayOnlineMs: driver.todayOnlineMs || 0,
+            onlineSessionStartAt: driver.onlineSessionStartAt,
+            onlineAt: driver.onlineAt,
+        };
 
-        // Cek inactivity (>2 jam tanpa lastActive)
-        if (isDriverInactive(driver, now)) {
-            inactiveDrivers.push({ ref: doc.ref, driver });
+        if (isDriverInactive(merged, now)) {
+            inactiveDrivers.push({ id: driver.id, driver: merged, ref: driverRefs[driver.id]?.ref });
             return;
         }
 
-        // Cek daily limit (>=12 jam hari ini)
-        if (isDriverOverDailyLimit(driver, now)) {
-            overLimitDrivers.push({ ref: doc.ref, driver });
+        if (isDriverOverDailyLimit(merged, now)) {
+            overLimitDrivers.push({ id: driver.id, driver: merged, ref: driverRefs[driver.id]?.ref });
             return;
         }
     });
@@ -348,8 +376,11 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
         for (let i = 0; i < inactiveDrivers.length; i += batchSize) {
             const batch = admin.firestore().batch();
             const chunk = inactiveDrivers.slice(i, i + batchSize);
-            chunk.forEach(({ ref, driver }) => {
-                const updates = {
+            const rtdbUpdates = [];
+            chunk.forEach(({ id, driver, ref }) => {
+                const onlineSince = getTimestampMillis(driver.onlineSessionStartAt) || getTimestampMillis(driver.onlineAt);
+                const todayMs = (driver.todayOnlineMs || 0) + (onlineSince ? (now - onlineSince) : 0);
+                const baseFields = {
                     status: "offline",
                     isOnline: false,
                     offlineAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -357,14 +388,24 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
                     statusChangedAt: admin.firestore.FieldValue.serverTimestamp(),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 };
-                // Akumulasi todayOnlineMs saat offline
-                const onlineSince = getTimestampMillis(driver.onlineSessionStartAt) || getTimestampMillis(driver.onlineAt);
-                if (onlineSince) {
-                    updates.todayOnlineMs = (driver.todayOnlineMs || 0) + (now - onlineSince);
-                }
-                batch.update(ref, updates);
+                if (onlineSince) baseFields.todayOnlineMs = todayMs;
+                if (ref) batch.update(ref, baseFields);
+                rtdbUpdates.push(
+                    rtdb.ref(`drivers/${id}`).update({
+                        isOnline: false,
+                        status: "offline",
+                        statusChangedAt: admin.database.ServerValue.TIMESTAMP,
+                        lastActive: admin.database.ServerValue.TIMESTAMP,
+                        offlineAt: admin.database.ServerValue.TIMESTAMP,
+                        autoOfflineAt: admin.database.ServerValue.TIMESTAMP,
+                        onlineSessionStartAt: null,
+                        onlineAt: null,
+                        ...(onlineSince ? { todayOnlineMs: todayMs } : {}),
+                    })
+                );
             });
-            await batch.commit();
+            if (chunk.some(c => c.ref)) await batch.commit();
+            await Promise.all(rtdbUpdates);
         }
         console.log(`[AutoOffline] Set ${inactiveDrivers.length} inactive drivers offline.`);
     }
@@ -374,8 +415,11 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
         for (let i = 0; i < overLimitDrivers.length; i += batchSize) {
             const batch = admin.firestore().batch();
             const chunk = overLimitDrivers.slice(i, i + batchSize);
-            chunk.forEach(({ ref, driver }) => {
-                const updates = {
+            const rtdbUpdates = [];
+            chunk.forEach(({ id, driver, ref }) => {
+                const onlineSince = getTimestampMillis(driver.onlineSessionStartAt) || getTimestampMillis(driver.onlineAt);
+                const todayMs = (driver.todayOnlineMs || 0) + (onlineSince ? (now - onlineSince) : 0);
+                const baseFields = {
                     status: "offline",
                     isOnline: false,
                     offlineAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -383,13 +427,24 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
                     statusChangedAt: admin.firestore.FieldValue.serverTimestamp(),
                     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 };
-                const onlineSince = getTimestampMillis(driver.onlineSessionStartAt) || getTimestampMillis(driver.onlineAt);
-                if (onlineSince) {
-                    updates.todayOnlineMs = (driver.todayOnlineMs || 0) + (now - onlineSince);
-                }
-                batch.update(ref, updates);
+                if (onlineSince) baseFields.todayOnlineMs = todayMs;
+                if (ref) batch.update(ref, baseFields);
+                rtdbUpdates.push(
+                    rtdb.ref(`drivers/${id}`).update({
+                        isOnline: false,
+                        status: "offline",
+                        statusChangedAt: admin.database.ServerValue.TIMESTAMP,
+                        lastActive: admin.database.ServerValue.TIMESTAMP,
+                        offlineAt: admin.database.ServerValue.TIMESTAMP,
+                        autoOfflineAt: admin.database.ServerValue.TIMESTAMP,
+                        onlineSessionStartAt: null,
+                        onlineAt: null,
+                        ...(onlineSince ? { todayOnlineMs: todayMs } : {}),
+                    })
+                );
             });
-            await batch.commit();
+            if (chunk.some(c => c.ref)) await batch.commit();
+            await Promise.all(rtdbUpdates);
         }
         console.log(`[AutoOffline] Set ${overLimitDrivers.length} over-limit drivers offline.`);
     }
@@ -402,12 +457,28 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
 
 // Reset daily online time for all drivers at midnight
 exports.resetDailyOnlineTime = onSchedule("every day 00:00", async () => {
+    const now = Date.now();
+
+    // Reset RTDB
+    const rtdbSnap = await rtdb.ref('drivers').once('value');
+    const rtdbUpdates = [];
+    rtdbSnap.forEach(child => {
+        rtdbUpdates.push(
+            rtdb.ref(`drivers/${child.key}`).update({
+                todayOnlineMs: 0,
+                todayOnlineResetAt: admin.database.ServerValue.TIMESTAMP,
+            })
+        );
+    });
+    await Promise.all(rtdbUpdates);
+
+    // Reset Firestore
     const driversSnapshot = await admin.firestore().collection("drivers")
         .select()
         .get();
 
     if (driversSnapshot.empty) {
-        console.log("[DailyReset] No drivers to reset.");
+        console.log("[DailyReset] Reset RTDB for " + rtdbUpdates.length + " drivers. No Firestore drivers to reset.");
         return;
     }
 
@@ -426,9 +497,46 @@ exports.resetDailyOnlineTime = onSchedule("every day 00:00", async () => {
         await batch.commit();
     }
 
-    console.log(`[DailyReset] Reset todayOnlineMs for ${refs.length} drivers.`);
+    console.log(`[DailyReset] Reset todayOnlineMs for ${refs.length} Firestore drivers and ${rtdbUpdates.length} RTDB drivers.`);
     return null;
 });
+
+async function getOnlineDrivers() {
+    const [rtdbSnap, fsSnap] = await Promise.all([
+        rtdb.ref('drivers').once('value'),
+        admin.firestore().collection('drivers').get()
+    ]);
+
+    const rtdbMap = {};
+    rtdbSnap.forEach(child => {
+        const data = child.val();
+        if (data && data.isOnline && data.status === 'online') {
+            rtdbMap[child.key] = data;
+        }
+    });
+
+    const drivers = [];
+    fsSnap.forEach(doc => {
+        const rtdbData = rtdbMap[doc.id];
+        if (!rtdbData) return;
+        const fs = doc.data();
+        drivers.push({
+            id: doc.id,
+            ...fs,
+            isOnline: rtdbData.isOnline,
+            status: rtdbData.status,
+            lastActive: rtdbData.lastActive,
+            todayOnlineMs: rtdbData.todayOnlineMs || 0,
+            location: rtdbData.location,
+            lastLocationUpdate: rtdbData.lastLocationUpdate,
+            onlineAt: rtdbData.onlineAt,
+            offlineAt: rtdbData.offlineAt,
+            onlineSessionStartAt: rtdbData.onlineSessionStartAt,
+            statusChangedAt: rtdbData.statusChangedAt,
+        });
+    });
+    return drivers;
+}
 
 async function dispatchOrder(orderId, orderData, dispatchState) {
     let pickupLocation = orderData.pickup || orderData.pickupLocation;
@@ -442,17 +550,12 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
 
     console.log(`[Dispatch] Processing Order ${orderId} | Radius: ${currentRadius}km | Iteration: ${dispatchState.iteration} | Rejected: ${rejectedDrivers.length}`);
 
-    // Query all online drivers
-    const driversSnapshot = await admin.firestore().collection("drivers")
-        .where("isOnline", "==", true)
-        .where("status", "==", "online") // Driver yang tidak sedang bawa order
-        .get();
-
+    // Read online drivers from RTDB + Firestore
+    const drivers = await getOnlineDrivers();
     let candidates = [];
 
-    driversSnapshot.forEach(doc => {
-        const driver = doc.data();
-        const driverId = doc.id;
+    drivers.forEach(driver => {
+        const driverId = driver.id;
 
         // Skip if already rejected/timed out this order
         if (rejectedDrivers.includes(driverId)) return;
@@ -600,14 +703,10 @@ async function setNoDriverStatus(orderId, orderData) {
  */
 async function getOnlineAvailableDriversCount() {
     try {
-        const driversSnapshot = await admin.firestore().collection("drivers")
-            .where("isOnline", "==", true)
-            .where("status", "==", "online")
-            .get();
+        const drivers = await getOnlineDrivers();
         let count = 0;
         const now = Date.now();
-        driversSnapshot.forEach(doc => {
-            const driver = doc.data();
+        drivers.forEach(driver => {
             if (!isDriverInactive(driver, now) && !isDriverOverDailyLimit(driver, now) && (driver.balance || 0) >= 0) {
                 count += 1;
             }
