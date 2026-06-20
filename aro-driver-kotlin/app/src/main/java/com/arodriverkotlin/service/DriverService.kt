@@ -2,59 +2,74 @@ package com.arodriverkotlin.service
 
 import android.net.Uri
 import android.util.Log
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 object DriverService {
     private val db = FirebaseFirestore.getInstance()
+    private val rtdb = FirebaseDatabase.getInstance().reference
     private val storage = FirebaseStorage.getInstance()
 
     suspend fun toggleOnline(uid: String, currentOnline: Boolean) {
         val online = !currentOnline
-        val update = mutableMapOf<String, Any>(
+        val fsUpdate = mutableMapOf<String, Any>(
             "isOnline" to online,
             "status" to if (online) "online" else "offline",
             "statusChangedAt" to FieldValue.serverTimestamp(),
             "updatedAt" to FieldValue.serverTimestamp(),
             "lastActive" to FieldValue.serverTimestamp(),
         )
+        val rtdbUpdate = mutableMapOf<String, Any>(
+            "isOnline" to online,
+            "status" to if (online) "online" else "offline",
+            "statusChangedAt" to ServerValue.TIMESTAMP,
+            "lastActive" to ServerValue.TIMESTAMP,
+        )
         if (online) {
-            update["onlineAt"] = FieldValue.serverTimestamp()
-            update["offlineAt"] = FieldValue.delete()
-            update["onlineSessionStartAt"] = FieldValue.serverTimestamp()
+            fsUpdate["onlineAt"] = FieldValue.serverTimestamp()
+            fsUpdate["offlineAt"] = FieldValue.delete()
+            fsUpdate["onlineSessionStartAt"] = FieldValue.serverTimestamp()
+            rtdbUpdate["onlineAt"] = ServerValue.TIMESTAMP
+            rtdbUpdate["offlineAt"] = null
+            rtdbUpdate["onlineSessionStartAt"] = ServerValue.TIMESTAMP
         } else {
-            update["offlineAt"] = FieldValue.serverTimestamp()
-            // Akumulasi todayOnlineMs saat offline
+            fsUpdate["offlineAt"] = FieldValue.serverTimestamp()
+            rtdbUpdate["offlineAt"] = ServerValue.TIMESTAMP
             try {
-                val doc = db.collection("drivers").document(uid).get().await()
-                val todayMs = doc.getLong("todayOnlineMs") ?: 0L
-                val sessionStartTs = doc.getTimestamp("onlineSessionStartAt") ?: doc.getTimestamp("onlineAt")
+                val snap = rtdb.child("drivers/$uid").get().await()
+                val todayMs = snap.child("todayOnlineMs").getValue(Long::class.java) ?: 0L
+                val sessionStartTs = snap.child("onlineSessionStartAt").getValue(Long::class.java)
+                    ?: snap.child("onlineAt").getValue(Long::class.java)
                 if (sessionStartTs != null) {
-                    val elapsed = System.currentTimeMillis() - sessionStartTs.toDate().time
-                    update["todayOnlineMs"] = todayMs + elapsed
+                    val elapsed = System.currentTimeMillis() - sessionStartTs
+                    val newTodayMs = todayMs + elapsed
+                    fsUpdate["todayOnlineMs"] = newTodayMs
+                    rtdbUpdate["todayOnlineMs"] = newTodayMs
                 }
             } catch (e: Exception) {
-                Log.w("DRIVER", "Failed to read online session for accumulation", e)
+                Log.w("DRIVER", "Failed to read RTDB session for accumulation", e)
             }
-            update["onlineSessionStartAt"] = FieldValue.delete()
+            fsUpdate["onlineSessionStartAt"] = FieldValue.delete()
+            rtdbUpdate["onlineSessionStartAt"] = null
         }
-        db.collection("drivers").document(uid).set(
-            update,
-            com.google.firebase.firestore.SetOptions.merge()
-        ).await()
+        db.collection("drivers").document(uid).set(fsUpdate, SetOptions.merge()).await()
+        rtdb.child("drivers/$uid").updateChildren(rtdbUpdate).await()
     }
 
     suspend fun updateLocation(uid: String, lat: Double, lng: Double) {
-        db.collection("drivers").document(uid).set(
+        rtdb.child("drivers/$uid").updateChildren(
             mapOf(
-                "location" to mapOf("lat" to lat, "lng" to lng),
-                "lastLocationUpdate" to FieldValue.serverTimestamp(),
-                "lastActive" to FieldValue.serverTimestamp(),
-            ),
-            com.google.firebase.firestore.SetOptions.merge()
+                "location/lat" to lat,
+                "location/lng" to lng,
+                "lastLocationUpdate" to ServerValue.TIMESTAMP,
+                "lastActive" to ServerValue.TIMESTAMP,
+            )
         ).await()
     }
 

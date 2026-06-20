@@ -9,7 +9,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, updatePassword } from 'firebase/auth';
 
-import ManualOrderForm from '../components/ManualOrderForm';
+
 
 const getDownloadURLWithRetry = async (storageRef, retries = 3, delay = 1000) => {
   for (let i = 0; i < retries; i++) {
@@ -30,7 +30,7 @@ const getDownloadURLWithRetry = async (storageRef, retries = 3, delay = 1000) =>
 function Dashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showManualOrderModal, setShowManualOrderModal] = useState(false);
+  const USER_APP_URL = import.meta.env.VITE_USER_APP_URL || '/admin';
   const navigate = useNavigate();
   const { 
     baseFare, setBaseFare, 
@@ -1122,7 +1122,7 @@ function Dashboard() {
           </nav>
           <div className="px-6 mt-auto space-y-3">
             <button 
-              onClick={() => setShowManualOrderModal(true)}
+              onClick={() => window.open(USER_APP_URL + '/admin/orders/create', '_blank')}
               className="w-full bg-[#f3ffca] text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 hover:shadow-[0_0_20px_rgba(243,255,202,0.3)] transition-all active:scale-95 group"
             >
               <span className="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">add_circle</span>
@@ -3335,17 +3335,6 @@ function Dashboard() {
         </div>
       )}
 
-      {showManualOrderModal && (
-        <ManualOrderForm 
-          onClose={() => setShowManualOrderModal(false)} 
-          onOrderCreated={() => {
-            if (activeTab === 'Transactions' || activeTab === 'Overview') {
-              fetchTransactions();
-              fetchOverviewData();
-            }
-          }}
-        />
-      )}
     </div>
   );
 }

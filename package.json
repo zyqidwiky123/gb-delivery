@@ -6,5 +6,8 @@
     "aro-drive-driver-vite",
     "aro-admin-vite",
     "functions"
-  ]
+  ],
+  "dependencies": {
+    "libsodium-wrappers": "^0.8.4"
+  }
 }

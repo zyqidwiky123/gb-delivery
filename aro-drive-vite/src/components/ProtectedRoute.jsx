@@ -1,18 +1,17 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, isAdmin } = useUserStore();
+  const location = useLocation();
 
   if (!user) {
-    // Redirect to login if not logged in
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
 
   if (adminOnly && !isAdmin) {
-    // Redirect to home if not an admin
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
 
   return children;

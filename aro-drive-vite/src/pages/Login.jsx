@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 import { auth, googleProvider, db } from '../firebase/config';
 import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
@@ -7,6 +7,8 @@ import { doc, getDoc } from 'firebase/firestore';
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from;
   const { login } = useUserStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,9 +34,11 @@ function Login() {
       // Check if user exists in the system with whatsapp
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       
-      console.log("Logged in with Google:", user.email, "Admin:", isAdmin);
+      const hasAdminRole = userDoc.exists() && userDoc.data().role === 'admin';
+      const isAccessingAdmin = from?.startsWith('/admin');
+      console.log("Logged in with Google:", user.email, "Admin:", isAdmin, "AdminRole:", hasAdminRole, "AccessingAdmin:", isAccessingAdmin);
       
-      if (isAdmin) {
+      if (isAdmin || hasAdminRole || isAccessingAdmin) {
         login({
           id: user.uid,
           displayName: user.displayName,
@@ -42,7 +46,7 @@ function Login() {
           email: user.email,
           isAdmin: true
         });
-        navigate('/admin');
+        navigate(from || '/admin');
         return;
       }
 
@@ -98,21 +102,25 @@ function Login() {
       }
 
 
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+      const hasAdminRole = userDoc.exists() && userDoc.data().role === 'admin';
+      const isAccessingAdmin = from?.startsWith('/admin');
+      const effectiveAdmin = isAdmin || hasAdminRole || isAccessingAdmin;
+
       login({
         id: user.uid,
         displayName: user.displayName || 'User Aro Drive',
         photoURL: user.photoURL || 'https://via.placeholder.com/150',
         email: user.email,
-        isAdmin: isAdmin
+        isAdmin: effectiveAdmin
       });
       
-      console.log("Logged in with Email:", user.email, "Admin:", isAdmin);
+      console.log("Logged in with Email:", user.email, "Admin:", isAdmin, "AdminRole:", hasAdminRole, "AccessingAdmin:", isAccessingAdmin);
       
-      if (isAdmin) {
-        navigate('/admin');
+      if (effectiveAdmin) {
+        navigate(from || '/admin');
       } else {
-        // Fetch extra data for regular members
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
           login({

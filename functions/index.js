@@ -207,7 +207,13 @@ exports.onOrderCreated = onDocumentCreated("orders/{orderId}", async (event) => 
         console.error("Error sending WA notifications:", waError);
     }
 
-    // 3. Initialize Dispatch System (Only if pickupLocation exists)
+    // 3. Skip dispatch if order has direct driver assignment
+    if (orderData.status === 'accepted' || orderData.dispatch?.assignedDirectly) {
+        console.log(`Order ${orderId} has direct driver assignment (admin), skipping dispatch.`);
+        return;
+    }
+
+    // 4. Initialize Dispatch System (Only if pickupLocation exists)
     if (pickupLocation && pickupLocation.lat) {
         // Default reference center is still Blitar as per user request
         const BLITAR_CENTER = { lat: -8.098, lng: 112.164 };

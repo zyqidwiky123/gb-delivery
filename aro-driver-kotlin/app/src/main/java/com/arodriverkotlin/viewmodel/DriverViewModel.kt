@@ -15,6 +15,11 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.messaging.FirebaseMessaging
 import android.util.Log
 import kotlinx.coroutines.delay
@@ -34,6 +39,10 @@ class DriverViewModel : ViewModel() {
     private var allOrdersListener: ListenerRegistration? = null
     private var todayListener: ListenerRegistration? = null
     private var transactionsListener: ListenerRegistration? = null
+
+    private var rtdbProfileRef: DatabaseReference? = null
+    private var rtdbProfileListener: ValueEventListener? = null
+    private var prevRtdbIsOnline: Boolean? = null
 
     private var prevIncomingCount = 0
     private var lastLocationWrite = 0L
@@ -277,6 +286,50 @@ class DriverViewModel : ViewModel() {
                 }
             }
 
+        // RTDB listener for real-time dynamic fields (isOnline, status, location, session timers)
+        val rtdb = FirebaseDatabase.getInstance().reference
+        rtdbProfileRef = rtdb.child("drivers/$uid")
+        rtdbProfileListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val profile = _state.value.profile ?: return
+                val isOnline = snapshot.child("isOnline").getValue(Boolean::class.java) ?: profile.isOnline
+                val status = snapshot.child("status").getValue(String::class.java) ?: profile.status
+                val todayOnlineMs = snapshot.child("todayOnlineMs").getValue(Long::class.java) ?: profile.todayOnlineMs
+                val onlineTs = snapshot.child("onlineAt").getValue(Long::class.java)
+                val offlineTs = snapshot.child("offlineAt").getValue(Long::class.java)
+                val lastActiveTs = snapshot.child("lastActive").getValue(Long::class.java)
+                val lastLocUpdateTs = snapshot.child("lastLocationUpdate").getValue(Long::class.java)
+                val sessionStartTs = snapshot.child("onlineSessionStartAt").getValue(Long::class.java)
+                val lat = snapshot.child("location/lat").getValue(Double::class.java)
+                val lng = snapshot.child("location/lng").getValue(Double::class.java)
+
+                if (isOnline != prevRtdbIsOnline) {
+                    listenIncoming(uid, isOnline)
+                    prevRtdbIsOnline = isOnline
+                }
+
+                _state.value = _state.value.copy(
+                    profile = profile.copy(
+                        isOnline = isOnline,
+                        status = status,
+                        todayOnlineMs = todayOnlineMs,
+                        onlineTimestamp = onlineTs,
+                        offlineTimestamp = offlineTs,
+                        lastActiveTimestamp = lastActiveTs,
+                        lastLocationUpdateTimestamp = lastLocUpdateTs,
+                        onlineSessionStartTimestamp = sessionStartTs,
+                    ),
+                    currentLat = lat ?: _state.value.currentLat,
+                    currentLng = lng ?: _state.value.currentLng,
+                )
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.w("RTDB", "Profile listener error", error.toException())
+            }
+        }
+        rtdbProfileRef?.addValueEventListener(rtdbProfileListener!!)
+
         activeListener = db.collection("orders")
             .whereEqualTo("driverId", uid)
             .whereIn("status", listOf("accepted", "arriving", "picked_up"))
@@ -410,6 +463,12 @@ class DriverViewModel : ViewModel() {
         todayListener = null
         allOrdersListener = null
         transactionsListener = null
+        rtdbProfileRef?.let { ref ->
+            rtdbProfileListener?.let { ref.removeEventListener(it) }
+        }
+        rtdbProfileRef = null
+        rtdbProfileListener = null
+        prevRtdbIsOnline = null
     }
 
     private fun postMessage(message: String) {
