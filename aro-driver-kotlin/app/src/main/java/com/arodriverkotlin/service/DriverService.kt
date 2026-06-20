@@ -16,17 +16,18 @@ object DriverService {
 
     suspend fun toggleOnline(uid: String, currentOnline: Boolean) {
         val online = !currentOnline
-        val rtdbUpdate = mutableMapOf<String, Any>(
+        val update = hashMapOf<String, Any?>(
             "isOnline" to online,
             "status" to if (online) "online" else "offline",
             "statusChangedAt" to ServerValue.TIMESTAMP,
             "lastActive" to ServerValue.TIMESTAMP,
         )
         if (online) {
-            rtdbUpdate["onlineAt"] = ServerValue.TIMESTAMP
-            rtdbUpdate["onlineSessionStartAt"] = ServerValue.TIMESTAMP
+            update["onlineAt"] = ServerValue.TIMESTAMP
+            update["onlineSessionStartAt"] = ServerValue.TIMESTAMP
+            update["offlineAt"] = null
         } else {
-            rtdbUpdate["offlineAt"] = ServerValue.TIMESTAMP
+            update["offlineAt"] = ServerValue.TIMESTAMP
             try {
                 val snap = rtdb.child("drivers/$uid").get().await()
                 val todayMs = snap.child("todayOnlineMs").getValue(Long::class.java) ?: 0L
@@ -34,14 +35,15 @@ object DriverService {
                     ?: snap.child("onlineAt").getValue(Long::class.java)
                 if (sessionStartTs != null) {
                     val elapsed = System.currentTimeMillis() - sessionStartTs
-                    rtdbUpdate["todayOnlineMs"] = todayMs + elapsed
+                    update["todayOnlineMs"] = todayMs + elapsed
                 }
             } catch (e: Exception) {
                 Log.w("DRIVER", "Failed to read RTDB session for accumulation", e)
             }
-            rtdbUpdate["onlineSessionStartAt"] = null
+            update["onlineSessionStartAt"] = null
+            update["onlineAt"] = null
         }
-        rtdb.child("drivers/$uid").updateChildren(rtdbUpdate).await()
+        rtdb.child("drivers/$uid").updateChildren(update).await()
     }
 
     suspend fun updateLocation(uid: String, lat: Double, lng: Double) {
