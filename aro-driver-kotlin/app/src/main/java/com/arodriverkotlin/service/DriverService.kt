@@ -4,9 +4,7 @@ import android.net.Uri
 import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ServerValue
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
@@ -18,13 +16,6 @@ object DriverService {
 
     suspend fun toggleOnline(uid: String, currentOnline: Boolean) {
         val online = !currentOnline
-        val fsUpdate = mutableMapOf<String, Any>(
-            "isOnline" to online,
-            "status" to if (online) "online" else "offline",
-            "statusChangedAt" to FieldValue.serverTimestamp(),
-            "updatedAt" to FieldValue.serverTimestamp(),
-            "lastActive" to FieldValue.serverTimestamp(),
-        )
         val rtdbUpdate = mutableMapOf<String, Any>(
             "isOnline" to online,
             "status" to if (online) "online" else "offline",
@@ -32,14 +23,9 @@ object DriverService {
             "lastActive" to ServerValue.TIMESTAMP,
         )
         if (online) {
-            fsUpdate["onlineAt"] = FieldValue.serverTimestamp()
-            fsUpdate["offlineAt"] = FieldValue.delete()
-            fsUpdate["onlineSessionStartAt"] = FieldValue.serverTimestamp()
             rtdbUpdate["onlineAt"] = ServerValue.TIMESTAMP
-            rtdbUpdate["offlineAt"] = null
             rtdbUpdate["onlineSessionStartAt"] = ServerValue.TIMESTAMP
         } else {
-            fsUpdate["offlineAt"] = FieldValue.serverTimestamp()
             rtdbUpdate["offlineAt"] = ServerValue.TIMESTAMP
             try {
                 val snap = rtdb.child("drivers/$uid").get().await()
@@ -48,17 +34,13 @@ object DriverService {
                     ?: snap.child("onlineAt").getValue(Long::class.java)
                 if (sessionStartTs != null) {
                     val elapsed = System.currentTimeMillis() - sessionStartTs
-                    val newTodayMs = todayMs + elapsed
-                    fsUpdate["todayOnlineMs"] = newTodayMs
-                    rtdbUpdate["todayOnlineMs"] = newTodayMs
+                    rtdbUpdate["todayOnlineMs"] = todayMs + elapsed
                 }
             } catch (e: Exception) {
                 Log.w("DRIVER", "Failed to read RTDB session for accumulation", e)
             }
-            fsUpdate["onlineSessionStartAt"] = FieldValue.delete()
             rtdbUpdate["onlineSessionStartAt"] = null
         }
-        db.collection("drivers").document(uid).set(fsUpdate, SetOptions.merge()).await()
         rtdb.child("drivers/$uid").updateChildren(rtdbUpdate).await()
     }
 
