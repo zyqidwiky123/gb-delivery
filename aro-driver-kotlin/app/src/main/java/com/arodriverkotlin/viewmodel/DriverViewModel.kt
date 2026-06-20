@@ -16,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.messaging.FirebaseMessaging
+import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -76,11 +77,15 @@ class DriverViewModel : ViewModel() {
     }
 
     fun toggleOnline() = viewModelScope.launch {
-        val uid = _state.value.userId ?: return@launch
-        val online = _state.value.profile?.isOnline ?: false
+        val uid = _state.value.userId
+        if (uid == null) {
+            _state.value = _state.value.copy(message = "Sesi tidak ditemukan")
+            return@launch
+        }
+        val wasOnline = _state.value.profile?.isOnline ?: false
         try {
-            DriverService.toggleOnline(uid, online)
-            _state.value = _state.value.copy(message = if (online) "Online" else "Offline")
+            DriverService.toggleOnline(uid, wasOnline)
+            _state.value = _state.value.copy(message = if (wasOnline) "Offline" else "Online")
         } catch (e: Exception) {
             _state.value = _state.value.copy(message = "Gagal: ${e.localizedMessage ?: "Error tidak dikenal"}")
         }
@@ -245,7 +250,10 @@ class DriverViewModel : ViewModel() {
 
         profileListener = db.collection("drivers").document(uid)
             .addSnapshotListener { snap, error ->
-                if (error != null) return@addSnapshotListener
+                if (error != null) {
+                    Log.w("PROFILE", "Snapshot listener error", error)
+                    return@addSnapshotListener
+                }
                 if (snap == null || !snap.exists()) {
                     logout()
                     _state.value = _state.value.copy(message = "Sesi berakhir. Akun driver dihapus.")

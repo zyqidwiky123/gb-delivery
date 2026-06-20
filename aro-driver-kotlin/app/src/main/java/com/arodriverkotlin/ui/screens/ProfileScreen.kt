@@ -322,6 +322,7 @@ fun ProfileScreen(
                 Switch(
                     checked = state.profile?.isOnline ?: false,
                     onCheckedChange = { vm.toggleOnline() },
+                    // Note: DriverShell.kt TopBar also has toggleOnline without checked param
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = AroGreen,

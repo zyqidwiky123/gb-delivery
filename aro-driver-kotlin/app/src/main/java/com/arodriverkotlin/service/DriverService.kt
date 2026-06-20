@@ -1,6 +1,7 @@
 package com.arodriverkotlin.service
 
 import android.net.Uri
+import android.util.Log
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -35,7 +36,9 @@ object DriverService {
                     val elapsed = System.currentTimeMillis() - sessionStartTs.toDate().time
                     update["todayOnlineMs"] = todayMs + elapsed
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w("DRIVER", "Failed to read online session for accumulation", e)
+            }
             update["onlineSessionStartAt"] = FieldValue.delete()
         }
         db.collection("drivers").document(uid).set(
