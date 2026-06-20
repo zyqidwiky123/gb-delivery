@@ -820,37 +820,33 @@ exports.onOrderUpdate = onDocumentUpdated("orders/{orderId}", async (event) => {
             const pricing = pricingDoc.exists ? pricingDoc.data() : null;
 
             if (driverId) {
-                const driverDoc = await admin.firestore().collection("drivers").doc(driverId).get();
-                if (driverDoc.exists) {
-                    const driverData = driverDoc.data();
-                    const driverLoc = driverData.location;
-                    const pickupLoc = newValue.pickupLocation || newValue.pickup;
+                // Baca lokasi dari RTDB (real-time dari driver app Kotlin)
+                const rtdbSnap = await rtdb.ref(`drivers/${driverId}/location`).once('value');
+                const driverLoc = rtdbSnap.val();
+                const pickupLoc = newValue.pickupLocation || newValue.pickup;
 
-                    console.log(`[PickupSurcharge] Driver location:`, driverLoc, `Pickup location:`, pickupLoc);
+                console.log(`[PickupSurcharge] Driver RTDB location:`, driverLoc, `Pickup location:`, pickupLoc);
 
-                    const { fee, distance } = calculatePickupFee(driverLoc, pickupLoc, pricing);
-                    console.log(`[PickupSurcharge] Calculated distance: ${distance} km, surcharge fee: Rp ${fee}`);
+                const { fee, distance } = calculatePickupFee(driverLoc, pickupLoc, pricing);
+                console.log(`[PickupSurcharge] Calculated distance: ${distance} km, surcharge fee: Rp ${fee}`);
 
-                    if (fee > 0) {
-                        const originalTotal = Number(newValue.total) || 0;
-                        const newTotal = originalTotal + fee;
-                        
-                        await admin.firestore().collection("orders").doc(orderId).update({
-                            pickupFee: fee,
-                            pickupDistance: distance,
-                            total: newTotal
-                        });
+                if (fee > 0) {
+                    const originalTotal = Number(newValue.total) || 0;
+                    const newTotal = originalTotal + fee;
+                    
+                    await admin.firestore().collection("orders").doc(orderId).update({
+                        pickupFee: fee,
+                        pickupDistance: distance,
+                        total: newTotal
+                    });
 
-                        console.log(`[PickupSurcharge] Updated order ${orderId} with pickupFee: Rp ${fee}, new total: Rp ${newTotal}`);
-                    } else {
-                        await admin.firestore().collection("orders").doc(orderId).update({
-                            pickupFee: 0,
-                            pickupDistance: distance
-                        });
-                        console.log(`[PickupSurcharge] Pickup distance is ${distance} km, no surcharge applied.`);
-                    }
+                    console.log(`[PickupSurcharge] Updated order ${orderId} with pickupFee: Rp ${fee}, new total: Rp ${newTotal}`);
                 } else {
-                    console.warn(`[PickupSurcharge] Driver document ${driverId} not found.`);
+                    await admin.firestore().collection("orders").doc(orderId).update({
+                        pickupFee: 0,
+                        pickupDistance: distance
+                    });
+                    console.log(`[PickupSurcharge] Pickup distance is ${distance} km, no surcharge applied.`);
                 }
             }
         } catch (surchargeError) {
