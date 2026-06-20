@@ -8,7 +8,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +46,18 @@ fun AroDriverApp(vm: DriverViewModel = viewModel()) {
         )
     }
 
+    val uid = state.userId
+    val isOnline = state.profile?.isOnline == true
+    LaunchedEffect(state.loading, uid, isOnline) {
+        if (!state.loading) {
+            if (isOnline && uid != null) {
+                ForegroundService.start(ctx, uid)
+            } else {
+                ForegroundService.stop(ctx)
+            }
+        }
+    }
+
     if (!permissionsOk.value) {
         PermissionsScreen(onAllGranted = { permissionsOk.value = true })
         return
@@ -72,19 +84,6 @@ fun AroDriverApp(vm: DriverViewModel = viewModel()) {
             }
             else -> {
                 DriverShell(vm, state, vm::logout)
-
-                val isOnline = state.profile?.isOnline == true
-                val uid = state.userId
-                DisposableEffect(isOnline, uid) {
-                    if (isOnline && uid != null) {
-                        ForegroundService.start(ctx, uid)
-                    } else {
-                        ForegroundService.stop(ctx)
-                    }
-                    onDispose {
-                        ForegroundService.stop(ctx)
-                    }
-                }
             }
         }
     }
