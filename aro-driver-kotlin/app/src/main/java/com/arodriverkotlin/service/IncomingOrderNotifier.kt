@@ -3,16 +3,14 @@ package com.arodriverkotlin.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
-import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.arodriverkotlin.MainActivity
-import com.arodriverkotlin.R
 
 object IncomingOrderNotifier {
     const val CHANNEL_ID = "aro_drive_incoming_v5"
@@ -34,7 +32,7 @@ object IncomingOrderNotifier {
                 description = "Notifikasi pesanan baru ARO DRIVE"
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 300, 150, 300, 150, 300)
-                setSound(soundUri(context), notificationAudioAttributes())
+                setSound(Settings.System.DEFAULT_NOTIFICATION_URI, notificationAudioAttributes())
                 enableLights(true)
             }
             context.getSystemService(NotificationManager::class.java)
@@ -86,7 +84,7 @@ object IncomingOrderNotifier {
                 .setCategory(NotificationCompat.CATEGORY_CALL)
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-                builder.setSound(soundUri(context))
+                builder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
             }
 
             val notificationId = if (orderId.isBlank()) {
@@ -102,10 +100,6 @@ object IncomingOrderNotifier {
             Log.e(TAG, "Gagal menampilkan notifikasi order $orderId", error)
         }
     }
-
-    private fun soundUri(context: Context): Uri = Uri.parse(
-        "${ContentResolver.SCHEME_ANDROID_RESOURCE}://${context.packageName}/${R.raw.notifdriver}",
-    )
 
     private fun notificationAudioAttributes(): AudioAttributes = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_NOTIFICATION)
