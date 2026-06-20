@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
 import { useUserStore } from '../store/userStore';
-import { db } from '../firebase/config';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db, database } from '../firebase/config';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { ref, onValue } from 'firebase/database';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -27,10 +28,14 @@ function AdminDashboard() {
       updateStats({ totalRevenue: revenue, totalOrders: count });
     });
 
-    // 2. Listen to Drivers for Stats
-    const qDrivers = query(collection(db, "drivers"), where("status", "==", "online"));
-    const unsubDrivers = onSnapshot(qDrivers, (snapshot) => {
-      updateStats({ activeDrivers: snapshot.size });
+    // 2. Listen to Drivers for Stats (via RTDB)
+    const driversRef = ref(database, 'drivers');
+    const unsubDrivers = onValue(driversRef, (snapshot) => {
+      let count = 0;
+      snapshot.forEach(child => {
+        if (child.val().status === 'online') count++;
+      });
+      updateStats({ activeDrivers: count });
     });
 
     return () => {

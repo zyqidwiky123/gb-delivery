@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { auth, db } from '../firebase/config';
-import { collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, where } from 'firebase/firestore';
+import { auth, db, database } from '../firebase/config';
+import { collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, onValue } from 'firebase/database';
 import { useOrderStore } from '../store/orderStore';
 import { useUserStore } from '../store/userStore';
 import { useAdminStore } from '../store/adminStore';
@@ -42,7 +43,6 @@ const AdminOrderCreate = () => {
   const { platformFeePercent } = useAdminStore();
 
   const [merchants, setMerchants] = useState([]);
-  const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [merchantSearch, setMerchantSearch] = useState('');
   const [showMerchantDropdown, setShowMerchantDropdown] = useState(false);
@@ -88,6 +88,8 @@ const AdminOrderCreate = () => {
 
   // Driver
   const [selectedDriver, setSelectedDriver] = useState('');
+  const [onlineIds, setOnlineIds] = useState(new Set());
+  const [allDriverData, setAllDriverData] = useState([]);
 
   const handleLogout = async () => {
     logout();
@@ -103,14 +105,31 @@ const AdminOrderCreate = () => {
     return unsub;
   }, []);
 
-  // Fetch online drivers
+  // Fetch online drivers (RTDB) + all driver data (Firestore)
   useEffect(() => {
-    const q = query(collection(db, 'drivers'), where('isOnline', '==', true));
-    const unsub = onSnapshot(q, (snap) => {
-      setDrivers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const driversRef = ref(database, 'drivers');
+    const unsub = onValue(driversRef, (snap) => {
+      const ids = new Set();
+      snap.forEach(child => {
+        if (child.val().isOnline) ids.add(child.key);
+      });
+      setOnlineIds(ids);
     });
     return unsub;
   }, []);
+
+  useEffect(() => {
+    const q = query(collection(db, 'drivers'));
+    const unsub = onSnapshot(q, (snap) => {
+      setAllDriverData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return unsub;
+  }, []);
+
+  const drivers = useMemo(() =>
+    allDriverData.filter(d => onlineIds.has(d.id)),
+    [allDriverData, onlineIds]
+  );
 
   const filteredMerchants = useMemo(() => {
     if (!merchantSearch) return merchants;
