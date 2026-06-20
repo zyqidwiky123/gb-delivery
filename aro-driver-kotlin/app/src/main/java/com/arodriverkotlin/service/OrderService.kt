@@ -1,5 +1,7 @@
 package com.arodriverkotlin.service
 
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -12,6 +14,7 @@ import kotlin.math.roundToLong
 
 object OrderService {
     private val db = FirebaseFirestore.getInstance()
+    private val rtdb = FirebaseDatabase.getInstance().reference
 
     fun listenIncoming(uid: String, onResult: (List<DriverOrder>) -> Unit): ListenerRegistration {
         return db.collection("orders")
@@ -72,6 +75,10 @@ object OrderService {
                 ))
                 tx.update(driverRef, "status", "busy")
             }.await()
+            rtdb.child("drivers/$uid").updateChildren(hashMapOf(
+                "status" to "busy",
+                "lastActive" to ServerValue.TIMESTAMP,
+            )).await()
         } catch (e: Exception) {
             throw e
         }
@@ -111,6 +118,12 @@ object OrderService {
                 "onlineAt" to FieldValue.serverTimestamp(),
             ))
         }.await()
+        rtdb.child("drivers/$uid").updateChildren(hashMapOf(
+            "isOnline" to true,
+            "status" to "online",
+            "onlineAt" to ServerValue.TIMESTAMP,
+            "lastActive" to ServerValue.TIMESTAMP,
+        )).await()
     }
 
     suspend fun pickupOrder(orderId: String, pickupsDone: Long, pickupCount: Int) {
@@ -197,5 +210,12 @@ object OrderService {
                 "updatedAt" to timestamp,
             )
         ).await()
+
+        rtdb.child("drivers/$uid").updateChildren(hashMapOf(
+            "isOnline" to true,
+            "status" to "online",
+            "onlineAt" to ServerValue.TIMESTAMP,
+            "lastActive" to ServerValue.TIMESTAMP,
+        )).await()
     }
 }
