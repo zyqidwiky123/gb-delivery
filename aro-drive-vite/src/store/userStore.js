@@ -134,7 +134,6 @@ export const useUserStore = create(
       name: 'aro-user-storage', // key di localStorage
       partialize: (state) => ({
         user: state.user,
-        isAdmin: state.isAdmin,
         isGuestMode: state.isGuestMode,
         loyaltyPoints: state.loyaltyPoints,
         vouchers: state.vouchers,

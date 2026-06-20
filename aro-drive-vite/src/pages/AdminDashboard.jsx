@@ -62,9 +62,13 @@ function AdminDashboard() {
               <span className="font-bold text-sm">Dashboard</span>
            </Link>
            <Link to="/admin/orders" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
-              <span className="material-symbols-outlined text-xl">list_alt</span>
-              <span className="font-bold text-sm">Semua Pesanan</span>
-           </Link>
+               <span className="material-symbols-outlined text-xl">list_alt</span>
+               <span className="font-bold text-sm">Semua Pesanan</span>
+            </Link>
+            <Link to="/admin/orders/create" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
+               <span className="material-symbols-outlined text-xl">add_circle</span>
+               <span className="font-bold text-sm">Buat Pesanan</span>
+            </Link>
            <Link to="/admin/merchants" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
               <span className="material-symbols-outlined text-xl">store</span>
               <span className="font-bold text-sm">Kelola Merchant</span>

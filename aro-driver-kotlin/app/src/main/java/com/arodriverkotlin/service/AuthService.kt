@@ -2,6 +2,7 @@ package com.arodriverkotlin.service
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -47,6 +48,20 @@ object AuthService {
             ),
             com.google.firebase.firestore.SetOptions.merge()
         ).await()
+
+        // Init RTDB driver node if not exists
+        val rtdb = FirebaseDatabase.getInstance().reference
+        val rtdbSnap = rtdb.child("drivers/$uid").get().await()
+        if (!rtdbSnap.exists()) {
+            val existing = driverRef.get().await()
+            rtdb.child("drivers/$uid").updateChildren(
+                mapOf(
+                    "isOnline" to (existing.getBoolean("isOnline") ?: false),
+                    "status" to (existing.getString("status") ?: "offline"),
+                    "todayOnlineMs" to (existing.getLong("todayOnlineMs") ?: 0),
+                )
+            ).await()
+        }
     }
 
     fun logout() {

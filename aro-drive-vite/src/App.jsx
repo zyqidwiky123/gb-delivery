@@ -1,8 +1,11 @@
-import React, { useEffect, lazy, Suspense } from 'react'
+import React, { useEffect, useState, lazy, Suspense } from 'react'
 import { LazyMotion } from 'framer-motion'
 
 const loadFeatures = () => import('./framer-features.js').then(res => res.default)
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth, db } from './firebase/config'
+import { doc, getDoc } from 'firebase/firestore'
 
 // Lazy load pages
 const Welcome = lazy(() => import('./pages/Welcome'))
@@ -29,6 +32,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const AdminOrders = lazy(() => import('./pages/AdminOrders'))
 const AdminMerchants = lazy(() => import('./pages/AdminMerchants'))
 const AdminSettings = lazy(() => import('./pages/AdminSettings'))
+const AdminOrderCreate = lazy(() => import('./pages/AdminOrderCreate'))
 
 import { useAdminStore } from './store/adminStore'
 import { useOrderStore } from './store/orderStore'
@@ -48,10 +52,28 @@ import ChatAdminButton from './components/ChatAdminButton'
 function App() {
   const { initSettings } = useAdminStore();
   const { initPricing } = useOrderStore();
-  const { user, isGuestMode } = useUserStore();
+  const { user, isGuestMode, setAdminStatus } = useUserStore();
   const { initTheme } = useThemeStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists() && userDoc.data().role === 'admin') {
+            setAdminStatus(true);
+          }
+        } catch (e) {
+          console.warn('Failed to check admin status:', e);
+        }
+      }
+      setAuthReady(true);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     initTheme();
@@ -73,7 +95,7 @@ function App() {
 
   useEffect(() => {
     // Redirect to welcome page if not a guest and not logged in, and not on auth pages
-    if (!user && !isGuestMode && !['/welcome', '/login', '/register', '/complete-profile'].includes(location.pathname)) {
+    if (!user && !isGuestMode && !['/welcome', '/login', '/register', '/complete-profile'].includes(location.pathname) && !location.pathname.startsWith('/admin')) {
       navigate('/welcome', { replace: true });
     }
     // Redirect logged in user from root or welcome to member home
@@ -90,6 +112,14 @@ function App() {
       unsub2();
     };
   }, [initSettings, initPricing]);
+
+  if (!authReady) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const isNavbarHidden = [
     '/welcome', '/login', '/register', '/complete-profile',
@@ -147,6 +177,11 @@ function App() {
         <Route path="/admin/settings" element={
           <ProtectedRoute adminOnly={true}>
             <AdminSettings />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/orders/create" element={
+          <ProtectedRoute adminOnly={true}>
+            <AdminOrderCreate />
           </ProtectedRoute>
         } />
       </Routes>
