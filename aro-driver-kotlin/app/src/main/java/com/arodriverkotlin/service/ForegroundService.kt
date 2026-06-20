@@ -2,8 +2,6 @@ package com.arodriverkotlin.service
 
 import android.Manifest
 import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
@@ -12,10 +10,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.arodriverkotlin.MainActivity
-import com.arodriverkotlin.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -23,6 +21,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +37,6 @@ class ForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var incomingListener: ListenerRegistration? = null
-    private var currentIncomingCount = 0
 
     private var driverUid: String? = null
 
@@ -75,15 +73,20 @@ class ForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val uid = intent?.getStringExtra("EXTRA_UID")
-        if (uid != null) {
-            driverUid = uid
-            startLocationUpdates()
-            startListeningForOrders(uid)
-        }
-
         val notification = buildNotification()
         startForeground(NOTIFICATION_ID, notification)
+
+        val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
+        if (uid != null) {
+            driverUid = uid
+            persistDriverUid(uid)
+            startLocationUpdates()
+            startListeningForOrders(uid)
+        } else {
+            Log.w(TAG, "Service dimulai tanpa UID driver; service dihentikan")
+            stopSelf()
+            return START_NOT_STICKY
+        }
         return START_STICKY
     }
 
@@ -114,69 +117,23 @@ class ForegroundService : Service() {
         incomingListener = FirebaseFirestore.getInstance().collection("orders")
             .whereEqualTo("status", "searching")
             .whereEqualTo("dispatch.offeredTo", uid)
-            .addSnapshotListener { snap, _ ->
-                val docs = snap?.documents ?: emptyList()
-                val count = docs.size
-                if (count > currentIncomingCount) {
-                    showIncomingRingtoneNotification()
+            .addSnapshotListener { snap, error ->
+                if (error != null) {
+                    Log.e(TAG, "Listener pesanan masuk gagal", error)
+                    return@addSnapshotListener
                 }
-                currentIncomingCount = count
+
+                snap?.documentChanges
+                    ?.filter { it.type == DocumentChange.Type.ADDED }
+                    ?.forEach { change ->
+                        IncomingOrderNotifier.show(
+                            context = this,
+                            orderId = change.document.id,
+                            title = "ARO DRIVE",
+                            body = "Ada pesanan baru!",
+                        )
+                    }
             }
-    }
-
-    private fun showIncomingRingtoneNotification() {
-        try {
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            ensureIncomingChannel(nm)
-
-            val intent = Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            val pendingIntent = PendingIntent.getActivity(
-                this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val fullScreenPendingIntent = PendingIntent.getActivity(
-                this, 1, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val soundUri = android.net.Uri.parse("android.resource://${packageName}/raw/notifdriver")
-            val notification = NotificationCompat.Builder(this, INCOMING_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("ARO DRIVE")
-                .setContentText("Ada pesanan baru!")
-                .setAutoCancel(true)
-                .setSound(soundUri)
-                .setVibrate(longArrayOf(0, 300, 150, 300, 150, 300))
-                .setContentIntent(pendingIntent)
-                .setFullScreenIntent(fullScreenPendingIntent, true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_CALL)
-                .build()
-            nm.notify(INCOMING_NOTIFICATION_ID, notification)
-        } catch (_: Exception) {}
-    }
-
-    private fun ensureIncomingChannel(nm: NotificationManager) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        try {
-            val soundUri = android.net.Uri.parse("android.resource://${packageName}/raw/notifdriver")
-            val audioAttrs = android.media.AudioAttributes.Builder()
-                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
-                .build()
-            val channel = NotificationChannel(
-                INCOMING_CHANNEL_ID,
-                "Pesanan Masuk",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifikasi pesanan baru ARO DRIVE"
-                enableVibration(true)
-                setSound(soundUri, audioAttrs)
-                enableLights(true)
-            }
-            nm.createNotificationChannel(channel)
-        } catch (_: Exception) {}
     }
 
     private fun buildNotification(): Notification {
@@ -203,14 +160,16 @@ class ForegroundService : Service() {
         var latestLat: Double? = null
         var latestLng: Double? = null
 
-        private const val INCOMING_CHANNEL_ID = "aro_drive_incoming_v4"
+        private const val TAG = "ForegroundService"
+        private const val PREFS_NAME = "foreground_service"
+        private const val STORED_DRIVER_UID = "driver_uid"
+        private const val EXTRA_UID = "EXTRA_UID"
         private const val FOREGROUND_CHANNEL_ID = "aro_drive_foreground_service"
         private const val NOTIFICATION_ID = 1001
-        private const val INCOMING_NOTIFICATION_ID = 1002
 
         fun start(ctx: Context, uid: String) {
             val intent = Intent(ctx, ForegroundService::class.java).apply {
-                putExtra("EXTRA_UID", uid)
+                putExtra(EXTRA_UID, uid)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ctx.startForegroundService(intent)
@@ -220,7 +179,21 @@ class ForegroundService : Service() {
         }
 
         fun stop(ctx: Context) {
+            ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .remove(STORED_DRIVER_UID)
+                .apply()
             ctx.stopService(Intent(ctx, ForegroundService::class.java))
         }
     }
+
+    private fun persistDriverUid(uid: String) {
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            .edit()
+            .putString(STORED_DRIVER_UID, uid)
+            .apply()
+    }
+
+    private fun storedDriverUid(): String? =
+        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(STORED_DRIVER_UID, null)
 }

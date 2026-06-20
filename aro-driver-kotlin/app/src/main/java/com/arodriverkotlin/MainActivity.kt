@@ -1,8 +1,6 @@
 package com.arodriverkotlin
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -22,7 +20,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        createNotificationChannels()
         requestNotificationPermission()
         getFcmToken()
 
@@ -31,43 +28,6 @@ class MainActivity : ComponentActivity() {
                 AroDriverApp()
             }
         }
-    }
-
-    private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        try {
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-            try {
-                val fgChannel = NotificationChannel(
-                    "aro_drive_foreground_service",
-                    "ARO DRIVE",
-                    NotificationManager.IMPORTANCE_LOW
-                ).apply {
-                    description = "Layanan latar belakang ARO DRIVE"
-                    setShowBadge(false)
-                }
-                nm.createNotificationChannel(fgChannel)
-            } catch (_: Exception) {}
-
-            try {
-                val soundUri = android.net.Uri.parse("android.resource://${packageName}/raw/notifdriver")
-                val audioAttrs = android.media.AudioAttributes.Builder()
-                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
-                val incomingChannel = NotificationChannel(
-                    "aro_drive_incoming_v4",
-                    "Pesanan Masuk",
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "Notifikasi pesanan baru ARO DRIVE"
-                    enableVibration(true)
-                    setSound(soundUri, audioAttrs)
-                    enableLights(true)
-                }
-                nm.createNotificationChannel(incomingChannel)
-            } catch (_: Exception) {}
-        } catch (_: Exception) {}
     }
 
     private fun requestNotificationPermission() {

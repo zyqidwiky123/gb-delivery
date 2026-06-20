@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.arodriverkotlin.service.IncomingOrderNotifier
 
 class AroDriverApplication : Application() {
 
@@ -29,18 +30,6 @@ class AroDriverApplication : Application() {
             nm.createNotificationChannel(fgChannel)
         } catch (_: Exception) {}
 
-        try {
-            val incomingChannel = NotificationChannel(
-                "aro_drive_incoming_v3",
-                "Pesanan Masuk",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifikasi pesanan baru ARO DRIVE"
-                enableVibration(true)
-                setSound(null, null)
-                enableLights(true)
-            }
-            nm.createNotificationChannel(incomingChannel)
-        } catch (_: Exception) {}
+        IncomingOrderNotifier.createChannel(this)
     }
 }
