@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
 import { useUserStore } from '../store/userStore';
-import { db, database } from '../firebase/config';
+import { db } from '../firebase/config';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { ref, onValue } from 'firebase/database';
+import { getDatabase, ref, onValue } from 'firebase/database';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -28,15 +28,21 @@ function AdminDashboard() {
       updateStats({ totalRevenue: revenue, totalOrders: count });
     });
 
-    // 2. Listen to Drivers for Stats (via RTDB)
-    const driversRef = ref(database, 'drivers');
-    const unsubDrivers = onValue(driversRef, (snapshot) => {
-      let count = 0;
-      snapshot.forEach(child => {
-        if (child.val().status === 'online') count++;
-      });
-      updateStats({ activeDrivers: count });
-    });
+    // 2. Listen to Drivers for Stats (via RTDB) — lazy init, catch if RTDB unavailable
+    let unsubDrivers = () => {};
+    try {
+      const dbRT = getDatabase();
+      const driversRef = ref(dbRT, 'drivers');
+      unsubDrivers = onValue(driversRef, (snapshot) => {
+        let count = 0;
+        snapshot.forEach(child => {
+          if (child.val().status === 'online') count++;
+        });
+        updateStats({ activeDrivers: count });
+      }, (err) => console.warn('RTDB listen error:', err));
+    } catch (e) {
+      console.warn('RTDB not available, skipping driver count:', e);
+    }
 
     return () => {
       unsubOrders();

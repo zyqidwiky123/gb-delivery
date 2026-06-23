@@ -3,6 +3,7 @@ const { onRequest } = require('firebase-functions/v2/https');
 const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onValueWritten } = require("firebase-functions/v2/database");
 
 // Set global options for all v2 functions
 setGlobalOptions({ 
@@ -16,7 +17,9 @@ const admin = require("firebase-admin");
 // const axios = require("axios"); // Lazy load inside functions
 // const vision = require("@google-cloud/vision"); // Lazy load inside functions
 
-admin.initializeApp();
+admin.initializeApp({
+  databaseURL: "https://gb-delivery-41bf6-default-rtdb.asia-southeast1.firebasedatabase.app",
+});
 const rtdb = admin.database();
 
 // Helper to calculate distance in KM using Haversine formula
@@ -1778,6 +1781,7 @@ exports.rejectOffer = onRequest({ cors: true }, async (req, res) => {
  */
 exports.onImageUploaded = onObjectFinalized({
   bucket: "gb-delivery-41bf6.firebasestorage.app",
+  region: "asia-southeast2",
   cpu: 1,
   memory: '1GiB'
 }, async (event) => {
@@ -1970,3 +1974,36 @@ exports.migrateImagesToWebP = onRequest({ cors: true, timeoutSeconds: 540 }, asy
         res.status(500).send({ success: false, error: error.message });
     }
 });
+
+/**
+ * Sync RTDB driver online status to Firestore
+ * Bridges Kotlin app (writes to RTDB) with web apps (read from Firestore)
+ */
+exports.syncDriverOnlineStatus = onValueWritten(
+    { ref: "/drivers/{driverId}", region: "asia-southeast1" },
+    async (event) => {
+        const { driverId } = event.params;
+        const after = event.data.after.val();
+
+        if (!after) {
+            console.log(`Driver ${driverId} deleted from RTDB, skipping`);
+            return;
+        }
+
+        const isOnline = after.isOnline ?? false;
+        const status = after.status || 'offline';
+
+        try {
+            await admin.firestore().collection("drivers").doc(driverId).set({
+                isOnline,
+                status,
+                lastRTDBUpdate: after.lastActive ? new Date(after.lastActive).toISOString() : null,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+
+            console.log(`Synced driver ${driverId} to Firestore: isOnline=${isOnline}, status=${status}`);
+        } catch (e) {
+            console.error(`Error syncing driver ${driverId} to Firestore:`, e);
+        }
+    }
+);

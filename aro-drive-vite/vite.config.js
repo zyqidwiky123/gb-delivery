@@ -66,9 +66,7 @@ export default defineConfig({
     // Strip console.log/warn from production builds automatically
     minify: 'esbuild',
   },
-  esbuild: {
-    drop: ['console', 'debugger'],
-  },
+
   server: {
     allowedHosts: true,
     host: true,

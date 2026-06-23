@@ -1,6 +1,7 @@
 {
   "rules": {
     "drivers": {
+      ".read": "auth != null",
       "$uid": {
         ".read": "auth != null",
         ".write": "auth.uid === $uid",

@@ -5,12 +5,18 @@ import App from './App'
 import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 
-registerSW({ 
-  immediate: true,
+const updateSW = registerSW({
   onNeedRefresh() {
-    console.log('New content available, refreshing...');
-    window.location.reload();
-  }
+    updateSW(true);
+  },
+  onRegistered(registration) {
+    if (!registration) return;
+    registration.update();
+    setInterval(() => registration.update(), 15 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') registration.update();
+    });
+  },
 })
 
 ReactDOM.createRoot(document.getElementById('root')).render(

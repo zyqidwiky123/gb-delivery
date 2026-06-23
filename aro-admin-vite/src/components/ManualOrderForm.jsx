@@ -46,7 +46,11 @@ const ManualOrderForm = ({ onClose, onOrderCreated }) => {
       };
 
       const docRef = await addDoc(collection(db, "orders"), payload);
-      alert(`Pesanan Berhasil Dibuat! ID: ${docRef.id}`);
+      const USER_APP_URL = import.meta.env.VITE_USER_APP_URL || 'https://aro-drive-user.web.app';
+      const openTracking = `${USER_APP_URL}/tracking?id=${docRef.id}`;
+      if (window.confirm(`Pesanan Berhasil Dibuat!\nID: ${docRef.id}\n\nOK = Buka halaman tracking\nBatal = Tutup`)) {
+        window.open(openTracking, '_blank');
+      }
       if (onOrderCreated) onOrderCreated(docRef.id);
       onClose();
     } catch (error) {

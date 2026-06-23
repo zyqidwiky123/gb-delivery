@@ -8,6 +8,7 @@
     "functions"
   ],
   "dependencies": {
-    "libsodium-wrappers": "^0.8.4"
+    "libsodium-wrappers": "^0.8.4",
+    "@firebase/app": "^0.14.10"
   }
 }

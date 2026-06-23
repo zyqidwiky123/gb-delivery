@@ -40,6 +40,7 @@ import { useUserStore } from './store/userStore'
 import { useThemeStore } from './store/themeStore'
 
 import ProtectedRoute from './components/ProtectedRoute'
+import ErrorBoundary from './components/ErrorBoundary'
 
 import Header from './components/Header'
 import Navbar from './components/Navbar'
@@ -132,6 +133,7 @@ function App() {
 
   return (
     <LazyMotion features={loadFeatures} strict>
+    <ErrorBoundary>
     <div className={`min-h-screen bg-background text-textPrimary font-sans ${!isNavbarHidden ? 'pb-20' : ''}`}>
       <Header />
       <PageTransition>
@@ -190,6 +192,7 @@ function App() {
       {!isNavbarHidden && <Navbar />}
       {showChatBtn && <ChatAdminButton />}
     </div>
+    </ErrorBoundary>
     </LazyMotion>
   )
 }

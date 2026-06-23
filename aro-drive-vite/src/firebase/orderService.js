@@ -146,6 +146,16 @@ export const updateDriverStatus = async (driverId, data) => {
     }
 
     await updateDoc(driverRef, { ...nextData });
+
+    // Sync ke RTDB agar Kotlin app juga lihat perubahan
+    const { getDatabase, ref, update } = await import('firebase/database');
+    const rtdb = getDatabase();
+    await update(ref(rtdb, `drivers/${driverId}`), {
+      isOnline: nextData.isOnline ?? false,
+      status: nextData.status || 'offline',
+      lastActive: serverTimestamp(),
+      statusChangedAt: serverTimestamp(),
+    });
   } catch (e) {
     console.error("Error updating driver: ", e);
   }
@@ -210,6 +220,7 @@ export const cancelOrder = async (orderId, reason, cancelledBy = 'user') => {
         lastActive: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+
     }
     
     console.log(`Order ${orderId} cancelled by ${cancelledBy}. Reason: ${reason}`);

@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { auth, db, database } from '../firebase/config';
+import { auth, db } from '../firebase/config';
 import { collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref, onValue } from 'firebase/database';
 import { useOrderStore } from '../store/orderStore';
 import { useUserStore } from '../store/userStore';
 import { useAdminStore } from '../store/adminStore';
@@ -39,7 +38,7 @@ const deepClean = (obj) => {
 const AdminOrderCreate = () => {
   const navigate = useNavigate();
   const { user, logout } = useUserStore();
-  const { pricing, calculateAppServiceFee } = useOrderStore();
+  const { pricing, calculateFee, calculateAppServiceFee } = useOrderStore();
   const { platformFeePercent } = useAdminStore();
 
   const [merchants, setMerchants] = useState([]);
@@ -88,7 +87,6 @@ const AdminOrderCreate = () => {
 
   // Driver
   const [selectedDriver, setSelectedDriver] = useState('');
-  const [onlineIds, setOnlineIds] = useState(new Set());
   const [allDriverData, setAllDriverData] = useState([]);
 
   const handleLogout = async () => {
@@ -105,19 +103,7 @@ const AdminOrderCreate = () => {
     return unsub;
   }, []);
 
-  // Fetch online drivers (RTDB) + all driver data (Firestore)
-  useEffect(() => {
-    const driversRef = ref(database, 'drivers');
-    const unsub = onValue(driversRef, (snap) => {
-      const ids = new Set();
-      snap.forEach(child => {
-        if (child.val().isOnline) ids.add(child.key);
-      });
-      setOnlineIds(ids);
-    });
-    return unsub;
-  }, []);
-
+  // Fetch all drivers from Firestore (online status synced from RTDB via Cloud Function)
   useEffect(() => {
     const q = query(collection(db, 'drivers'));
     const unsub = onSnapshot(q, (snap) => {
@@ -127,8 +113,8 @@ const AdminOrderCreate = () => {
   }, []);
 
   const drivers = useMemo(() =>
-    allDriverData.filter(d => onlineIds.has(d.id)),
-    [allDriverData, onlineIds]
+    allDriverData.filter(d => d.isOnline && d.status === 'online'),
+    [allDriverData]
   );
 
   const filteredMerchants = useMemo(() => {
@@ -170,28 +156,9 @@ const AdminOrderCreate = () => {
     return 0;
   }, [serviceType, sendWeight, shopWeight]);
 
-  const calcDeliveryFee = useCallback((dist, type, w) => {
-    if (!dist || dist <= 0) return 0;
-    const p = pricing[type] || pricing['jek'];
-    if (!p) return 0;
-    let total = p.baseFare || 0;
-    if (type === 'shop') {
-      total = (p.serviceFee || 0) + (dist * (p.ratePerKm || 0));
-      if (w > 1) {
-        total += Math.ceil((w - 1) / 2) * (p.weightFareRate || 0);
-      }
-    } else {
-      const minDist = p.minDistance || 0;
-      if (dist > minDist) total += (dist - minDist) * (p.ratePerKm || 0);
-      if (type === 'send' && w > 1) {
-        total += Math.ceil((w - 1) / 2) * (p.weightFareRate || 2000);
-      }
-    }
-    total += calculateAppServiceFee(dist);
-    return Math.round(total / 1000) * 1000;
-  }, [pricing, calculateAppServiceFee]);
 
-  const autoDeliveryFee = useMemo(() => calcDeliveryFee(distance, serviceType, weight), [calcDeliveryFee, distance, serviceType, weight]);
+
+  const autoDeliveryFee = useMemo(() => calculateFee(distance, serviceType, weight), [calculateFee, distance, serviceType, weight]);
 
   const subtotal = manualPricing ? Number(manualSubtotal) || 0 : computedSubtotal;
   const deliveryFee = manualPricing ? Number(manualDeliveryFee) || 0 : autoDeliveryFee;
@@ -387,7 +354,11 @@ const AdminOrderCreate = () => {
       }
 
       alert(`Pesanan berhasil dibuat! ID: ${docRef.id}`);
-      navigate('/admin/orders');
+      if (window.confirm('Lihat halaman tracking pesanan?')) {
+        navigate(`/tracking?id=${docRef.id}`);
+      } else {
+        navigate('/admin/orders');
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       alert('Gagal membuat pesanan: ' + error.message);
