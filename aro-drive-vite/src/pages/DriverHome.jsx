@@ -26,6 +26,7 @@ function DriverHome() {
     const fetchStatus = async () => {
       if (!user?.id) return;
       setStatusLoading(true);
+
       const data = await getDriverData(user.id);
       if (data && data.status) {
         setIsOnline(data.status === 'online');

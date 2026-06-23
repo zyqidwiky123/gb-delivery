@@ -1,5 +1,6 @@
 package com.arodriverkotlin.navigation
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,8 +23,11 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,6 +70,19 @@ private data class TabItem(
 fun DriverShell(vm: DriverViewModel, state: UiState, onLogout: () -> Unit) {
     var selected by rememberSaveable { mutableIntStateOf(0) }
     var showEditProfile by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(state.message) {
+        state.message?.let { msg ->
+            if (msg == "Online" || msg == "Offline") {
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            } else {
+                snackbarHostState.showSnackbar(msg)
+            }
+            vm.dismissMessage()
+        }
+    }
 
     val navTabs = remember(onLogout) {
         listOf(
@@ -90,6 +108,7 @@ fun DriverShell(vm: DriverViewModel, state: UiState, onLogout: () -> Unit) {
                 }
                 BottomNav(navTabs, selected) { selected = it }
             }
+            SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
         }
     }
 }

@@ -92,11 +92,17 @@ class DriverViewModel : ViewModel() {
             return@launch
         }
         val wasOnline = _state.value.profile?.isOnline ?: false
+        val newOnline = !wasOnline
+        _state.value = _state.value.copy(
+            profile = _state.value.profile?.copy(isOnline = newOnline)
+        )
         try {
             DriverService.toggleOnline(uid, wasOnline)
-            _state.value = _state.value.copy(message = if (wasOnline) "Offline" else "Online")
         } catch (e: Exception) {
-            _state.value = _state.value.copy(message = "Gagal: ${e.localizedMessage ?: "Error tidak dikenal"}")
+            _state.value = _state.value.copy(
+                profile = _state.value.profile?.copy(isOnline = wasOnline),
+                message = "Gagal: ${e.localizedMessage ?: "Error tidak dikenal"}"
+            )
         }
     }
 
@@ -291,10 +297,13 @@ class DriverViewModel : ViewModel() {
         rtdbProfileRef = rtdb.child("drivers/$uid")
         rtdbProfileListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val profile = _state.value.profile ?: return
-                val isOnline = snapshot.child("isOnline").getValue(Boolean::class.java) ?: profile.isOnline
-                val status = snapshot.child("status").getValue(String::class.java) ?: profile.status
-                val todayOnlineMs = snapshot.child("todayOnlineMs").getValue(Long::class.java) ?: profile.todayOnlineMs
+                val currentProfile = _state.value.profile
+                val isOnline = snapshot.child("isOnline").getValue(Boolean::class.java)
+                    ?: currentProfile?.isOnline ?: false
+                val status = snapshot.child("status").getValue(String::class.java)
+                    ?: currentProfile?.status ?: "offline"
+                val todayOnlineMs = snapshot.child("todayOnlineMs").getValue(Long::class.java)
+                    ?: currentProfile?.todayOnlineMs ?: 0
                 val onlineTs = snapshot.child("onlineAt").getValue(Long::class.java)
                 val offlineTs = snapshot.child("offlineAt").getValue(Long::class.java)
                 val lastActiveTs = snapshot.child("lastActive").getValue(Long::class.java)
@@ -303,11 +312,15 @@ class DriverViewModel : ViewModel() {
                 val lat = snapshot.child("location/lat").getValue(Double::class.java)
                 val lng = snapshot.child("location/lng").getValue(Double::class.java)
 
-                if (isOnline != prevRtdbIsOnline) {
+                // Initialize prevRtdbIsOnline on first fire, then detect changes
+                if (prevRtdbIsOnline == null) {
+                    prevRtdbIsOnline = isOnline
+                } else if (isOnline != prevRtdbIsOnline) {
                     listenIncoming(uid, isOnline)
                     prevRtdbIsOnline = isOnline
                 }
 
+                val profile = currentProfile ?: return
                 _state.value = _state.value.copy(
                     profile = profile.copy(
                         isOnline = isOnline,
