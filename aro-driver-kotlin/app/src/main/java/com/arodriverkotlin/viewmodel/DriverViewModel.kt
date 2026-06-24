@@ -46,7 +46,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private var prevRtdbIsOnline: Boolean? = null
 
     private var prevIncomingCount = 0
-    private var lastLocationWrite = 0L
+    @Volatile private var lastLocationWrite = 0L
     private var sessionJob: kotlinx.coroutines.Job? = null
 
     init {
@@ -72,11 +72,11 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         }
         _state.value = _state.value.copy(loading = true, message = null)
         try {
-            val user = AuthService.loginOrRegister(email, password)
+            val user = AuthService.login(email, password)
             AuthService.ensureDriverProfile(user.uid, email)
             bindUser(user.uid)
         } catch (e: Exception) {
-            _state.value = UiState(loading = false, message = "Akses ditolak: ${e.message}")
+            _state.value = UiState(loading = false, message = AuthService.getErrorMessage(e))
         }
     }
 
@@ -95,9 +95,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         }
         val wasOnline = _state.value.profile?.isOnline ?: false
         val newOnline = !wasOnline
-        _state.value = _state.value.copy(
-            profile = _state.value.profile?.copy(isOnline = newOnline)
-        )
+        _state.value = _state.value.copy(loading = true)
         try {
             DriverService.toggleOnline(uid, wasOnline)
             if (newOnline) {
@@ -106,10 +104,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 ForegroundService.stop(getApplication())
             }
         } catch (e: Exception) {
-            _state.value = _state.value.copy(
-                profile = _state.value.profile?.copy(isOnline = wasOnline),
-                message = "Gagal: ${e.localizedMessage ?: "Error tidak dikenal"}"
-            )
+            postMessage("Gagal: ${e.localizedMessage ?: "Error tidak dikenal"}")
+        } finally {
+            _state.value = _state.value.copy(loading = false)
         }
     }
 
@@ -465,15 +462,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                         continue
                     }
 
-                    // Location heartbeat: ensure lastLocationUpdate stays fresh
-                    val lat = _state.value.currentLat ?: ForegroundService.latestLat
-                    val lng = _state.value.currentLng ?: ForegroundService.latestLng
-                    if (lat != null && lng != null) {
-                        try {
-                            DriverService.updateLocation(uid, lat, lng)
-                            lastLocationWrite = now
-                        } catch (_: Exception) {}
-                    }
                 } else {
                     // Auto-logout after 10 minutes offline
                     val offlineSince = profile.offlineTimestamp

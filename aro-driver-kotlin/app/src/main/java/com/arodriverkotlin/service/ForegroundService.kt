@@ -33,7 +33,7 @@ class ForegroundService : Service() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
-    private var lastLocationWrite = 0L
+    @Volatile private var lastLocationWrite = 0L
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var incomingListener: ListenerRegistration? = null
@@ -156,9 +156,9 @@ class ForegroundService : Service() {
     }
 
     companion object {
-        var currentOrderId: String? = null
-        var latestLat: Double? = null
-        var latestLng: Double? = null
+        @Volatile var currentOrderId: String? = null
+        @Volatile var latestLat: Double? = null
+        @Volatile var latestLng: Double? = null
 
         private const val TAG = "ForegroundService"
         private const val PREFS_NAME = "foreground_service"
