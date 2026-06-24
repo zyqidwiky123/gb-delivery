@@ -1,6 +1,7 @@
 package com.arodriverkotlin.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.arodriverkotlin.models.UiState
 import com.arodriverkotlin.service.AuthService
@@ -29,7 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class DriverViewModel : ViewModel() {
+class DriverViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
@@ -80,6 +81,7 @@ class DriverViewModel : ViewModel() {
     }
 
     fun logout() {
+        ForegroundService.stop(getApplication())
         clearListeners()
         AuthService.logout()
         _state.value = UiState(loading = false)
@@ -98,6 +100,11 @@ class DriverViewModel : ViewModel() {
         )
         try {
             DriverService.toggleOnline(uid, wasOnline)
+            if (newOnline) {
+                ForegroundService.start(getApplication(), uid)
+            } else {
+                ForegroundService.stop(getApplication())
+            }
         } catch (e: Exception) {
             _state.value = _state.value.copy(
                 profile = _state.value.profile?.copy(isOnline = wasOnline),
