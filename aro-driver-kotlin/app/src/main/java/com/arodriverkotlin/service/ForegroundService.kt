@@ -74,11 +74,12 @@ class ForegroundService : Service() {
                     lastUploadTime = now
                     val lat = loc.latitude
                     val lng = loc.longitude
+                    val orderId = currentOrderId
                     serviceScope.launch {
                         try {
                             DriverService.updateLocation(uid, lat, lng)
-                            if (hasActiveOrder) {
-                                DriverService.updateOrderLocation(currentOrderId!!, lat, lng)
+                            if (orderId != null) {
+                                DriverService.updateOrderLocation(orderId, lat, lng)
                             }
                         } catch (_: Exception) {}
                     }
@@ -91,9 +92,9 @@ class ForegroundService : Service() {
         val R = 6371000.0
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2).pow(2) +
+        val a = (sin(dLat / 2).pow(2) +
                 cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2).pow(2)
+                sin(dLon / 2).pow(2)).coerceIn(0.0, 1.0)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
     }

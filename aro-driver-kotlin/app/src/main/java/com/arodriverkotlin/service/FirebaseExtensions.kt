@@ -45,12 +45,12 @@ fun DocumentSnapshot.toProfile(): DriverProfile {
         photoUrl = getString("photoUrl") ?: "",
         qrisUrl = getString("qrisUrl") ?: "",
         bankAccounts = accounts,
-        onlineTimestamp = getTimestamp("onlineAt")?.toDate()?.time,
-        offlineTimestamp = getTimestamp("offlineAt")?.toDate()?.time,
-        lastActiveTimestamp = getTimestamp("lastActive")?.toDate()?.time,
-        lastLocationUpdateTimestamp = getTimestamp("lastLocationUpdate")?.toDate()?.time,
+        onlineTimestamp = (get("onlineAt") as? Timestamp)?.toDate()?.time,
+        offlineTimestamp = (get("offlineAt") as? Timestamp)?.toDate()?.time,
+        lastActiveTimestamp = (get("lastActive") as? Timestamp)?.toDate()?.time,
+        lastLocationUpdateTimestamp = (get("lastLocationUpdate") as? Timestamp)?.toDate()?.time,
         todayOnlineMs = getLong("todayOnlineMs") ?: 0,
-        onlineSessionStartTimestamp = getTimestamp("onlineSessionStartAt")?.toDate()?.time,
+        onlineSessionStartTimestamp = (get("onlineSessionStartAt") as? Timestamp)?.toDate()?.time,
     )
 }
 
@@ -143,8 +143,8 @@ fun DocumentSnapshot.toOrder(): DriverOrder {
         voucherUsed = getBoolean("voucherUsed") ?: false,
         balanceBefore = getLong("balanceBefore") ?: 0,
         balanceAfter = getLong("balanceAfter") ?: 0,
-        completedAt = getTimestamp("completedAt"),
-        acceptedAt = getTimestamp("acceptedAt"),
+        completedAt = get("completedAt") as? Timestamp,
+        acceptedAt = get("acceptedAt") as? Timestamp,
     )
 }
 
