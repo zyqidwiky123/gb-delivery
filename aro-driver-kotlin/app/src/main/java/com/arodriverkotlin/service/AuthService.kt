@@ -13,13 +13,28 @@ object AuthService {
 
     val currentUser: FirebaseUser? get() = auth.currentUser
 
-    suspend fun loginOrRegister(email: String, password: String): FirebaseUser {
-        val result = try {
-            auth.signInWithEmailAndPassword(email, password).await()
-        } catch (_: Exception) {
-            auth.createUserWithEmailAndPassword(email, password).await()
-        }
+    suspend fun login(email: String, password: String): FirebaseUser {
+        val result = auth.signInWithEmailAndPassword(email, password).await()
         return result.user ?: error("User tidak ditemukan")
+    }
+
+    fun getErrorMessage(e: Exception): String {
+        val code = (e as? com.google.firebase.auth.FirebaseAuthException)?.errorCode
+            ?: (e.message ?: "")
+        return when {
+            code == "auth/invalid-credential" || code == "auth/wrong-password" || code == "auth/user-not-found" ->
+                "Email atau kata sandi salah"
+            code == "auth/too-many-requests" ->
+                "Terlalu banyak percobaan. Coba lagi nanti."
+            code == "auth/user-disabled" ->
+                "Akun telah dinonaktifkan."
+            code == "auth/network-request-failed" ->
+                "Periksa koneksi internet."
+            code.contains("network") || e.message?.contains("network") == true ->
+                "Periksa koneksi internet."
+            else ->
+                "Gagal masuk: ${e.message}"
+        }
     }
 
     suspend fun ensureDriverProfile(uid: String, email: String) {
