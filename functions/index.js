@@ -139,7 +139,9 @@ function calculatePickupFee(driverLoc, pickupLoc, pricing) {
 }
 // const visionClient = new vision.ImageAnnotatorClient(); // Moved inside helper
 
-exports.onOrderCreated = onDocumentCreated("orders/{orderId}", async (event) => {
+exports.onOrderCreated = onDocumentCreated(
+    { document: "orders/{orderId}", region: "asia-southeast1" },
+    async (event) => {
     const orderData = event.data.data();
     const orderId = event.params.orderId;
     let { merchantId, serviceType, total, pickupLocation, pickupAddress, items } = orderData;
@@ -493,7 +495,6 @@ exports.resetDailyOnlineTime = onSchedule("every day 00:00", async () => {
         chunk.forEach(ref => {
             batch.update(ref, {
                 todayOnlineMs: 0,
-                onlineSessionStartAt: admin.firestore.FieldValue.serverTimestamp(),
                 todayOnlineResetAt: admin.firestore.FieldValue.serverTimestamp(),
             });
         });
@@ -761,7 +762,9 @@ async function sendNotificationToMerchant(merchantId, payload) {
     }
 }
 
-exports.onOrderUpdate = onDocumentUpdated("orders/{orderId}", async (event) => {
+exports.onOrderUpdate = onDocumentUpdated(
+    { document: "orders/{orderId}", region: "asia-southeast1" },
+    async (event) => {
     const newValue = event.data.after.data();
     const previousValue = event.data.before.data();
 

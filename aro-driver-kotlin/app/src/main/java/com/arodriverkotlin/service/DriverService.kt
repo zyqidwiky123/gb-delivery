@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ServerValue
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
@@ -16,18 +17,30 @@ object DriverService {
 
     suspend fun toggleOnline(uid: String, currentOnline: Boolean) {
         val online = !currentOnline
-        val update = hashMapOf<String, Any?>(
+        val rtdbUpdate = hashMapOf<String, Any?>(
             "isOnline" to online,
             "status" to if (online) "online" else "offline",
             "statusChangedAt" to ServerValue.TIMESTAMP,
             "lastActive" to ServerValue.TIMESTAMP,
         )
+        val fsUpdate = hashMapOf<String, Any?>(
+            "isOnline" to online,
+            "status" to if (online) "online" else "offline",
+            "statusChangedAt" to FieldValue.serverTimestamp(),
+            "lastActive" to FieldValue.serverTimestamp(),
+            "updatedAt" to FieldValue.serverTimestamp(),
+        )
         if (online) {
-            update["onlineAt"] = ServerValue.TIMESTAMP
-            update["onlineSessionStartAt"] = ServerValue.TIMESTAMP
-            update["offlineAt"] = null
+            rtdbUpdate["onlineAt"] = ServerValue.TIMESTAMP
+            rtdbUpdate["onlineSessionStartAt"] = ServerValue.TIMESTAMP
+            rtdbUpdate["offlineAt"] = null
+            fsUpdate["onlineAt"] = FieldValue.serverTimestamp()
+            fsUpdate["onlineSessionStartAt"] = FieldValue.serverTimestamp()
+            fsUpdate["offlineAt"] = null
         } else {
-            update["offlineAt"] = ServerValue.TIMESTAMP
+            rtdbUpdate["offlineAt"] = ServerValue.TIMESTAMP
+            fsUpdate["offlineAt"] = FieldValue.serverTimestamp()
+            var accumulatedTodayMs: Long? = null
             try {
                 val snap = rtdb.child("drivers/$uid").get().await()
                 val todayMs = snap.child("todayOnlineMs").getValue(Long::class.java) ?: 0L
@@ -35,15 +48,33 @@ object DriverService {
                     ?: snap.child("onlineAt").getValue(Long::class.java)
                 if (sessionStartTs != null) {
                     val elapsed = System.currentTimeMillis() - sessionStartTs
-                    update["todayOnlineMs"] = todayMs + elapsed
+                    accumulatedTodayMs = todayMs + elapsed
+                    rtdbUpdate["todayOnlineMs"] = accumulatedTodayMs
+                    fsUpdate["todayOnlineMs"] = accumulatedTodayMs
                 }
             } catch (e: Exception) {
                 Log.w("DRIVER", "Failed to read RTDB session for accumulation", e)
             }
-            update["onlineSessionStartAt"] = null
-            update["onlineAt"] = null
+            rtdbUpdate["onlineSessionStartAt"] = null
+            rtdbUpdate["onlineAt"] = null
+            fsUpdate["onlineSessionStartAt"] = FieldValue.delete()
+            fsUpdate["onlineAt"] = FieldValue.delete()
+            // Also read todayOnlineMs from Firestore as fallback if RTDB accumulation failed
+            if (accumulatedTodayMs == null) {
+                try {
+                    val fsSnap = db.collection("drivers").document(uid).get().await()
+                    val fsTodayMs = fsSnap.getLong("todayOnlineMs") ?: 0L
+                    val fsSessionStart = fsSnap.getTimestamp("onlineSessionStartAt")?.toDate()?.time
+                        ?: fsSnap.getTimestamp("onlineAt")?.toDate()?.time
+                    if (fsSessionStart != null) {
+                        val elapsed = System.currentTimeMillis() - fsSessionStart
+                        fsUpdate["todayOnlineMs"] = fsTodayMs + elapsed
+                    }
+                } catch (_: Exception) {}
+            }
         }
-        rtdb.child("drivers/$uid").updateChildren(update).await()
+        rtdb.child("drivers/$uid").updateChildren(rtdbUpdate).await()
+        db.collection("drivers").document(uid).update(fsUpdate).await()
     }
 
     suspend fun updateLocation(uid: String, lat: Double, lng: Double) {
