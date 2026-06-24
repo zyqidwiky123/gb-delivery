@@ -46,7 +46,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private var prevRtdbIsOnline: Boolean? = null
 
     private var prevIncomingCount = 0
-    @Volatile private var lastLocationWrite = 0L
     private var sessionJob: kotlinx.coroutines.Job? = null
 
     init {
@@ -108,21 +107,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         } finally {
             _state.value = _state.value.copy(loading = false)
         }
-    }
-
-    fun updateLocation(lat: Double, lng: Double) = viewModelScope.launch {
-        _state.value = _state.value.copy(currentLat = lat, currentLng = lng)
-        val uid = _state.value.userId ?: return@launch
-        val now = System.currentTimeMillis()
-        if (now - lastLocationWrite < 20_000) return@launch
-        lastLocationWrite = now
-        try {
-            DriverService.updateLocation(uid, lat, lng)
-            val activeOrderId = _state.value.active.firstOrNull()?.id
-            if (activeOrderId != null) {
-                DriverService.updateOrderLocation(activeOrderId, lat, lng)
-            }
-        } catch (_: Exception) {}
     }
 
     fun acceptOrder(orderId: String) = viewModelScope.launch {

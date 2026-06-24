@@ -28,12 +28,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlin.math.*
 
 class ForegroundService : Service() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
-    @Volatile private var lastLocationWrite = 0L
+
+    @Volatile private var lastUploadedLat = 0.0
+    @Volatile private var lastUploadedLng = 0.0
+    @Volatile private var lastUploadTime = 0L
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var incomingListener: ListenerRegistration? = null
@@ -44,32 +48,54 @@ class ForegroundService : Service() {
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         
-            locationCallback = object : LocationCallback() {
+        locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val loc = result.lastLocation ?: return
                 val uid = driverUid ?: return
-                
+
                 latestLat = loc.latitude
                 latestLng = loc.longitude
 
                 val now = System.currentTimeMillis()
-                // Update firestore max once every 20 seconds
-                if (now - lastLocationWrite >= 20_000) {
-                    lastLocationWrite = now
+                val distance = if (lastUploadTime > 0L) {
+                    calculateDistance(lastUploadedLat, lastUploadedLng, loc.latitude, loc.longitude)
+                } else Double.MAX_VALUE
+
+                val timeSinceLastUpload = now - lastUploadTime
+                val hasActiveOrder = currentOrderId != null
+
+                val shouldUpload =
+                    distance >= MOVEMENT_THRESHOLD_M ||
+                    (!hasActiveOrder && timeSinceLastUpload >= IDLE_HEARTBEAT_MS)
+
+                if (shouldUpload) {
+                    lastUploadedLat = loc.latitude
+                    lastUploadedLng = loc.longitude
+                    lastUploadTime = now
                     val lat = loc.latitude
                     val lng = loc.longitude
                     serviceScope.launch {
                         try {
                             DriverService.updateLocation(uid, lat, lng)
-                            val orderId = currentOrderId
-                            if (orderId != null) {
-                                DriverService.updateOrderLocation(orderId, lat, lng)
+                            if (hasActiveOrder) {
+                                DriverService.updateOrderLocation(currentOrderId!!, lat, lng)
                             }
                         } catch (_: Exception) {}
                     }
                 }
             }
         }
+    }
+
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371000.0
+        val dLat = toRadians(lat2 - lat1)
+        val dLon = toRadians(lon2 - lon1)
+        val a = sin(dLat / 2).pow(2) +
+                cos(toRadians(lat1)) * cos(toRadians(lat2)) *
+                sin(dLon / 2).pow(2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -160,6 +186,8 @@ class ForegroundService : Service() {
         @Volatile var latestLat: Double? = null
         @Volatile var latestLng: Double? = null
 
+        private const val MOVEMENT_THRESHOLD_M = 100.0
+        private const val IDLE_HEARTBEAT_MS = 15 * 60 * 1000L
         private const val TAG = "ForegroundService"
         private const val PREFS_NAME = "foreground_service"
         private const val STORED_DRIVER_UID = "driver_uid"
