@@ -8,7 +8,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arodriverkotlin.navigation.DriverShell
-import com.arodriverkotlin.service.ForegroundService
 import com.arodriverkotlin.ui.screens.LoginScreen
 import com.arodriverkotlin.ui.screens.PermissionsScreen
 import com.arodriverkotlin.ui.theme.AroBlack
@@ -44,18 +42,6 @@ fun AroDriverApp(vm: DriverViewModel = viewModel()) {
             (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU ||
              ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
         )
-    }
-
-    val uid = state.userId
-    val isOnline = state.profile?.isOnline == true
-    LaunchedEffect(state.loading, uid, isOnline) {
-        if (!state.loading) {
-            if (isOnline && uid != null) {
-                ForegroundService.start(ctx, uid)
-            } else {
-                ForegroundService.stop(ctx)
-            }
-        }
     }
 
     if (!permissionsOk.value) {
