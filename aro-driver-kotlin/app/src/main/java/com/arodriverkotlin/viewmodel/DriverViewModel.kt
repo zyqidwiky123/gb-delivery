@@ -426,17 +426,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 val now = System.currentTimeMillis()
 
                 if (profile.isOnline) {
-                    // Inactivity check: >2 jam tanpa lastActive
-                    val lastActive = profile.lastActiveTimestamp
-                        ?: profile.lastLocationUpdateTimestamp
-                    if (lastActive != null && (now - lastActive) > 2 * 3600_000L) {
-                        try {
-                            DriverService.toggleOnline(uid, true)
-                            postMessage("Tidak ada aktivitas 2 jam, otomatis offline.")
-                        } catch (_: Exception) {}
-                        continue
-                    }
-
                     // Daily limit check: >=12 jam hari ini
                     if (profile.todayOnlineMs >= 12 * 3600_000L) {
                         try {
