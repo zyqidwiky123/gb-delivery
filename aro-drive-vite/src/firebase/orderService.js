@@ -150,12 +150,28 @@ export const updateDriverStatus = async (driverId, data) => {
     // Sync ke RTDB agar Kotlin app juga lihat perubahan
     const { getDatabase, ref, update } = await import('firebase/database');
     const rtdb = getDatabase();
-    await update(ref(rtdb, `drivers/${driverId}`), {
+    const rtdbSync = {
       isOnline: nextData.isOnline ?? false,
       status: nextData.status || 'offline',
       lastActive: serverTimestamp(),
       statusChangedAt: serverTimestamp(),
-    });
+    };
+
+    // Sync session fields so RTDB data stays consistent with Firestore
+    if (nextData.status === 'online') {
+      rtdbSync.onlineAt = serverTimestamp();
+      rtdbSync.onlineSessionStartAt = serverTimestamp();
+      rtdbSync.offlineAt = null;
+    } else if (nextData.status === 'offline') {
+      rtdbSync.offlineAt = serverTimestamp();
+      if (nextData.todayOnlineMs !== undefined) {
+        rtdbSync.todayOnlineMs = nextData.todayOnlineMs;
+      }
+      rtdbSync.onlineSessionStartAt = null;
+      rtdbSync.onlineAt = null;
+    }
+
+    await update(ref(rtdb, `drivers/${driverId}`), rtdbSync);
   } catch (e) {
     console.error("Error updating driver: ", e);
   }

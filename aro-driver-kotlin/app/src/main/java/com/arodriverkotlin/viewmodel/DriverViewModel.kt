@@ -274,7 +274,21 @@ class DriverViewModel : ViewModel() {
                     _state.value = _state.value.copy(message = "Sesi berakhir. Akun driver dihapus.")
                     return@addSnapshotListener
                 }
-                val profile = snap.toProfile()
+                val current = _state.value.profile
+                val fsProfile = snap.toProfile()
+                // Preserve RTDB-specific fields that Firestore may have stale values for
+                val profile = fsProfile.copy(
+                    isOnline = current?.isOnline ?: fsProfile.isOnline,
+                    todayOnlineMs = current?.todayOnlineMs ?: fsProfile.todayOnlineMs,
+                    onlineSessionStartTimestamp = current?.onlineSessionStartTimestamp
+                        ?: fsProfile.onlineSessionStartTimestamp,
+                    onlineTimestamp = current?.onlineTimestamp ?: fsProfile.onlineTimestamp,
+                    offlineTimestamp = current?.offlineTimestamp ?: fsProfile.offlineTimestamp,
+                    lastActiveTimestamp = current?.lastActiveTimestamp
+                        ?: fsProfile.lastActiveTimestamp,
+                    lastLocationUpdateTimestamp = current?.lastLocationUpdateTimestamp
+                        ?: fsProfile.lastLocationUpdateTimestamp,
+                )
                 _state.value = _state.value.copy(profile = profile, loading = false)
                 listenIncoming(uid, profile.isOnline)
                 if (profile.isOnline && profile.status == "busy") {
