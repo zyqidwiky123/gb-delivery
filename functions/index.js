@@ -214,9 +214,71 @@ exports.onOrderCreated = onDocumentCreated(
         console.error("Error sending WA notifications:", waError);
     }
 
-    // 3. Skip dispatch if order has direct driver assignment
-    if (orderData.status === 'accepted' || orderData.dispatch?.assignedDirectly) {
-        console.log(`Order ${orderId} has direct driver assignment (admin), skipping dispatch.`);
+    // 3. Handle admin targeted dispatch (offer to specific driver first, fallback to normal dispatch)
+    if (orderData.dispatch?.assignedTo) {
+        const targetDriverId = orderData.dispatch.assignedTo;
+        console.log(`[TargetedDispatch] Order ${orderId} admin-assigned to driver ${targetDriverId}.`);
+
+        // Initialize dispatch context (same as normal dispatch)
+        const BLITAR_CENTER = { lat: -8.098, lng: 112.164 };
+        if (pickupLocation && pickupLocation.lat) {
+            const distToCenter = calculateDistance(
+                pickupLocation.lat, pickupLocation.lng,
+                BLITAR_CENTER.lat, BLITAR_CENTER.lng
+            );
+            const isKabupaten = distToCenter > 7;
+            const regionType = isKabupaten ? "kabupaten" : "kota";
+            const regionConfig = getDispatchRegionConfig(regionType);
+
+            const dispatchInit = {
+                status: "targeted",
+                assignedTo: targetDriverId,
+                offeredTo: targetDriverId,
+                offerExpiresAt: admin.firestore.Timestamp.fromDate(
+                    new Date(Date.now() + DRIVER_OFFER_TIMEOUT_MS)
+                ),
+                regionType,
+                currentRadius: regionConfig.initialRadius,
+                iteration: 1,
+                notifiedDrivers: [targetDriverId],
+                rejectedDrivers: [],
+                lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+                startedSearchingAt: admin.firestore.FieldValue.serverTimestamp(),
+                nextExpansionAt: new Date(Date.now() + RADIUS_EXPANSION_INTERVAL_MS),
+                assignedAt: orderData.dispatch.assignedAt || admin.firestore.FieldValue.serverTimestamp(),
+            };
+
+            await admin.firestore().collection("orders").doc(orderId).update({
+                dispatch: dispatchInit
+            });
+
+            // Send FCM to the targeted driver
+            try {
+                const driverDoc = await admin.firestore().collection("drivers").doc(targetDriverId).get();
+                if (driverDoc.exists) {
+                    const driverData = driverDoc.data();
+                    if (driverData.fcmToken) {
+                        await admin.messaging().send({
+                            token: driverData.fcmToken,
+                            data: {
+                                type: "NEW_ORDER",
+                                orderId: String(orderId),
+                                title: "Pesanan Dari Admin! 📋",
+                                body: `ARO-${orderId.slice(-5).toUpperCase()} — Tap untuk lihat dan ambil pesanan.`,
+                            },
+                            android: { priority: "high" },
+                        });
+                        console.log(`[TargetedDispatch] FCM sent to driver ${targetDriverId}`);
+                    } else {
+                        console.warn(`[TargetedDispatch] Driver ${targetDriverId} has no FCM token`);
+                    }
+                }
+            } catch (fcmErr) {
+                console.error(`[TargetedDispatch] FCM failed for driver ${targetDriverId}:`, fcmErr.message);
+            }
+        } else {
+            console.warn(`[TargetedDispatch] No pickup location for order ${orderId}, cannot dispatch.`);
+        }
         return;
     }
 

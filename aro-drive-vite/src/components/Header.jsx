@@ -15,8 +15,8 @@ const Header = () => {
   const navigate = useNavigate();
 
   // Hide header on certain pages like welcome, login, register
-  const hiddenOnPaths = ['/welcome', '/login', '/register', '/ride', '/food', '/send', '/shop', '/driver'];
-  if (hiddenOnPaths.includes(window.location.pathname) || window.location.pathname.startsWith('/driver')) return null;
+  const hiddenOnPaths = ['/welcome', '/login', '/register', '/ride', '/food', '/send', '/shop'];
+  if (hiddenOnPaths.includes(window.location.pathname)) return null;
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-outline/10 p-4 flex items-center justify-between">

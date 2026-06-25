@@ -357,7 +357,7 @@ const AdminOrderCreate = () => {
       if (window.confirm('Lihat halaman tracking pesanan?')) {
         navigate(`/tracking?id=${docRef.id}`);
       } else {
-        navigate('/admin/orders');
+        navigate('/member');
       }
     } catch (error) {
       console.error('Error creating order:', error);
@@ -379,25 +379,9 @@ const AdminOrderCreate = () => {
           <h1 className="font-['Plus_Jakarta_Sans'] font-black text-2xl italic text-primary tracking-tighter">ARO ADMIN</h1>
         </div>
         <nav className="flex-grow px-4 space-y-2">
-          <Link to="/admin" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
-            <span className="material-symbols-outlined text-xl">dashboard</span>
-            <span className="font-bold text-sm">Dashboard</span>
-          </Link>
-          <Link to="/admin/orders" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
-            <span className="material-symbols-outlined text-xl">list_alt</span>
-            <span className="font-bold text-sm">Semua Pesanan</span>
-          </Link>
           <Link to="/admin/orders/create" className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 text-primary group border border-primary/20">
             <span className="material-symbols-outlined text-xl">add_circle</span>
             <span className="font-bold text-sm">Buat Pesanan</span>
-          </Link>
-          <Link to="/admin/merchants" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
-            <span className="material-symbols-outlined text-xl">store</span>
-            <span className="font-bold text-sm">Kelola Merchant</span>
-          </Link>
-          <Link to="/admin/settings" className="flex items-center gap-3 p-4 rounded-xl text-zinc-500 hover:bg-on-background/5 hover:text-on-background transition-all">
-            <span className="material-symbols-outlined text-xl">settings</span>
-            <span className="font-bold text-sm">Pengaturan Tarif</span>
           </Link>
         </nav>
       </aside>
@@ -406,23 +390,19 @@ const AdminOrderCreate = () => {
       <main className="flex-grow p-8 md:p-12 overflow-y-auto">
         <header className="flex justify-between items-center mb-10">
           <div>
-            <Link to="/admin"
+            <button onClick={() => navigate(-1)}
               className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-primary transition-colors mb-2">
               <span className="material-symbols-outlined text-sm">arrow_back</span>
-              Kembali ke Dashboard
-            </Link>
+              Kembali
+            </button>
             <h2 className="text-3xl font-headline font-black italic tracking-tight mb-1 uppercase">Buat Pesanan Baru</h2>
             <p className="text-zinc-500 text-sm font-medium">Isi data pesanan dari WhatsApp customer.</p>
           </div>
           <div className="flex gap-3">
-            <Link to="/admin"
-              className="px-6 py-3 bg-zinc-900 text-zinc-400 rounded-xl text-xs font-black uppercase tracking-widest border border-zinc-800 hover:text-white transition-all">
-              Dashboard
-            </Link>
-            <Link to="/admin/orders"
+            <button onClick={() => navigate(-1)}
               className="px-6 py-3 bg-zinc-900 text-zinc-400 rounded-xl text-xs font-black uppercase tracking-widest border border-zinc-800 hover:text-white transition-all">
               Batal
-            </Link>
+            </button>
             <button onClick={handleLogout}
               className="px-6 py-3 bg-red-500/10 text-red-400 rounded-xl text-xs font-black uppercase tracking-widest border border-red-500/20 hover:bg-red-500/20 transition-all">
               Logout
@@ -789,9 +769,9 @@ const AdminOrderCreate = () => {
 
           {/* Submit */}
           <div className="flex gap-4 pb-12">
-            <Link to="/admin/orders" className="flex-1 py-5 rounded-2xl bg-zinc-900 text-zinc-400 font-headline font-black text-sm uppercase tracking-widest border border-zinc-800 text-center hover:text-white transition-all">
+            <button type="button" onClick={() => navigate(-1)} className="flex-1 py-5 rounded-2xl bg-zinc-900 text-zinc-400 font-headline font-black text-sm uppercase tracking-widest border border-zinc-800 text-center hover:text-white transition-all">
               Batal
-            </Link>
+            </button>
             <button type="submit" disabled={loading}
               className={`flex-[2] py-5 rounded-2xl font-headline font-black text-sm uppercase tracking-widest active:scale-[0.98] transition-all shadow-lg ${loading ? 'bg-zinc-700 text-zinc-500' : 'bg-primary text-black'}`}>
               {loading ? 'MEMPROSES...' : 'GAS PESANAN!'}

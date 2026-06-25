@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import { auth, db } from './firebase/config';
+
+const AdminOrderCreate = lazy(() => import('./pages/AdminOrderCreate'));
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAdminStore } from './store/adminStore';
@@ -64,6 +66,14 @@ function App() {
           } 
         />
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/admin/orders/create"
+          element={
+            <ProtectedRoute>
+              <AdminOrderCreate />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );

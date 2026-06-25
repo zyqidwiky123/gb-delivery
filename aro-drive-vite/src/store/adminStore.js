@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../firebase/config';
-import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import { useOrderStore } from './orderStore';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export const useAdminStore = create((set, get) => ({
   // Pricing Settings
@@ -125,11 +124,6 @@ export const useAdminStore = create((set, get) => ({
   },
   isLoading: false,
   
-  // Dashboard Metrics
-  totalRevenue: 2450000,
-  totalOrders: 154,
-  activeDrivers: 12,
-  
   // Actions
   // Real-time synchronization
   initSettings: () => {
@@ -177,32 +171,5 @@ export const useAdminStore = create((set, get) => ({
     };
   },
 
-  updatePricing: async (base, rate, serviceFee, weightFare, minDistance = 3.5) => {
-    set({ isLoading: true });
-    try {
-      await updateDoc(doc(db, "settings", "pricing"), {
-        jek: {
-          baseFare: base,
-          ratePerKm: rate,
-          minDistance
-        },
-        send: {
-          weightFareRate: weightFare
-        },
-        tip: {
-          weightFareRate: weightFare
-        },
-        updatedAt: new Date()
-      });
-      set({ baseFare: base, ratePerKm: rate, serviceFeePercent: serviceFee, weightFareRate: weightFare });
-    } catch (error) {
-      console.error("Error updating settings:", error);
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  updateStats: (stats) => set((state) => ({ ...state, ...stats })),
 }));
 
