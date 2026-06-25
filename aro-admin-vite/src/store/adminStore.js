@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export const useAdminStore = create((set) => ({
+export const useAdminStore = create((set, get) => ({
   adminUser: null,
   authLoading: true,
   platformFeePercent: 10,
@@ -58,13 +58,53 @@ export const useAdminStore = create((set) => ({
 
   // Bulk set (useful for fetching from Firestore)
   // Merge with existing defaults to prevent blank screen if Firestore is missing some keys
-  setAllPricing: (pricingData) => set((state) => ({ 
-    pricing: { ...state.pricing, ...pricingData } 
-  })),
+  setAllPricing: (pricingData) => set((state) => {
+    const merged = { ...state.pricing, ...pricingData };
+    if (merged.tip) merged.shop = { ...merged.shop, ...merged.tip };
+    if (merged.shop) merged.tip = { ...merged.tip, ...merged.shop };
+    return { pricing: merged };
+  }),
 
   setPointsPerTenk: (val) => set({ pointsPerTenk: val }),
   setPointsToRedeem: (val) => set({ pointsToRedeem: val }),
   updateMetrics: (drivers, orders) => set({ activeDrivers: drivers, totalOrdersToday: orders }),
-  
+
+  calculateAppServiceFee: (distance) => {
+    if (!distance || distance <= 0) return 0;
+    const { pricing } = get();
+    const settings = pricing.appServiceFee || { blockDistance: 3, feePerBlock: 1000 };
+    return Math.ceil(distance / settings.blockDistance) * settings.feePerBlock;
+  },
+
+  calculateFee: (distance, type = 'jek', weight = 0) => {
+    if (!distance || distance <= 0) return 0;
+    const { pricing, calculateAppServiceFee } = get();
+    const p = pricing[type] || (type === 'shop' ? pricing['tip'] : null) || pricing['jek'];
+
+    let total = p.baseFare || 0;
+
+    if (type === 'shop' || type === 'tip') {
+      total = (p.serviceFee || 0) + (distance * (p.ratePerKm || 0));
+      if (weight > 1) {
+        const extraWeight = weight - 1;
+        const weightSurcharge = Math.ceil(extraWeight / 2) * (p.weightFareRate || 0);
+        total += weightSurcharge;
+      }
+    } else {
+      const minDistance = p.minDistance || 0;
+      if (distance > minDistance) {
+        total += (distance - minDistance) * p.ratePerKm;
+      }
+      if (type === 'send' && weight > 1) {
+        const extraWeight = weight - 1;
+        const weightSurcharge = Math.ceil(extraWeight / 2) * (p.weightFareRate || 2000);
+        total += weightSurcharge;
+      }
+    }
+
+    total += calculateAppServiceFee(distance);
+    return Math.round(total / 1000) * 1000;
+  },
+
   logout: () => set({ adminUser: null, authLoading: false }),
 }));

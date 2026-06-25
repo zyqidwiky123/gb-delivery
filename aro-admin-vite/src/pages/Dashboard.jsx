@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
 import { db, storage } from '../firebase/config';
 import { 
@@ -30,7 +30,6 @@ const getDownloadURLWithRetry = async (storageRef, retries = 3, delay = 1000) =>
 function Dashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const USER_APP_URL = import.meta.env.VITE_USER_APP_URL || 'https://aro-drive-user.web.app';
   const navigate = useNavigate();
   const { 
     baseFare, setBaseFare, 
@@ -1121,18 +1120,14 @@ function Dashboard() {
             ))}
           </nav>
           <div className="px-6 mt-auto space-y-3">
-            <a
-              href={`${USER_APP_URL}/admin/orders/create`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                navigator.clipboard.writeText(`${USER_APP_URL}/admin/orders/create`).catch(() => {});
-              }}
+            <Link
+              to="/admin/orders/create"
+              onClick={() => setIsSidebarOpen(false)}
               className="w-full bg-[#f3ffca] text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 hover:shadow-[0_0_20px_rgba(243,255,202,0.3)] transition-all active:scale-95 group"
             >
               <span className="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">add_circle</span>
               <span className="font-headline tracking-tighter uppercase italic">Buat Pesanan</span>
-            </a>
+            </Link>
             <button className="w-full bg-white/5 text-on-surface-variant font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition-colors border border-white/5">
               <span className="material-symbols-outlined text-sm">campaign</span>
               Broadcast Alert

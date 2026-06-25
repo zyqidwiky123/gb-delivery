@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
-import { collection, query, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useOrderStore } from '../store/orderStore';
-import { useUserStore } from '../store/userStore';
+import { collection, query, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAdminStore } from '../store/adminStore';
 import LocationPickerModal from '../components/LocationPickerModal';
 
@@ -37,9 +34,7 @@ const deepClean = (obj) => {
 
 const AdminOrderCreate = () => {
   const navigate = useNavigate();
-  const { user, logout } = useUserStore();
-  const { pricing, calculateFee, calculateAppServiceFee } = useOrderStore();
-  const { platformFeePercent } = useAdminStore();
+  const { adminUser, logout, pricing, platformFeePercent, calculateFee, calculateAppServiceFee } = useAdminStore();
 
   const [merchants, setMerchants] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -221,9 +216,9 @@ const AdminOrderCreate = () => {
 
     try {
       const basePayload = {
-        status: selectedDriver ? 'accepted' : 'searching',
+        status: 'searching',
         serviceType,
-        customerId: user?.id || '',
+        customerId: adminUser?.uid || '',
         subtotal: safeNum(subtotal),
         deliveryFee: safeNum(deliveryFee),
         serviceFee: safeNum(platformCommission + appServiceFee),
@@ -329,13 +324,10 @@ const AdminOrderCreate = () => {
         basePayload.distance = Math.round(distance * 10) / 10;
       }
 
-      // Driver assignment
+      // Driver assignment - targeted dispatch (driver must accept)
       if (selectedDriver) {
-        basePayload.driverId = selectedDriver;
-        basePayload.acceptedAt = serverTimestamp();
         basePayload.dispatch = {
-          status: 'assigned',
-          assignedDirectly: true,
+          assignedTo: selectedDriver,
           assignedAt: serverTimestamp(),
         };
       }
@@ -343,21 +335,11 @@ const AdminOrderCreate = () => {
       const cleanedPayload = deepClean(basePayload) || {};
       const docRef = await addDoc(collection(db, 'orders'), cleanedPayload);
 
-      // If driver assigned, also update driver status
-      if (selectedDriver) {
-        try {
-          const driverRef = doc(db, 'drivers', selectedDriver);
-          await updateDoc(driverRef, { status: 'busy' });
-        } catch (err) {
-          console.error('Error updating driver status:', err);
-        }
-      }
-
       alert(`Pesanan berhasil dibuat! ID: ${docRef.id}`);
-      if (window.confirm('Lihat halaman tracking pesanan?')) {
-        navigate(`/tracking?id=${docRef.id}`);
+      if (window.confirm('Buat pesanan lagi?')) {
+        navigate('/admin/orders/create', { replace: true });
       } else {
-        navigate('/member');
+        navigate('/');
       }
     } catch (error) {
       console.error('Error creating order:', error);

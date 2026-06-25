@@ -317,6 +317,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 // Initialize prevRtdbIsOnline on first fire, then detect changes
                 if (prevRtdbIsOnline == null) {
                     prevRtdbIsOnline = isOnline
+                    listenIncoming(uid, isOnline)
                 } else if (isOnline != prevRtdbIsOnline) {
                     listenIncoming(uid, isOnline)
                     prevRtdbIsOnline = isOnline
