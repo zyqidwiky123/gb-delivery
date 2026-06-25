@@ -277,8 +277,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                     lastLocationUpdateTimestamp = current?.lastLocationUpdateTimestamp
                         ?: fsProfile.lastLocationUpdateTimestamp,
                 )
-                _state.value = _state.value.copy(profile = profile, loading = false)
-                listenIncoming(uid, profile.isOnline)
+                _state.value = _state.value.copy(profile = profile)
                 if (profile.isOnline && profile.status == "busy") {
                     db.collection("orders")
                         .whereEqualTo("driverId", uid)
@@ -318,6 +317,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 if (prevRtdbIsOnline == null) {
                     prevRtdbIsOnline = isOnline
                     listenIncoming(uid, isOnline)
+                    if (isOnline) {
+                        ForegroundService.start(getApplication(), uid)
+                    }
                 } else if (isOnline != prevRtdbIsOnline) {
                     listenIncoming(uid, isOnline)
                     prevRtdbIsOnline = isOnline
