@@ -52,10 +52,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.firestore.FirebaseFirestore
 import com.arodriverkotlin.models.Transaction
 import com.arodriverkotlin.models.UiState
 import com.arodriverkotlin.service.rupiah
 import com.arodriverkotlin.ui.theme.AroBlack
+import kotlinx.coroutines.tasks.await
+import androidx.compose.runtime.LaunchedEffect
 import com.arodriverkotlin.ui.theme.AroGreen
 import com.arodriverkotlin.ui.theme.Error
 import com.arodriverkotlin.ui.theme.GlassBg
@@ -74,6 +77,16 @@ fun WalletScreen(state: UiState, vm: DriverViewModel) {
     var showTopupModal by remember { mutableStateOf(false) }
     var topupAmount by remember { mutableLongStateOf(10000) }
     val p = state.profile
+
+    var pricing by remember { mutableStateOf<Map<String, Any>?>(null) }
+    LaunchedEffect(Unit) {
+        try {
+            val snap = FirebaseFirestore.getInstance()
+                .collection("settings").document("pricing")
+                .get().await()
+            pricing = snap.data
+        } catch (_: Exception) {}
+    }
 
     // Daily earnings grouping
     val completedOrders = state.completedToday
@@ -275,8 +288,13 @@ fun WalletScreen(state: UiState, vm: DriverViewModel) {
                                     Text(order.deliveryFee.rupiah(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                                 if (order.platformFee > 0) {
+                                    val rate = pricing
+                                        ?.get(order.serviceType)
+                                        ?.let { (it as? Map<*, *>)?.get("commission") as? Number }
+                                        ?.toInt()
+                                    val label = if (rate != null) "Komisi ($rate%)" else "Komisi"
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Komisi (10%)", color = Error, fontSize = 10.sp)
+                                        Text(label, color = Error, fontSize = 10.sp)
                                         Text("-${order.platformFee.rupiah()}", color = Error, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
