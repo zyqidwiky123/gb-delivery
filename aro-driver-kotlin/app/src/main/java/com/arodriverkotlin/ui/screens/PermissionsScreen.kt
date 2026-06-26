@@ -29,7 +29,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -241,18 +240,7 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                     )
                 }
 
-                Spacer(Modifier.height(8.dp))
 
-                TextButton(
-                    onClick = { onAllGranted() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "Nanti Saja",
-                        color = Muted,
-                        fontSize = 13.sp,
-                    )
-                }
             }
         }
     }

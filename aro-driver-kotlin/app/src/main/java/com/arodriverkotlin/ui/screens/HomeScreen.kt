@@ -341,7 +341,11 @@ private fun IncomingOrderCard(
         }
         if (!autoRejected) {
             autoRejected = true
-            onReject()
+            try {
+                onReject()
+            } catch (_: Exception) {
+                // Silent — expansionTrigger cloud function handles expired offer
+            }
         }
     }
 
