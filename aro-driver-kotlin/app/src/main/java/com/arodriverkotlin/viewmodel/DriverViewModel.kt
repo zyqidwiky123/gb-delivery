@@ -50,6 +50,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
     private var connectedRef: DatabaseReference? = null
     private var connectedListener: ValueEventListener? = null
+    private var disconnectJob: kotlinx.coroutines.Job? = null
+    private var reconnectAttempts = 0
 
     init {
         val user = AuthService.currentUser
@@ -240,6 +242,18 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
     fun reconnect() {
         FirebaseDatabase.getInstance().goOnline()
+        val uid = _state.value.userId
+        if (uid != null) {
+            val isOnline = _state.value.profile?.isOnline == true
+            rtdbProfileRef?.let { ref ->
+                rtdbProfileListener?.let { ref.removeEventListener(it) }
+            }
+            listenIncoming(uid, isOnline)
+            ForegroundService.start(getApplication(), uid)
+        }
+        disconnectJob?.cancel()
+        disconnectJob = null
+        reconnectAttempts = 0
         _state.value = _state.value.copy(showDisconnectDialog = false)
     }
 
@@ -372,8 +386,39 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 val connected = snapshot.getValue(Boolean::class.java) ?: false
                 val isOnline = _state.value.profile?.isOnline == true
                 _state.value = _state.value.copy(isConnected = connected)
+
                 if (!connected && isOnline) {
-                    _state.value = _state.value.copy(showDisconnectDialog = true)
+                    // Silent auto-reconnect di background (max 3x)
+                    if (reconnectAttempts < 3) {
+                        reconnectAttempts++
+                        viewModelScope.launch {
+                            delay(2_000)
+                            FirebaseDatabase.getInstance().goOnline()
+                            val uid = _state.value.userId
+                            if (uid != null) {
+                                rtdbProfileRef?.let { ref ->
+                                    rtdbProfileListener?.let { ref.removeEventListener(it) }
+                                }
+                                listenIncoming(uid, true)
+                            }
+                        }
+                    }
+                    // Debounce 5 detik sebelum munculin dialog
+                    if (disconnectJob?.isActive != true) {
+                        disconnectJob = viewModelScope.launch {
+                            delay(5_000)
+                            if (!_state.value.isConnected && _state.value.profile?.isOnline == true) {
+                                _state.value = _state.value.copy(showDisconnectDialog = true)
+                            }
+                        }
+                    }
+                } else if (connected) {
+                    reconnectAttempts = 0
+                    disconnectJob?.cancel()
+                    disconnectJob = null
+                    if (_state.value.showDisconnectDialog) {
+                        _state.value = _state.value.copy(showDisconnectDialog = false)
+                    }
                 }
             }
 
@@ -486,6 +531,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private fun clearListeners() {
         sessionJob?.cancel()
         sessionJob = null
+        disconnectJob?.cancel()
+        disconnectJob = null
         listOf(profileListener, incomingListener, activeListener, todayListener, allOrdersListener, transactionsListener)
             .forEach { it?.remove() }
         profileListener = null

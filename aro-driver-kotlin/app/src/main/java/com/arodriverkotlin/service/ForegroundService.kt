@@ -188,7 +188,7 @@ class ForegroundService : Service() {
         @Volatile var latestLng: Double? = null
 
         private const val MOVEMENT_THRESHOLD_M = 100.0
-        private const val IDLE_HEARTBEAT_MS = 15 * 60 * 1000L
+        private const val IDLE_HEARTBEAT_MS = 5 * 60 * 1000L
         private const val TAG = "ForegroundService"
         private const val PREFS_NAME = "foreground_service"
         private const val STORED_DRIVER_UID = "driver_uid"

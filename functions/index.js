@@ -40,7 +40,7 @@ function deg2rad(deg) {
     return deg * (Math.PI / 180);
 }
 
-const MAX_DRIVER_LOCATION_AGE_MS = 5 * 60 * 1000;
+const MAX_DRIVER_LOCATION_AGE_MS = 10 * 60 * 1000;
 const DRIVER_OFFER_TIMEOUT_MS = 60 * 1000;
 const RADIUS_EXPANSION_INTERVAL_MS = 60 * 1000;
 const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000;
@@ -260,13 +260,25 @@ exports.onOrderCreated = onDocumentCreated(
                     if (driverData.fcmToken) {
                         await admin.messaging().send({
                             token: driverData.fcmToken,
+                            notification: {
+                                title: "Pesanan Dari Admin! 📋",
+                                body: `ARO-${orderId.slice(-5).toUpperCase()} — Tap untuk lihat dan ambil pesanan.`,
+                            },
                             data: {
                                 type: "NEW_ORDER",
                                 orderId: String(orderId),
                                 title: "Pesanan Dari Admin! 📋",
                                 body: `ARO-${orderId.slice(-5).toUpperCase()} — Tap untuk lihat dan ambil pesanan.`,
                             },
-                            android: { priority: "high" },
+                            android: {
+                                priority: "high",
+                                notification: {
+                                    channel_id: "aro_drive_incoming_v5",
+                                    sound: "default",
+                                    priority: "high",
+                                    visibility: "public",
+                                },
+                            },
                         });
                         console.log(`[TargetedDispatch] FCM sent to driver ${targetDriverId}`);
                     } else {
@@ -627,10 +639,6 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         if (rejectedDrivers.includes(driverId)) return;
         // Also skip previously notified (for radius expansion compatibility)
         if (notifiedDrivers.includes(driverId)) return;
-        if (isDriverInactive(driver)) {
-            console.log(`[Dispatch] Skipping inactive driver ${driverId}.`);
-            return;
-        }
         if (isDriverOverDailyLimit(driver)) {
             console.log(`[Dispatch] Skipping driver ${driverId} — over daily online limit.`);
             return;
@@ -699,6 +707,10 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         try {
             const message = {
                 token: selectedDriver.fcmToken,
+                notification: {
+                    title: "Ada Order Baru! 🛵",
+                    body: `ARO-${orderId.slice(-5).toUpperCase()} — Jarak: ${selectedDriver.distance.toFixed(1)}km`,
+                },
                 data: {
                     type: "NEW_ORDER",
                     orderId: String(orderId),
@@ -707,6 +719,12 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
                 },
                 android: {
                     priority: "high",
+                    notification: {
+                        channel_id: "aro_drive_incoming_v5",
+                        sound: "default",
+                        priority: "high",
+                        visibility: "public",
+                    },
                 },
             };
             await admin.messaging().send(message);
@@ -773,7 +791,7 @@ async function getOnlineAvailableDriversCount() {
         let count = 0;
         const now = Date.now();
         drivers.forEach(driver => {
-            if (!isDriverInactive(driver, now) && !isDriverOverDailyLimit(driver, now) && (driver.balance || 0) >= 0) {
+            if (!isDriverOverDailyLimit(driver, now) && (driver.balance || 0) >= 0) {
                 count += 1;
             }
         });
