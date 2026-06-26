@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    function signedIn() { return request.auth != null; }
+    
+    function isAdmin() {
+      return signedIn() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin") ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+    
+    function isDriver() {
+      return signedIn() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "driver") ||
+        (exists(/databases/$(database)/documents/drivers/$(request.auth.uid)) && get(/databases/$(database)/documents/drivers/$(request.auth.uid)).data.role == "driver") ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin")
+      );
+    }
+
+    // --- Collections ---
+
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow write: if request.auth.uid == userId || isAdmin();
+    }
+
+    match /drivers/{driverId} {
+      allow read: if signedIn();
+      allow write: if request.auth.uid == driverId || isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if signedIn();
+      allow read: if signedIn() && (
+        resource.data.customerId == request.auth.uid ||
+        resource.data.driverId == request.auth.uid ||
+        resource.data.merchantId == request.auth.uid ||
+        (resource.data.status == "searching" && (
+          resource.data.dispatch.offeredTo == request.auth.uid ||
+          !("dispatch" in resource.data)
+        )) ||
+        isAdmin()
+      );
+      allow update: if signedIn() && (
+        ((isDriver() || isAdmin()) && (
+           (request.resource.data.status == "accepted" && resource.data.status == "searching") ||
+           (resource.data.driverId == request.auth.uid) ||
+           (resource.data.status == "searching" && resource.data.dispatch.offeredTo == request.auth.uid && request.resource.data.dispatch.status == "rejected")
+        )) ||
+        (resource.data.customerId == request.auth.uid && (resource.data.status in ["searching", "accepted", "picked_up", "on_route", "completed", "cancelled"])) ||
+        (resource.data.merchantId == request.auth.uid) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /merchants/{merchantId} {
+      allow read: if true;
+      allow write: if isAdmin() || (signedIn() && request.auth.uid == merchantId);
+      
+      match /menu/{menuId} {
+        allow read: if true;
+        allow write: if isAdmin() || (signedIn() && request.auth.uid == merchantId);
+      }
+    }
+
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /topup_requests/{requestId} {
+      allow create, read: if signedIn();
+      allow update: if isAdmin();
+    }
+    
+    match /admins/{adminId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+  }
+}
