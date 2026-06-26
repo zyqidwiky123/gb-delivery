@@ -14,4 +14,6 @@ data class UiState(
     val currentLat: Double? = null,
     val currentLng: Double? = null,
     val allTransactions: List<Transaction> = emptyList(),
+    val isConnected: Boolean = true,
+    val showDisconnectDialog: Boolean = false,
 )

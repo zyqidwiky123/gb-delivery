@@ -48,6 +48,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private var prevIncomingCount = 0
     private var sessionJob: kotlinx.coroutines.Job? = null
 
+    private var connectedRef: DatabaseReference? = null
+    private var connectedListener: ValueEventListener? = null
+
     init {
         val user = AuthService.currentUser
         if (user == null) {
@@ -231,6 +234,20 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         _state.value = _state.value.copy(message = null)
     }
 
+    fun dismissDisconnectDialog() {
+        _state.value = _state.value.copy(showDisconnectDialog = false)
+    }
+
+    fun reconnect() {
+        FirebaseDatabase.getInstance().goOnline()
+        _state.value = _state.value.copy(showDisconnectDialog = false)
+    }
+
+    fun relogin() {
+        _state.value = _state.value.copy(showDisconnectDialog = false)
+        logout()
+    }
+
     private fun bindUser(uid: String) {
         clearListeners()
         _state.value = _state.value.copy(loading = false, userId = uid)
@@ -347,6 +364,22 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
         rtdbProfileRef?.addValueEventListener(rtdbProfileListener!!)
+
+        // Monitor Firebase RTDB connection state
+        connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected")
+        connectedListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val connected = snapshot.getValue(Boolean::class.java) ?: false
+                val isOnline = _state.value.profile?.isOnline == true
+                _state.value = _state.value.copy(isConnected = connected)
+                if (!connected && isOnline) {
+                    _state.value = _state.value.copy(showDisconnectDialog = true)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        }
+        connectedRef?.addValueEventListener(connectedListener!!)
 
         activeListener = db.collection("orders")
             .whereEqualTo("driverId", uid)
@@ -467,6 +500,11 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         rtdbProfileRef = null
         rtdbProfileListener = null
         prevRtdbIsOnline = null
+        connectedRef?.let { ref ->
+            connectedListener?.let { ref.removeEventListener(it) }
+        }
+        connectedRef = null
+        connectedListener = null
     }
 
     private fun postMessage(message: String) {

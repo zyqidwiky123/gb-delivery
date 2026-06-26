@@ -22,7 +22,9 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -109,6 +111,25 @@ fun DriverShell(vm: DriverViewModel, state: UiState, onLogout: () -> Unit) {
                 BottomNav(navTabs, selected) { selected = it }
             }
             SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+
+            if (state.showDisconnectDialog) {
+                AlertDialog(
+                    onDismissRequest = { vm.dismissDisconnectDialog() },
+                    title = { Text("Koneksi Terputus", color = Color.White) },
+                    text = { Text("Koneksi ke server terputus. Silakan coba lagi atau login ulang.", color = Muted) },
+                    confirmButton = {
+                        TextButton(onClick = { vm.reconnect() }) {
+                            Text("Coba Lagi", color = AroGreen)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { vm.relogin() }) {
+                            Text("Login Ulang", color = Color.White)
+                        }
+                    },
+                    containerColor = Surface,
+                )
+            }
         }
     }
 }
