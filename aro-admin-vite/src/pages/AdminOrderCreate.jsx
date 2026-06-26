@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
-import { collection, query, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { useAdminStore } from '../store/adminStore';
 import LocationPickerModal from '../components/LocationPickerModal';
 
@@ -103,6 +103,16 @@ const AdminOrderCreate = () => {
     const q = query(collection(db, 'drivers'));
     const unsub = onSnapshot(q, (snap) => {
       setAllDriverData(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return unsub;
+  }, []);
+
+  // Fetch pricing from Firestore so fee calculation uses live data, not hardcoded defaults
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'pricing'), (docSnap) => {
+      if (docSnap.exists()) {
+        useAdminStore.getState().setAllPricing(docSnap.data());
+      }
     });
     return unsub;
   }, []);
