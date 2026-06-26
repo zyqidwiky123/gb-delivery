@@ -55,15 +55,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ARO DRIVE Driver v${{ github.ref_name }}
-            body: |
-             ## ARO DRIVE Driver v${{ github.ref_name }}
+          body: |
+            ## ARO DRIVE Driver v${{ github.ref_name }}
 
-             ### Perubahan:
-             - Notifikasi seperti WhatsApp: notif tetap muncul meski app diclose (FCM notification payload + channel_id)
-             - Restart foreground service otomatis saat FCM diterima
-             - WakeLock biar proses gak mati sebelum notif muncul
-             - Location heartbeat tiap 5 menit (sebelumnya 15 menit)
-             - Maks umur lokasi driver 10 menit (sebelumnya 5 menit)
-             - Hapus filter inactivity redundant di dispatch
-             - Hapus tombol "Nanti Saja" di izin baterai (wajib)
+            ### Perubahan:
+            - Notifikasi seperti WhatsApp: notif tetap muncul meski app diclose (FCM notification payload + channel_id)
+            - Restart foreground service otomatis saat FCM diterima
+            - WakeLock biar proses gak mati sebelum notif muncul
+            - Location heartbeat tiap 5 menit (sebelumnya 15 menit)
+            - Maks umur lokasi driver 10 menit (sebelumnya 5 menit)
+            - Hapus filter inactivity redundant di dispatch
+            - Hapus tombol "Nanti Saja" di izin baterai (wajib)
           files: aro-driver-kotlin/app/build/outputs/apk/release/app-release.apk
