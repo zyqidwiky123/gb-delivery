@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 
 class DriverViewModel(application: Application) : AndroidViewModel(application) {
@@ -51,7 +52,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private var connectedRef: DatabaseReference? = null
     private var connectedListener: ValueEventListener? = null
     private var disconnectJob: kotlinx.coroutines.Job? = null
-    private var reconnectAttempts = 0
+    private var retryDelay = 1_000L
 
     init {
         val user = AuthService.currentUser
@@ -244,16 +245,13 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         FirebaseDatabase.getInstance().goOnline()
         val uid = _state.value.userId
         if (uid != null) {
-            val isOnline = _state.value.profile?.isOnline == true
-            rtdbProfileRef?.let { ref ->
-                rtdbProfileListener?.let { ref.removeEventListener(it) }
-            }
-            listenIncoming(uid, isOnline)
+            clearListeners()
+            bindListeners(uid)
             ForegroundService.start(getApplication(), uid)
         }
+        retryDelay = 1_000L
         disconnectJob?.cancel()
         disconnectJob = null
-        reconnectAttempts = 0
         _state.value = _state.value.copy(showDisconnectDialog = false)
     }
 
@@ -270,10 +268,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
         val db = FirebaseFirestore.getInstance()
 
-        // Start session watcher
         startSessionWatcher(uid)
 
-        // Role check
         db.collection("users").document(uid).get().addOnSuccessListener { userDoc ->
             val role = userDoc.getString("role")
             if (role != "driver") {
@@ -281,6 +277,12 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 logout()
             }
         }
+
+        bindListeners(uid)
+    }
+
+    private fun bindListeners(uid: String) {
+        val db = FirebaseFirestore.getInstance()
 
         profileListener = db.collection("drivers").document(uid)
             .addSnapshotListener { snap, error ->
@@ -295,7 +297,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 }
                 val current = _state.value.profile
                 val fsProfile = snap.toProfile()
-                // Preserve RTDB-specific fields that Firestore may have stale values for
                 val profile = fsProfile.copy(
                     isOnline = current?.isOnline ?: fsProfile.isOnline,
                     todayOnlineMs = current?.todayOnlineMs ?: fsProfile.todayOnlineMs,
@@ -324,7 +325,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 }
             }
 
-        // RTDB listener for real-time dynamic fields (isOnline, status, location, session timers)
         val rtdb = FirebaseDatabase.getInstance().reference
         rtdbProfileRef = rtdb.child("drivers/$uid")
         rtdbProfileListener = object : ValueEventListener {
@@ -344,7 +344,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 val lat = snapshot.child("location/lat").getValue(Double::class.java)
                 val lng = snapshot.child("location/lng").getValue(Double::class.java)
 
-                // Initialize prevRtdbIsOnline on first fire, then detect changes
                 if (prevRtdbIsOnline == null) {
                     prevRtdbIsOnline = isOnline
                     listenIncoming(uid, isOnline)
@@ -379,7 +378,6 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         }
         rtdbProfileRef?.addValueEventListener(rtdbProfileListener!!)
 
-        // Monitor Firebase RTDB connection state
         connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected")
         connectedListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -388,32 +386,34 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 _state.value = _state.value.copy(isConnected = connected)
 
                 if (!connected && isOnline) {
-                    // Silent auto-reconnect di background (max 3x)
-                    if (reconnectAttempts < 3) {
-                        reconnectAttempts++
-                        viewModelScope.launch {
-                            delay(2_000)
-                            FirebaseDatabase.getInstance().goOnline()
-                            val uid = _state.value.userId
-                            if (uid != null) {
-                                rtdbProfileRef?.let { ref ->
-                                    rtdbProfileListener?.let { ref.removeEventListener(it) }
-                                }
-                                listenIncoming(uid, true)
+                    viewModelScope.launch {
+                        delay(retryDelay)
+                        retryDelay = (retryDelay * 2).coerceAtMost(30_000L)
+                        FirebaseDatabase.getInstance().goOnline()
+                        val uid = _state.value.userId
+                        if (uid != null) {
+                            rtdbProfileRef?.let { ref ->
+                                rtdbProfileListener?.let { ref.removeEventListener(it) }
                             }
+                            listenIncoming(uid, true)
                         }
                     }
-                    // Debounce 5 detik sebelum munculin dialog
+
                     if (disconnectJob?.isActive != true) {
                         disconnectJob = viewModelScope.launch {
-                            delay(5_000)
+                            var elapsed = 0L
+                            while (elapsed < 30_000) {
+                                delay(5_000)
+                                elapsed += 5_000
+                                if (_state.value.isConnected) break
+                            }
                             if (!_state.value.isConnected && _state.value.profile?.isOnline == true) {
                                 _state.value = _state.value.copy(showDisconnectDialog = true)
                             }
                         }
                     }
                 } else if (connected) {
-                    reconnectAttempts = 0
+                    retryDelay = 1_000L
                     disconnectJob?.cancel()
                     disconnectJob = null
                     if (_state.value.showDisconnectDialog) {
@@ -480,6 +480,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 val list = snap?.documents?.map { it.toTransaction() } ?: emptyList()
                 _state.value = _state.value.copy(allTransactions = list)
             }
+
+        listenIncoming(uid, _state.value.profile?.isOnline == true)
     }
 
     private fun listenIncoming(uid: String, online: Boolean) {
@@ -505,6 +507,19 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 delay(30_000)
                 val profile = _state.value.profile ?: continue
                 val now = System.currentTimeMillis()
+
+                // Firestore health check
+                try {
+                    FirebaseFirestore.getInstance()
+                        .collection("settings").document("platform")
+                        .get()
+                        .await()
+                } catch (_: Exception) {
+                    if (_state.value.profile?.isOnline == true) {
+                        reconnect()
+                    }
+                    continue
+                }
 
                 if (profile.isOnline) {
                     // Daily limit check: >=12 jam hari ini
