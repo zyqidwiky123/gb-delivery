@@ -59,27 +59,28 @@ class DebugOverlayService : Service() {
             height = WindowManager.LayoutParams.WRAP_CONTENT
             x = 0
             y = 100
-        }.also { layoutParams ->
-            overlayView = LayoutInflater.from(this).inflate(com.arodriverkotlin.R.layout.debug_overlay, null)
-            windowManager?.addView(overlayView, layoutParams)
+        }
 
-            overlayView?.setOnTouchListener { _, event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        initialX = params.x.toFloat()
-                        initialY = params.y.toFloat()
-                        initialTouchX = event.rawX
-                        initialTouchY = event.rawY
-                        true
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        params.x = (initialX + event.rawX - initialTouchX).toInt()
-                        params.y = (initialY + event.rawY - initialTouchY).toInt()
-                        windowManager?.updateViewLayout(overlayView!!, params)
-                        true
-                    }
-                    else -> false
+        overlayView = LayoutInflater.from(this).inflate(com.arodriverkotlin.R.layout.debug_overlay, null)
+        windowManager?.addView(overlayView, params)
+
+        val lp = params
+        overlayView?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = lp.x.toFloat()
+                    initialY = lp.y.toFloat()
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    true
                 }
+                MotionEvent.ACTION_MOVE -> {
+                    lp.x = (initialX + event.rawX - initialTouchX).toInt()
+                    lp.y = (initialY + event.rawY - initialTouchY).toInt()
+                    windowManager?.updateViewLayout(overlayView!!, lp)
+                    true
+                }
+                else -> false
             }
         }
     }

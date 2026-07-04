@@ -46,11 +46,11 @@ class OfflineQueueProcessor(
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: android.net.Network) {
-                tryEmit(true)
+                trySend(true)
             }
 
             override fun onLost(network: android.net.Network) {
-                tryEmit(false)
+                trySend(false)
             }
         }
         cm.registerDefaultNetworkCallback(callback)
