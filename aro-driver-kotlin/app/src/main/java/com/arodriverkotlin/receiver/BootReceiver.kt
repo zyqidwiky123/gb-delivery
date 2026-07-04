@@ -48,7 +48,7 @@ class BootReceiver : BroadcastReceiver() {
             }
 
             override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
-                Log.w(TAG, "Failed to read isOnline from RTDB", error)
+                Log.w(TAG, "Failed to read isOnline from RTDB: ${error.message}")
             }
         })
     }

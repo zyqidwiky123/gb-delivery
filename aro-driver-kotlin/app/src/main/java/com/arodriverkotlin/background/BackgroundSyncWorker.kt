@@ -108,7 +108,7 @@ class BackgroundSyncWorker(
                         val driverSnap = FirebaseFirestore.getInstance()
                             .collection("drivers").document(uid).get().await()
                         val profile = com.arodriverkotlin.models.DriverProfile(
-                            uid = uid,
+                            id = uid,
                             name = driverSnap.getString("name") ?: driverSnap.getString("displayName") ?: "Driver",
                             phone = driverSnap.getString("phone") ?: "",
                             email = driverSnap.getString("email") ?: "",
