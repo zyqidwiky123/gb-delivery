@@ -34,10 +34,11 @@ class MessagingService : FirebaseMessagingService() {
             val data = message.data
             if (data["type"] == "NEW_ORDER") {
                 val orderId = data["orderId"]
+                val title = data["title"] ?: getString(com.arodriverkotlin.R.string.incoming_order_title)
+                val body = data["body"] ?: getString(com.arodriverkotlin.R.string.incoming_order_body)
                 if (orderId != null) {
                     Log.d(TAG, "NEW_ORDER FCM received: $orderId")
-                    // Firestore listener di ForegroundService akan pick up order ini
-                    // dan menampilkan notifikasi + memulai acceptance timeout
+                    IncomingOrderNotifier.show(this, orderId, title, body)
                 }
             }
         } finally {

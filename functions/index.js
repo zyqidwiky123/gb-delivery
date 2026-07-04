@@ -280,8 +280,8 @@ exports.onOrderCreated = onDocumentCreated(
                             android: {
                                 priority: "high",
                                 notification: {
-                                    channel_id: "aro_drive_incoming_v5",
-                                    sound: "default",
+                                        channel_id: "aro_drive_incoming_v6",
+                                        sound: "notifdriver",
                                     priority: "high",
                                     visibility: "public",
                                 },
@@ -734,8 +734,8 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
                 android: {
                     priority: "high",
                     notification: {
-                        channel_id: "aro_drive_incoming_v5",
-                        sound: "default",
+                        channel_id: "aro_drive_incoming_v6",
+                        sound: "notifdriver",
                         priority: "high",
                         visibility: "public",
                     },
