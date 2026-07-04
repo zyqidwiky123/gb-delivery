@@ -26,10 +26,7 @@ class OrderTimeoutManager(
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private const val TAG = "OrderTimeoutManager"
-    private val FALLBACK_TIMEOUT_MS = acceptTimeoutMs + 15_000L   // 15s buffer after alarm
-    private const val ALARM_ACTION = "com.arodriverkotlin.ORDER_TIMEOUT"
-    private const val WORK_NAME = "order_timeout_fallback"
+    private val FALLBACK_TIMEOUT_MS = acceptTimeoutMs + 15_000L
 
     private val pendingAlarms = mutableMapOf<String, PendingIntent>()
 
@@ -53,7 +50,7 @@ class OrderTimeoutManager(
         }
 
         // Cancel WorkManager
-        WorkManager.getInstance(context).cancelUniqueWork("$WORK_NAME_$orderId")
+        WorkManager.getInstance(context).cancelUniqueWork("${WORK_NAME}_$orderId")
     }
 
     private fun scheduleExactAlarm(orderId: String, timeoutMs: Long = acceptTimeoutMs) {
@@ -66,7 +63,7 @@ class OrderTimeoutManager(
         }
         
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_ALLOW_MUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         } else {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         }
@@ -100,7 +97,7 @@ class OrderTimeoutManager(
             .build()
 
         WorkManager.getInstance(context)
-            .enqueueUniqueWork("$WORK_NAME_$orderId", ExistingWorkPolicy.REPLACE, work)
+            .enqueueUniqueWork("${WORK_NAME}_$orderId", ExistingWorkPolicy.REPLACE, work)
     }
 
     fun shutdown() {
@@ -110,5 +107,11 @@ class OrderTimeoutManager(
         }
         pendingAlarms.clear()
         scope.cancel()
+    }
+
+    companion object {
+        private const val TAG = "OrderTimeoutManager"
+        const val ALARM_ACTION = "com.arodriverkotlin.ORDER_TIMEOUT"
+        private const val WORK_NAME = "order_timeout_fallback"
     }
 }

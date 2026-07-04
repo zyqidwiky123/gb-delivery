@@ -15,9 +15,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.awaitClose
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
@@ -34,12 +34,6 @@ class OfflineQueueProcessor(
     private val locationDao = db.locationDao()
     private val actionDao = db.actionQueueDao()
 
-    private const val TAG = "OfflineQueueProcessor"
-    private const val BASE_BACKOFF_MS = 1000L
-    private const val MAX_BACKOFF_MS = 120_000L
-    private const val BATCH_SIZE = 20
-    private const val SYNC_INTERVAL_MS = 30_000L
-
     fun onStart() {
         scope.launch { observeConnectivity() }
     }
@@ -48,7 +42,7 @@ class OfflineQueueProcessor(
         scope.cancel()
     }
 
-    private fun observeConnectivity() = flow {
+    private fun observeConnectivity() = callbackFlow {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: android.net.Network) {
@@ -60,7 +54,7 @@ class OfflineQueueProcessor(
             }
         }
         cm.registerDefaultNetworkCallback(callback)
-        emit(cm.activeNetwork != null)
+        trySend(cm.activeNetwork != null)
         awaitClose { cm.unregisterNetworkCallback(callback) }
     }.distinctUntilChanged().onEach { isConnected ->
         if (isConnected) {
@@ -220,4 +214,12 @@ class OfflineQueueProcessor(
         photoUrl = "", vehicleType = "motorcycle", plateNumber = "",
         balance = 0, isOnline = true, status = "online"
     )
+
+    companion object {
+        private const val TAG = "OfflineQueueProcessor"
+        private const val BASE_BACKOFF_MS = 1000L
+        private const val MAX_BACKOFF_MS = 120_000L
+        private const val BATCH_SIZE = 20
+        private const val SYNC_INTERVAL_MS = 30_000L
+    }
 }

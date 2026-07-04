@@ -19,7 +19,9 @@ import com.arodriverkotlin.database.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -32,9 +34,6 @@ class DebugOverlayService : Service() {
     private var initialY = 0f
     private var initialTouchX = 0f
     private var initialTouchY = 0f
-
-    private const val TAG = "DebugOverlayService"
-    private const val UPDATE_INTERVAL_MS = 2000L
 
     override fun onCreate() {
         super.onCreate()
@@ -53,8 +52,8 @@ class DebugOverlayService : Service() {
             }
             format = PixelFormat.TRANSLUCENT
             flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
+                .or(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                .or(WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH)
             gravity = Gravity.TOP or Gravity.START
             width = WindowManager.LayoutParams.WRAP_CONTENT
             height = WindowManager.LayoutParams.WRAP_CONTENT
@@ -87,43 +86,39 @@ class DebugOverlayService : Service() {
 
     private fun startUpdates() {
         scope.launch {
-            while (!scope.isCancelled) {
+            while (isActive) {
                 updateOverlay()
                 delay(UPDATE_INTERVAL_MS)
             }
         }
     }
 
-    private fun updateOverlay() {
+    private suspend fun updateOverlay() {
         if (overlayView == null) return
 
         try {
             val uid = getStoredUid() ?: "N/A"
-            val locationDao = AppDatabase.getInstance(this).locationDao()
-            val pendingCount = locationDao.getPendingCount(uid)
-            val actionDao = AppDatabase.getInstance(this).actionQueueDao()
-            val pendingActions = actionDao.getPendingCount(uid)
-            
-            val tripState = AppDatabase.getInstance(this).tripStateDao().getState(uid)
+            val db = AppDatabase.getInstance(this)
+            val pendingCount = db.locationDao().getPendingCount(uid)
+            val pendingActions = db.actionQueueDao().getPendingCount(uid)
+            val tripState = db.tripStateDao().getState(uid)
             val tripStateStr = tripState?.state ?: "IDLE"
-            
+
             val foregroundService = com.arodriverkotlin.service.ForegroundService
             val currentLat = foregroundService.latestLat
             val currentLng = foregroundService.latestLng
             val hasActiveTrip = foregroundService.currentOrderId != null
 
             val text = StringBuilder()
-            text.appendLine("🔧 DEBUG OVERLAY")
             text.appendLine("UID: $uid")
-            text.appendLine("Trip State: $tripStateStr")
-            text.appendLine("Active Trip: ${if (hasActiveTrip) "YES" else "NO"}")
-            text.appendLine("Order ID: ${foregroundService.currentOrderId ?: "N/A"}")
+            text.appendLine("State: $tripStateStr")
+            text.appendLine("Active: ${if (hasActiveTrip) "YES" else "NO"}")
+            text.appendLine("Order: ${foregroundService.currentOrderId ?: "N/A"}")
             text.appendLine("GPS: ${if (currentLat != null) String.format("%.6f, %.6f", currentLat, currentLng) else "N/A"}")
-            text.appendLine("Pending Locations: $pendingCount")
-            text.appendLine("Pending Actions: $pendingActions")
-            text.appendLine("Buffer Size: ${foregroundService.locationBufferSize}")
+            text.appendLine("Pending Loc: $pendingCount")
+            text.appendLine("Pending Act: $pendingActions")
 
-            val textView = overlayView?.findViewById<TextView>(com.arodriverkotlin.R.id.debug_text)
+            val textView = overlayView?.findViewById<TextView>(com.arodriverkotlin.R.id.tv_debug_title)
             textView?.text = text.toString()
         } catch (e: Exception) {
             Log.w(TAG, "Failed to update overlay", e)
@@ -147,6 +142,8 @@ class DebugOverlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        private const val TAG = "DebugOverlayService"
+        private const val UPDATE_INTERVAL_MS = 2000L
         fun start(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(Intent(context, DebugOverlayService::class.java))

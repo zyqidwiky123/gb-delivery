@@ -31,7 +31,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         val transitionType = geofencingEvent.geofenceTransition
         val triggeringGeofences = geofencingEvent.triggeringGeofences
 
-        for (geofence in triggeringGeofences) {
+        for (geofence in triggeringGeofences ?: emptyList()) {
             val geofenceId = geofence.requestId
             Log.i(TAG, "Geofence transition: $geofenceId, type: $transitionType")
             

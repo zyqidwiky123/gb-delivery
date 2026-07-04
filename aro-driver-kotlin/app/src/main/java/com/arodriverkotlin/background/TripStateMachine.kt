@@ -10,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -31,9 +32,8 @@ class TripStateMachine(
 
     private val mutex = Mutex()
 
-    private const val TAG = "TripStateMachine"
-
     companion object {
+        private const val TAG = "TripStateMachine"
         const val STATE_IDLE = "IDLE"
         const val STATE_OFFERED = "OFFERED"
         const val STATE_ACCEPTED = "ACCEPTED"
@@ -231,7 +231,7 @@ class TripStateMachine(
         dropoffLat = state.dropoffLat
         dropoffLng = state.dropoffLng
         if (currentState != STATE_IDLE && currentOrderId != null) {
-            tripStateDao.upsert(state)
+            scope.launch { tripStateDao.upsert(state) }
         }
         Log.d(TAG, "Loaded persisted state: $currentState for order $currentOrderId")
     }
@@ -240,14 +240,14 @@ class TripStateMachine(
         scope.cancel()
     }
 
-    private fun TripState.toMap(): java.util.Map<String, Any?> {
-        return java.util.HashMap<String, Any?>().apply {
+    private fun TripState.toMap(): MutableMap<String, Any> {
+        return mutableMapOf<String, Any>().apply {
             put("state", state)
-            put("orderId", orderId)
-            put("pickupLat", pickupLat)
-            put("pickupLng", pickupLng)
-            put("dropoffLat", dropoffLat)
-            put("dropoffLng", dropoffLng)
+            put("orderId", orderId ?: "")
+            put("pickupLat", pickupLat ?: 0.0)
+            put("pickupLng", pickupLng ?: 0.0)
+            put("dropoffLat", dropoffLat ?: 0.0)
+            put("dropoffLng", dropoffLng ?: 0.0)
             put("updatedAt", updatedAt)
             put("version", version)
         }

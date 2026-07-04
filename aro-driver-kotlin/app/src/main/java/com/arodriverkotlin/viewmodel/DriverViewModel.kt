@@ -10,7 +10,6 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
-import androidx.work.setExpedited
 import com.arodriverkotlin.background.BackgroundSyncWorker
 import com.arodriverkotlin.database.AppDatabase
 import com.arodriverkotlin.database.entity.PendingAction

@@ -17,10 +17,7 @@ class GeofenceManager(
 
     private val geofencingClient: GeofencingClient = LocationServices.getGeofencingClient(context)
 
-    private const val TAG = "GeofenceManager"
     private val GEOFENCE_RADIUS_METERS: Float by lazy { configService.getGeofenceRadiusMeters() }
-    private const val GEOFENCE_EXPIRATION = Geofence.NEVER_EXPIRE
-    private const val GEOFENCE_TRANSITION_TYPES = Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT
 
     private val activeGeofences = mutableMapOf<String, Geofence>()
 
@@ -73,7 +70,7 @@ class GeofenceManager(
 
         val request = GeofencingRequest.Builder()
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-            .addGeofences(activeGeofences.values)
+            .addGeofences(activeGeofences.values.toList())
             .build()
 
         val pendingIntent = createGeofencePendingIntent()
@@ -94,5 +91,11 @@ class GeofenceManager(
 
     fun shutdown() {
         clearAllGeofences()
+    }
+
+    companion object {
+        private const val TAG = "GeofenceManager"
+        private const val GEOFENCE_EXPIRATION = Geofence.NEVER_EXPIRE
+        private const val GEOFENCE_TRANSITION_TYPES = Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT
     }
 }

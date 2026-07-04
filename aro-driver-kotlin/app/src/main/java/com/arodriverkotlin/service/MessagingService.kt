@@ -11,6 +11,10 @@ import com.google.firebase.messaging.RemoteMessage
 
 class MessagingService : FirebaseMessagingService() {
 
+    companion object {
+        private const val TAG = "MessagingService"
+    }
+
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         saveToken(token)

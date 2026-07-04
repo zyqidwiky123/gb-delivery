@@ -9,7 +9,9 @@ import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlin.math.pow
 
 class BackgroundNavigationManager(
     private val context: Context,
@@ -19,8 +21,6 @@ class BackgroundNavigationManager(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val db = AppDatabase.getInstance(context)
     private val maneuverDao = db.navigationManeuverDao()
-
-    private const val TAG = "BackgroundNavigationManager"
 
     suspend fun startNavigation(orderId: String, origin: LatLng, destination: LatLng, apiKey: String) {
         try {
@@ -82,5 +82,9 @@ class BackgroundNavigationManager(
 
     fun shutdown() {
         scope.cancel()
+    }
+
+    companion object {
+        private const val TAG = "BackgroundNavigationManager"
     }
 }
