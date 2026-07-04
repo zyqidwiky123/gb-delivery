@@ -38,6 +38,7 @@ class MessagingService : FirebaseMessagingService() {
                 val body = data["body"] ?: getString(com.arodriverkotlin.R.string.incoming_order_body)
                 if (orderId != null) {
                     Log.d(TAG, "NEW_ORDER FCM received: $orderId")
+                    IncomingOrderNotifier.createChannel(this)
                     IncomingOrderNotifier.show(this, orderId, title, body)
                 }
             }

@@ -267,24 +267,12 @@ exports.onOrderCreated = onDocumentCreated(
                     if (driverData.fcmToken) {
                         await admin.messaging().send({
                             token: driverData.fcmToken,
-                            notification: {
-                                title: "Pesanan Dari Admin! 📋",
-                                body: `ARO-${orderId.slice(-5).toUpperCase()} — Tap untuk lihat dan ambil pesanan.`,
-                            },
                             data: {
                                 type: "NEW_ORDER",
                                 orderId: String(orderId),
-                                title: "Pesanan Dari Admin! 📋",
-                                body: `ARO-${orderId.slice(-5).toUpperCase()} — Tap untuk lihat dan ambil pesanan.`,
                             },
                             android: {
                                 priority: "high",
-                                notification: {
-                                        channel_id: "aro_drive_incoming_v6",
-                                        sound: "notifdriver",
-                                    priority: "high",
-                                    visibility: "public",
-                                },
                             },
                         });
                         console.log(`[TargetedDispatch] FCM sent to driver ${targetDriverId}`);
@@ -721,24 +709,12 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         try {
             const message = {
                 token: selectedDriver.fcmToken,
-                notification: {
-                    title: "Ada Order Baru! 🛵",
-                    body: `ARO-${orderId.slice(-5).toUpperCase()} — Jarak: ${selectedDriver.distance.toFixed(1)}km`,
-                },
                 data: {
                     type: "NEW_ORDER",
                     orderId: String(orderId),
-                    title: "Ada Order Baru! 🛵",
-                    body: `Ayo ambil orderan ARO-${orderId.slice(-5).toUpperCase()}! Jarak: ${selectedDriver.distance.toFixed(1)}km. Kamu punya 60 detik!`,
                 },
                 android: {
                     priority: "high",
-                    notification: {
-                        channel_id: "aro_drive_incoming_v6",
-                        sound: "notifdriver",
-                        priority: "high",
-                        visibility: "public",
-                    },
                 },
             };
             await admin.messaging().send(message);
