@@ -116,7 +116,7 @@ object DriverService {
         return url
     }
 
-    suspend fun updateTripState(uid: String, state: java.util.Map<String, Any?>) {
+    suspend fun updateTripState(uid: String, state: MutableMap<String, Any>) {
         rtdb.child("drivers/$uid/tripState").updateChildren(state).await()
     }
 }

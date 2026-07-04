@@ -24,7 +24,7 @@ object RatingService {
         return snap.getLong("ratingCount")?.toInt() ?: 0
     }
 
-    suspend fun getLatestRatings(uid: String, limit: Int = 10): List<Rating> {
+    suspend fun getLatestRatings(uid: String, limit: Long = 10): List<Rating> {
         val ratings = firestore.collection("drivers").document(uid)
             .collection("ratings")
             .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)

@@ -11,7 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 class BootReceiver : BroadcastReceiver() {
 
-    private const val TAG = "BootReceiver"
+    private val TAG = "BootReceiver"
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
@@ -37,7 +37,7 @@ class BootReceiver : BroadcastReceiver() {
 
         val rtdb = FirebaseDatabase.getInstance().reference
         rtdb.child("drivers/$uid/isOnline").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot) {
+            override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
                 val isOnline = snapshot.getValue(Boolean::class.java) ?: false
                 if (isOnline) {
                     Log.i(TAG, "Driver was online, restarting ForegroundService")
@@ -47,8 +47,8 @@ class BootReceiver : BroadcastReceiver() {
                 }
             }
 
-            override fun onCancelled(error) {
-                Log.w(TAG, "Failed to read isOnline from RTDB", error.toException())
+            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
+                Log.w(TAG, "Failed to read isOnline from RTDB", error)
             }
         })
     }

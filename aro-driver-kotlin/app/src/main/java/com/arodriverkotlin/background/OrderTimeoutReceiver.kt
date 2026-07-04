@@ -13,7 +13,6 @@ import com.arodriverkotlin.service.OrderService
 class OrderTimeoutReceiver : BroadcastReceiver() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private const val TAG = "OrderTimeoutReceiver"
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != OrderTimeoutManager.ALARM_ACTION) return
@@ -34,5 +33,9 @@ class OrderTimeoutReceiver : BroadcastReceiver() {
                 Log.e(TAG, "Failed to auto-reject order $orderId", e)
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "OrderTimeoutReceiver"
     }
 }

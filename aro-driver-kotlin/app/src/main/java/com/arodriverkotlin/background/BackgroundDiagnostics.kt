@@ -9,7 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.HashMap
 
 class BackgroundDiagnostics(
@@ -18,8 +20,6 @@ class BackgroundDiagnostics(
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private const val TAG = "BackgroundDiagnostics"
-    private const val UPLOAD_INTERVAL_MS = 24 * 60 * 60 * 1000L // 24 hours
 
     private var serviceStartTime = System.currentTimeMillis()
     private var locationFixes = 0L
@@ -35,7 +35,7 @@ class BackgroundDiagnostics(
 
     fun start() {
         scope.launch {
-            while (!scope.isCancelled) {
+            while (isActive) {
                 delay(UPLOAD_INTERVAL_MS)
                 uploadDiagnostics()
             }
@@ -130,7 +130,7 @@ class BackgroundDiagnostics(
 
     private fun getAppVersion(): String {
         return try {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
         } catch (_: Exception) {
             "unknown"
         }
@@ -139,5 +139,10 @@ class BackgroundDiagnostics(
     fun shutdown() {
         scope.cancel()
         scope.launch { uploadDiagnostics() } // Final upload
+    }
+
+    companion object {
+        private const val TAG = "BackgroundDiagnostics"
+        private const val UPLOAD_INTERVAL_MS = 24 * 60 * 60 * 1000L // 24 hours
     }
 }

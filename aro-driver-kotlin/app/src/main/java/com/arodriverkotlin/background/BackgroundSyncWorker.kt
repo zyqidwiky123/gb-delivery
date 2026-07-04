@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import com.arodriverkotlin.database.AppDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 
 class BackgroundSyncWorker(
@@ -24,32 +25,33 @@ class BackgroundSyncWorker(
     private val locationDao = db.locationDao()
     private val actionDao = db.actionQueueDao()
 
-    override suspend fun doWork(): Result = try {
-        val isExpedited = params.expedited
-        Log.i(TAG, "Starting background sync, expedited=$isExpedited")
+    override suspend fun doWork(): Result {
+        return try {
+            Log.i(TAG, "Starting background sync")
 
-        val firestoreHealthy = checkFirestoreHealth()
-        val rtdbHealthy = checkRtdbHealth()
+            val firestoreHealthy = checkFirestoreHealth()
+            val rtdbHealthy = checkRtdbHealth()
 
-        if (!firestoreHealthy || !rtdbHealthy) {
-            Log.w(TAG, "Health check failed: firestore=$firestoreHealthy, rtdb=$rtdbHealthy")
-            return if (isExpedited) Result.retry() else Result.failure()
-        }
+            if (!firestoreHealthy || !rtdbHealthy) {
+                Log.w(TAG, "Health check failed: firestore=$firestoreHealthy, rtdb=$rtdbHealthy")
+                return Result.retry()
+            }
 
-        val uid = params.inputData.getString("uid")
-        if (uid != null) {
-            syncPendingLocations(uid)
-            syncPendingActions(uid)
-        }
+            val uid = inputData.getString("uid")
+            if (uid != null) {
+                syncPendingLocations(uid)
+                syncPendingActions(uid)
+            }
 
-        Log.i(TAG, "Background sync completed successfully")
-        Result.success()
-    } catch (e: Exception) {
-        Log.e(TAG, "Background sync failed", e)
-        if (params.runAttemptCount < 3) {
-            Result.retry()
-        } else {
-            Result.failure()
+            Log.i(TAG, "Background sync completed successfully")
+            Result.success()
+        } catch (e: Exception) {
+            Log.e(TAG, "Background sync failed", e)
+            if (runAttemptCount < 3) {
+                Result.retry()
+            } else {
+                Result.failure()
+            }
         }
     }
 
@@ -144,7 +146,7 @@ class BackgroundSyncWorker(
                         val serviceFee = orderSnap.getLong("serviceFee") ?: 0
                         val balance = driverSnap.getLong("balance") ?: 0
                         val profile = com.arodriverkotlin.models.DriverProfile(
-                            uid = uid, balance = balance, isOnline = true, status = "busy"
+                            id = uid, balance = balance, isOnline = true, status = "busy"
                         )
                         com.arodriverkotlin.service.OrderService.completeOrder(
                             action.orderId, uid, profile,

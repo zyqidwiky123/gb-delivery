@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.*
 
@@ -112,7 +113,7 @@ class ForegroundService : Service() {
         }
 
         serviceScope.launch {
-            while (!serviceScope.isCancelled) {
+            while (isActive) {
                 delay(BUFFER_FLUSH_INTERVAL_MS)
                 if (driverUid != null && locationBuffer.isNotEmpty()) {
                     flushLocationBuffer(driverUid!!)
