@@ -9,3 +9,4 @@ firestore.indexes.json
 *.log
 .DS_Store
 *Sync
+.opencode/
