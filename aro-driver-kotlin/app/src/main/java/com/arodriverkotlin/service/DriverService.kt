@@ -34,9 +34,11 @@ object DriverService {
             rtdbUpdate["onlineAt"] = ServerValue.TIMESTAMP
             rtdbUpdate["onlineSessionStartAt"] = ServerValue.TIMESTAMP
             rtdbUpdate["offlineAt"] = null
+            rtdbUpdate["lastLocationUpdate"] = ServerValue.TIMESTAMP
             fsUpdate["onlineAt"] = FieldValue.serverTimestamp()
             fsUpdate["onlineSessionStartAt"] = FieldValue.serverTimestamp()
             fsUpdate["offlineAt"] = null
+            fsUpdate["lastLocationUpdate"] = FieldValue.serverTimestamp()
         } else {
             rtdbUpdate["offlineAt"] = ServerValue.TIMESTAMP
             fsUpdate["offlineAt"] = FieldValue.serverTimestamp()

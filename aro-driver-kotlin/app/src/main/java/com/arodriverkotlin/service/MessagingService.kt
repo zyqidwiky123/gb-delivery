@@ -23,16 +23,23 @@ class MessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
 
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid != null) {
-            ForegroundService.start(this, uid)
-        }
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        ForegroundService.start(this, uid)
 
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ARO_DRIVE:FCM")
         wakeLock.acquire(10_000)
         try {
-            Log.d(TAG, "FCM received")
+            val data = message.data
+            if (data["type"] == "NEW_ORDER") {
+                val orderId = data["orderId"]
+                if (orderId != null) {
+                    Log.d(TAG, "NEW_ORDER FCM received: $orderId")
+                    // Firestore listener di ForegroundService akan pick up order ini
+                    // dan menampilkan notifikasi + memulai acceptance timeout
+                }
+            }
         } finally {
             if (wakeLock.isHeld) wakeLock.release()
         }

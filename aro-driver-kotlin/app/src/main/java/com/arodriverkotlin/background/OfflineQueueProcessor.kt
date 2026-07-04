@@ -139,7 +139,7 @@ class OfflineQueueProcessor(
                         true
                     }
                     "reject" -> {
-                        OrderService.rejectOrder(action.orderId)
+                        OrderService.rejectOrder(action.orderId, uid)
                         true
                     }
                     "arrive" -> {

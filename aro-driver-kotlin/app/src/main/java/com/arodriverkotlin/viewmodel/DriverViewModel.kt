@@ -243,7 +243,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     fun rejectOrder(orderId: String) = viewModelScope.launch {
         val uid = _state.value.userId ?: return@launch
         try {
-            OrderService.rejectOrder(orderId)
+            OrderService.rejectOrder(orderId, uid)
             postMessage("Pesanan ditolak.")
         } catch (e: Exception) {
             if (isNetworkError(e)) {

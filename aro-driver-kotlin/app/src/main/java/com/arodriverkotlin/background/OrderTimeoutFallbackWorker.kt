@@ -31,7 +31,7 @@ class OrderTimeoutFallbackWorker(
                 return Result.success()
             }
 
-            OrderService.rejectOrder(orderId)
+            OrderService.rejectOrder(orderId, uid)
             Log.i(TAG, "Fallback: Order $orderId auto-rejected, re-dispatch triggered")
 
             Result.success()
