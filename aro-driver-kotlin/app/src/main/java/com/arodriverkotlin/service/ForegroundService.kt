@@ -316,6 +316,7 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
     }
 
     private fun startListeningForOrders(uid: String) {
+        if (realtimeOrderListener != null) return
         realtimeOrderListener = RealtimeOrderListener(uid) { orderId ->
             IncomingOrderNotifier.show(
                 context = this@ForegroundService,
