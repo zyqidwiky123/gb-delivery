@@ -123,7 +123,7 @@ class BackgroundSyncWorker(
                         true
                     }
                     "reject" -> {
-                        com.arodriverkotlin.service.OrderService.rejectOrder(action.orderId)
+                        com.arodriverkotlin.service.OrderService.rejectOrder(action.orderId, uid)
                         true
                     }
                     "arrive" -> {

@@ -79,6 +79,7 @@ object OrderService {
                 "status" to "busy",
                 "lastActive" to ServerValue.TIMESTAMP,
             )).await()
+            rtdb.child("drivers/$uid/incoming/$orderId").removeValue().await()
         } catch (e: Exception) {
             throw e
         }
@@ -93,13 +94,18 @@ object OrderService {
         ).await()
     }
 
-    suspend fun rejectOrder(orderId: String) {
+    suspend fun rejectOrder(orderId: String, uid: String? = null) {
         db.collection("orders").document(orderId).update(
             mapOf(
                 "dispatch.status" to "rejected",
                 "dispatch.rejectedAt" to FieldValue.serverTimestamp(),
             )
         ).await()
+        if (uid != null) {
+            try {
+                rtdb.child("drivers/$uid/incoming/$orderId").removeValue().await()
+            } catch (_: Exception) {}
+        }
     }
 
     suspend fun cancelOrder(orderId: String, uid: String, profile: DriverProfile, reason: String) {

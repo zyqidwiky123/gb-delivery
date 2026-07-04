@@ -252,6 +252,13 @@ exports.onOrderCreated = onDocumentCreated(
                 dispatch: dispatchInit
             });
 
+            // Write to RTDB for targeted dispatch
+            try {
+                await rtdb.ref(`drivers/${targetDriverId}/incoming`).child(orderId).set(true);
+            } catch (rtdbErr) {
+                console.warn(`[Targeted] RTDB write failed for driver ${targetDriverId}:`, rtdbErr.message);
+            }
+
             // Send FCM to the targeted driver
             try {
                 const driverDoc = await admin.firestore().collection("drivers").doc(targetDriverId).get();
@@ -702,6 +709,13 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         "dispatch.lastAttemptAt": admin.firestore.FieldValue.serverTimestamp()
     });
 
+    // Write to RTDB so the driver's RealtimeOrderListener picks it up
+    try {
+        await rtdb.ref(`drivers/${selectedDriver.id}/incoming`).child(orderId).set(true);
+    } catch (rtdbErr) {
+        console.warn(`[Dispatch] RTDB write failed for driver ${selectedDriver.id}:`, rtdbErr.message);
+    }
+
     // Send FCM notification only to the selected driver
     if (selectedDriver.fcmToken) {
         try {
@@ -856,6 +870,14 @@ exports.onOrderUpdate = onDocumentUpdated(
 
     if (dispatchChangedToRejected && newValue.status === "searching") {
         console.log(`[Reject] Order ${event.params.orderId} was rejected by driver. Rotating immediately...`);
+
+        // Cleanup RTDB incoming node for the rejecting driver
+        if (newValue.dispatch?.offeredTo) {
+            try {
+                await rtdb.ref(`drivers/${newValue.dispatch.offeredTo}/incoming`).child(event.params.orderId).remove();
+            } catch (_) {}
+        }
+
         const dispatch = newValue.dispatch;
         const rejectedDrivers = dispatch.rejectedDrivers || [];
         if (dispatch.offeredTo && !rejectedDrivers.includes(dispatch.offeredTo)) {

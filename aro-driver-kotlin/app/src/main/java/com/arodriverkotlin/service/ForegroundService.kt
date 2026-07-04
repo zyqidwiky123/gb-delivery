@@ -31,6 +31,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ListenerRegistration
@@ -176,6 +177,7 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
             driverUid = uid
             persistDriverUid(uid)
             startLocationUpdates()
+            fetchAndUploadLastLocation(uid)
             orderTimeoutManager = OrderTimeoutManager(this, uid, ConfigService.getAcceptTimeoutMs())
             startListeningForOrders(uid)
             geofenceManager = GeofenceManager(this, uid, ConfigService)
@@ -270,6 +272,23 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
                 fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
             } catch (_: Exception) {}
         }
+    }
+
+    private fun fetchAndUploadLastLocation(uid: String) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
+        try {
+            fusedLocationClient.getCurrentLocation(currentPriority, CancellationTokenSource().token)
+                .addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        latestLat = loc.latitude
+                        latestLng = loc.longitude
+                        latestSpeed = loc.speed
+                        serviceScope.launch {
+                            DriverService.updateLocation(uid, loc.latitude, loc.longitude)
+                        }
+                    }
+                }
+        } catch (_: Exception) {}
     }
 
     fun updateLocationIntervalForTripState(hasActiveTrip: Boolean) {
