@@ -1,3 +1,32 @@
 <resources>
     <string name="app_name">aro partner</string>
+    <string name="maps_api_key">AIzaSyDHfsq6wdr5_iQdKfDjIer2TVdQyQPLAJE</string>
+    <string name="foreground_running">Menjalankan layanan latar belakang...</string>
+    <string name="incoming_order_title">ARO DRIVE</string>
+    <string name="incoming_order_body">Ada pesanan baru!</string>
+    <string name="order_accepted">Pesanan diterima.</string>
+    <string name="order_cancelled">Pesanan dibatalkan.</string>
+    <string name="order_arrived">Status tiba diperbarui.</string>
+    <string name="order_pickup">Status pickup diperbarui.</string>
+    <string name="order_completed">Pesanan selesai.</string>
+    <string name="order_rejected">Pesanan ditolak.</string>
+    <string name="pending_accept">Pesanan akan diproses saat koneksi pulih.</string>
+    <string name="pending_arrive">Status tiba akan diperbarui saat koneksi pulih.</string>
+    <string name="pending_pickup">Pickup akan diproses saat koneksi pulih.</string>
+    <string name="pending_complete">Penyelesaian akan diproses saat koneksi pulih.</string>
+    <string name="pending_cancel">Pembatalan akan diproses saat koneksi pulih.</string>
+    <string name="verification_title">Masukkan PIN Verifikasi</string>
+    <string name="verification_subtitle">Masukkan PIN 4 digit dari penumpang</string>
+    <string name="verify_button">Verifikasi</string>
+    <string name="cancel_button">Batal</string>
+    <string name="complete_without_pin">Selesaikan Tanpa PIN</string>
+    <string name="pin_error">PIN salah atau sudah expired</string>
+    <string name="arrived_pickup">Anda telah tiba di lokasi pickup</string>
+    <string name="arrived_dropoff">Anda telah tiba di lokasi tujuan</string>
+    <string name="confirm_arrive">Konfirmasi Sampai</string>
+    <string name="confirm_complete">Selesaikan Pesanan</string>
+    <string name="rating_title">Rating Saya</string>
+    <string name="rating_count">%d ulasan</string>
+    <string name="permission_location_lost">Izin lokasi dicabut. Fitur navigasi terbatas.</string>
+    <string name="network_error">Koneksi bermasalah. Pesanan akan diproses saat koneksi pulih.</string>
 </resources>

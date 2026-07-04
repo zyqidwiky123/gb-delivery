@@ -115,4 +115,8 @@ object DriverService {
         db.collection("drivers").document(uid).update("qrisUrl", url).await()
         return url
     }
+
+    suspend fun updateTripState(uid: String, state: java.util.Map<String, Any?>) {
+        rtdb.child("drivers/$uid/tripState").updateChildren(state).await()
+    }
 }

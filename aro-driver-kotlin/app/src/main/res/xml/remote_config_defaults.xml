@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <entry>
+        <key>maps_api_key</key>
+        <value></value>
+    </entry>
+    <entry>
+        <key>accept_timeout_seconds</key>
+        <value>20</value>
+    </entry>
+    <entry>
+        <key>geofence_radius_meters</key>
+        <value>100</value>
+    </entry>
+    <entry>
+        <key>location_interval_active_ms</key>
+        <value>3000</value>
+    </entry>
+    <entry>
+        <key>location_interval_idle_ms</key>
+        <value>15000</value>
+    </entry>
+    <entry>
+        <key>location_interval_offline_ms</key>
+        <value>30000</value>
+    </entry>
+</defaultsMap>

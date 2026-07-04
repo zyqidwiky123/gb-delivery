@@ -125,8 +125,7 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
             )
             if (shouldFetch) {
                 routePoints = emptyList()
-                val ai = ctx.packageManager.getApplicationInfo(ctx.packageName, PackageManager.GET_META_DATA)
-                val apiKey = ai.metaData.getString("com.google.android.geo.API_KEY") ?: ""
+                val apiKey = com.arodriverkotlin.service.ConfigService.getMapsApiKey()
                 routePoints = DirectionsService.fetchRoute(origin, dest!!, apiKey)
                 lastRouteOrigin = origin
                 lastRouteDest = dest

@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,6 +15,16 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.arodriverkotlin.MainActivity
+import com.arodriverkotlin.background.BackgroundDiagnostics
+import com.arodriverkotlin.background.BackgroundNavigationManager
+import com.arodriverkotlin.background.GeofenceEventHandler
+import com.arodriverkotlin.background.GeofenceManager
+import com.arodriverkotlin.background.OfflineQueueProcessor
+import com.arodriverkotlin.background.OrderTimeoutManager
+import com.arodriverkotlin.background.TripStateMachine
+import com.arodriverkotlin.background.SmartWakeLock
+import com.arodriverkotlin.database.AppDatabase
+import com.arodriverkotlin.database.entity.PendingLocation
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -27,6 +38,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.*
 
@@ -38,16 +50,35 @@ class ForegroundService : Service() {
     @Volatile private var lastUploadedLat = 0.0
     @Volatile private var lastUploadedLng = 0.0
     @Volatile private var lastUploadTime = 0L
+    @Volatile private var latestSpeed: Float? = null
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var incomingListener: ListenerRegistration? = null
+    private var realtimeOrderListener: RealtimeOrderListener? = null
+    private var firestoreOrderFallback: ListenerRegistration? = null
+    private var offlineQueueProcessor: OfflineQueueProcessor? = null
+    private var tripStateMachine: TripStateMachine? = null
+    private var geofenceManager: GeofenceManager? = null
+    private var navigationManager: BackgroundNavigationManager? = null
+    private var orderTimeoutManager: OrderTimeoutManager? = null
+    private var diagnostics: BackgroundDiagnostics? = null
+    private var smartWakeLock: SmartWakeLock? = null
+    private var permissionMonitor: PermissionMonitor? = null
 
     private var driverUid: String? = null
+
+    private val locationBuffer = mutableListOf<PendingLocation>()
+    private val BUFFER_FLUSH_INTERVAL_MS = ConfigService.getBufferFlushIntervalMs()
+    private val BUFFER_MAX_SIZE = ConfigService.getBufferMaxSize()
+
+    // Adaptive location intervals
+    private var currentLocationIntervalMs = 5000L
+    private var currentMinUpdateIntervalMs = 2000L
+    private var currentPriority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
 
     override fun onCreate() {
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        
+
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val loc = result.lastLocation ?: return
@@ -55,6 +86,7 @@ class ForegroundService : Service() {
 
                 latestLat = loc.latitude
                 latestLng = loc.longitude
+                latestSpeed = loc.speed
 
                 val now = System.currentTimeMillis()
                 val distance = if (lastUploadTime > 0L) {
@@ -65,26 +97,61 @@ class ForegroundService : Service() {
                 val hasActiveOrder = currentOrderId != null
 
                 val shouldUpload =
-                    distance >= MOVEMENT_THRESHOLD_M ||
-                    (!hasActiveOrder && timeSinceLastUpload >= IDLE_HEARTBEAT_MS)
+                    distance >= ConfigService.getMovementThresholdM() ||
+                    (!hasActiveOrder && timeSinceLastUpload >= ConfigService.getIdleHeartbeatMs())
+
+                bufferLocation(uid, loc.latitude, loc.longitude, currentOrderId)
 
                 if (shouldUpload) {
                     lastUploadedLat = loc.latitude
                     lastUploadedLng = loc.longitude
                     lastUploadTime = now
-                    val lat = loc.latitude
-                    val lng = loc.longitude
-                    val orderId = currentOrderId
-                    serviceScope.launch {
-                        try {
-                            DriverService.updateLocation(uid, lat, lng)
-                            if (orderId != null) {
-                                DriverService.updateOrderLocation(orderId, lat, lng)
-                            }
-                        } catch (_: Exception) {}
-                    }
+                    flushLocationBuffer(uid)
                 }
             }
+        }
+
+        serviceScope.launch {
+            while (!serviceScope.isCancelled) {
+                delay(BUFFER_FLUSH_INTERVAL_MS)
+                if (driverUid != null && locationBuffer.isNotEmpty()) {
+                    flushLocationBuffer(driverUid!!)
+                }
+            }
+        }
+    }
+
+    private fun bufferLocation(uid: String, lat: Double, lng: Double, orderId: String?) {
+        val location = PendingLocation(
+            uid = uid,
+            lat = lat,
+            lng = lng,
+            timestamp = System.currentTimeMillis(),
+            orderId = orderId
+        )
+
+        synchronized(locationBuffer) {
+            locationBuffer.add(location)
+            if (locationBuffer.size > BUFFER_MAX_SIZE) {
+                locationBuffer.removeFirst()
+            }
+        }
+    }
+
+    private fun flushLocationBuffer(uid: String) {
+        val toFlush = synchronized(locationBuffer) {
+            val copy = locationBuffer.toList()
+            locationBuffer.clear()
+            copy
+        }
+
+        if (toFlush.isEmpty()) return
+
+        val db = AppDatabase.getInstance(this)
+        val locationDao = db.locationDao()
+        serviceScope.launch {
+            locationDao.insertAll(toFlush)
+            offlineQueueProcessor?.let { it.processQueue() }
         }
     }
 
@@ -103,12 +170,48 @@ class ForegroundService : Service() {
         val notification = buildNotification()
         startForeground(NOTIFICATION_ID, notification)
 
-        val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
+val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
         if (uid != null) {
             driverUid = uid
             persistDriverUid(uid)
             startLocationUpdates()
+            orderTimeoutManager = OrderTimeoutManager(this, uid, ConfigService.getAcceptTimeoutMs())
             startListeningForOrders(uid)
+            geofenceManager = GeofenceManager(this, uid, ConfigService)
+            com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().setCustomKey("last_state", "starting")
+            tripStateMachine = TripStateMachine(
+                context = this,
+                uid = uid,
+                orderTimeoutManager = orderTimeoutManager,
+                geofenceManager = geofenceManager,
+                onTripStateChanged = { hasActiveTrip ->
+                    com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance()
+                        .setCustomKey("last_state", tripStateMachine?.getCurrentState() ?: "none")
+                    if (hasActiveTrip) smartWakeLock?.acquireForOrder()
+                    else smartWakeLock?.releaseAll()
+                    updateLocationIntervalForTripState(hasActiveTrip)
+                }
+            ).apply {
+                serviceScope.launch { loadPersistedState() }
+                updateLocationIntervalForTripState(getCurrentOrderId() != null)
+            }
+            GeofenceEventHandler.setHandler { ctx, geofenceId, transitionType ->
+                tripStateMachine?.handleGeofenceTransition(geofenceId, transitionType)
+            }
+            navigationManager = BackgroundNavigationManager(this, uid)
+            diagnostics = BackgroundDiagnostics(this, uid).apply { start() }
+            smartWakeLock = SmartWakeLock(this)
+            permissionMonitor = PermissionMonitor(this) { permission ->
+                Log.w(TAG, "Permission lost: $permission")
+                if (permission == Manifest.permission.ACCESS_FINE_LOCATION) {
+                    currentPriority = Priority.PRIORITY_LOW_POWER
+                    fusedLocationClient.removeLocationUpdates(locationCallback)
+                    startLocationUpdates()
+                }
+            }
+            offlineQueueProcessor = OfflineQueueProcessor(this, uid).apply {
+                onStart()
+            }
         } else {
             Log.w(TAG, "Service dimulai tanpa UID driver; service dihentikan")
             stopSelf()
@@ -119,17 +222,46 @@ class ForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        when (level) {
+            ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
+                Log.d(TAG, "TRIM_MEMORY_UI_HIDDEN - reducing non-critical resources")
+                // Clear non-essential caches
+                synchronized(locationBuffer) {
+                    if (locationBuffer.size > 20) {
+                        locationBuffer.clear()
+                    }
+                }
+            }
+            ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
+            ComponentCallbacks2.TRIM_MEMORY_BACKGROUND -> {
+                Log.d(TAG, "TRIM_MEMORY_RUNNING_LOW/BACKGROUND - pausing passive listeners")
+            }
+            ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
+                Log.w(TAG, "TRIM_MEMORY_COMPLETE - process near death")
+            }
+        }
+    }
+
     override fun onDestroy() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        incomingListener?.remove()
+        realtimeOrderListener?.stopListening()
+        firestoreOrderFallback?.remove()
+        geofenceManager?.shutdown()
+        tripStateMachine?.shutdown()
+        navigationManager?.shutdown()
+        orderTimeoutManager?.shutdown()
+        offlineQueueProcessor?.onStop()
+        smartWakeLock?.releaseAll()
         serviceScope.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         super.onDestroy()
     }
 
     private fun startLocationUpdates() {
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L)
-            .setMinUpdateIntervalMillis(2000L)
+        val request = LocationRequest.Builder(currentPriority, currentLocationIntervalMs)
+            .setMinUpdateIntervalMillis(currentMinUpdateIntervalMs)
             .build()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -139,9 +271,47 @@ class ForegroundService : Service() {
         }
     }
 
+    fun updateLocationIntervalForTripState(hasActiveTrip: Boolean) {
+        if (hasActiveTrip) {
+            val speed = (latestSpeed ?: 0f) * 3.6f
+            currentLocationIntervalMs = when {
+                speed > 40f -> 5000L
+                speed > 20f -> 3000L
+                else -> 2000L
+            }
+            currentMinUpdateIntervalMs = currentLocationIntervalMs / 2
+            currentPriority = Priority.PRIORITY_HIGH_ACCURACY
+        } else if (driverUid != null) {
+            currentLocationIntervalMs = ConfigService.getLocationIntervalIdleMs()
+            currentMinUpdateIntervalMs = ConfigService.getLocationMinIntervalIdleMs()
+            currentPriority = Priority.PRIORITY_BALANCED_POWER_ACCURACY
+        } else {
+            currentLocationIntervalMs = ConfigService.getLocationIntervalOfflineMs()
+            currentMinUpdateIntervalMs = ConfigService.getLocationIntervalOfflineMs()
+            currentPriority = Priority.PRIORITY_LOW_POWER
+        }
+
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+        startLocationUpdates()
+    }
+
     private fun startListeningForOrders(uid: String) {
-        incomingListener?.remove()
-        incomingListener = FirebaseFirestore.getInstance().collection("orders")
+        realtimeOrderListener = RealtimeOrderListener(uid) { orderId ->
+            IncomingOrderNotifier.show(
+                context = this@ForegroundService,
+                orderId = orderId,
+                title = getString(com.arodriverkotlin.R.string.incoming_order_title),
+                body = getString(com.arodriverkotlin.R.string.incoming_order_body),
+            )
+            orderTimeoutManager?.startAcceptanceTimeout(orderId, ConfigService.getAcceptTimeoutMs())
+        }
+        realtimeOrderListener?.startListening()
+        startFirestoreOrderFallback(uid)
+    }
+
+    private fun startFirestoreOrderFallback(uid: String) {
+        firestoreOrderFallback?.remove()
+        firestoreOrderFallback = FirebaseFirestore.getInstance().collection("orders")
             .whereEqualTo("status", "searching")
             .whereEqualTo("dispatch.offeredTo", uid)
             .addSnapshotListener { snap, error ->
@@ -153,12 +323,14 @@ class ForegroundService : Service() {
                 snap?.documentChanges
                     ?.filter { it.type == DocumentChange.Type.ADDED }
                     ?.forEach { change ->
+                        val orderId = change.document.id
                         IncomingOrderNotifier.show(
-                            context = this,
-                            orderId = change.document.id,
-                            title = "ARO DRIVE",
-                            body = "Ada pesanan baru!",
+                            context = this@ForegroundService,
+                            orderId = orderId,
+                            title = getString(com.arodriverkotlin.R.string.incoming_order_title),
+                            body = getString(com.arodriverkotlin.R.string.incoming_order_body),
                         )
+                        orderTimeoutManager?.startAcceptanceTimeout(orderId, ConfigService.getAcceptTimeoutMs())
                     }
             }
     }
@@ -187,8 +359,6 @@ class ForegroundService : Service() {
         @Volatile var latestLat: Double? = null
         @Volatile var latestLng: Double? = null
 
-        private const val MOVEMENT_THRESHOLD_M = 100.0
-        private const val IDLE_HEARTBEAT_MS = 5 * 60 * 1000L
         private const val TAG = "ForegroundService"
         private const val PREFS_NAME = "foreground_service"
         private const val STORED_DRIVER_UID = "driver_uid"

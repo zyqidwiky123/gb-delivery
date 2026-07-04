@@ -28,16 +28,7 @@ class MessagingService : FirebaseMessagingService() {
         val wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ARO_DRIVE:FCM")
         wakeLock.acquire(10_000)
         try {
-            val title = message.notification?.title
-                ?: message.data["title"]
-                ?: "ARO DRIVE"
-            val body = message.notification?.body
-                ?: message.data["body"]
-                ?: message.data["message"]
-                ?: "Ada pesanan baru!"
-            val orderId = message.data["orderId"] ?: message.data["order_id"] ?: ""
-
-            IncomingOrderNotifier.show(this, orderId, title, body)
+            Log.d(TAG, "FCM received")
         } finally {
             if (wakeLock.isHeld) wakeLock.release()
         }

@@ -124,6 +124,28 @@ object OrderService {
             "onlineAt" to ServerValue.TIMESTAMP,
             "lastActive" to ServerValue.TIMESTAMP,
         )).await()
+
+        // Cancellation penalty
+        try {
+            val scoreSnap = db.collection("drivers").document(uid).get().await()
+            val totalTrips = scoreSnap.getLong("totalTrips") ?: 0
+            if (totalTrips > 10) {
+                val cancellations = scoreSnap.getLong("cancellations") ?: 0
+                val rate = if (totalTrips > 0) cancellations.toDouble() / totalTrips else 0.0
+                if (rate > 0.2) {
+                    val penalty = DriverScoreService.getCancellationPenalty(uid)
+                    db.collection("drivers").document(uid)
+                        .update("balance", FieldValue.increment(-penalty)).await()
+                    db.collection("drivers").document(uid)
+                        .collection("penalties").add(mapOf(
+                            "amount" to penalty,
+                            "reason" to "cancellation_rate_exceeded",
+                            "orderId" to orderId,
+                            "createdAt" to FieldValue.serverTimestamp()
+                        )).await()
+                }
+            }
+        } catch (_: Exception) {}
     }
 
     suspend fun pickupOrder(orderId: String, pickupsDone: Long, pickupCount: Int) {
