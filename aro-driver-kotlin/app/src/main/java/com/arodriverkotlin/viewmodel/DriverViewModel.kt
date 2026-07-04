@@ -3,6 +3,17 @@ package com.arodriverkotlin.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
+import androidx.work.setExpedited
+import com.arodriverkotlin.background.BackgroundSyncWorker
+import com.arodriverkotlin.database.AppDatabase
+import com.arodriverkotlin.database.entity.PendingAction
 import com.arodriverkotlin.models.UiState
 import com.arodriverkotlin.service.AuthService
 import com.arodriverkotlin.service.DriverService
@@ -30,6 +41,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 class DriverViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow(UiState())
@@ -87,6 +99,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
     fun logout() {
         ForegroundService.stop(getApplication())
+        cancelBackgroundSync()
         clearListeners()
         AuthService.logout()
         _state.value = UiState(loading = false)
@@ -105,8 +118,10 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             DriverService.toggleOnline(uid, wasOnline)
             if (newOnline) {
                 ForegroundService.start(getApplication(), uid)
+                scheduleBackgroundSync(uid)
             } else {
                 ForegroundService.stop(getApplication())
+                cancelBackgroundSync()
             }
         } catch (e: Exception) {
             postMessage("Gagal: ${e.localizedMessage ?: "Error tidak dikenal"}")
@@ -122,15 +137,26 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             OrderService.acceptOrder(orderId, uid, profile)
             postMessage("Pesanan diterima.")
         } catch (e: Exception) {
-            postMessage(e.message ?: "Gagal menerima pesanan.")
+            if (isNetworkError(e)) {
+                enqueuePendingAction(uid, "accept", orderId, profileToPayload(profile))
+                postMessage("Pesanan akan diproses saat koneksi pulih.")
+            } else {
+                postMessage(e.message ?: "Gagal menerima pesanan.")
+            }
         }
     }
 
     fun arriveOrder(orderId: String) = viewModelScope.launch {
+        val uid = _state.value.userId ?: return@launch
         try {
             OrderService.arriveAtPickup(orderId)
             postMessage("Status tiba diperbarui.")
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            if (isNetworkError(e)) {
+                enqueuePendingAction(uid, "arrive", orderId)
+                postMessage("Status tiba akan diperbarui saat koneksi pulih.")
+            }
+        }
     }
 
     fun cancelOrder(orderId: String, reason: String) = viewModelScope.launch {
@@ -140,32 +166,53 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             OrderService.cancelOrder(orderId, uid, profile, reason)
             postMessage("Pesanan dibatalkan.")
         } catch (e: Exception) {
-            postMessage("Gagal membatalkan: ${e.message}")
+            if (isNetworkError(e)) {
+                val payload = org.json.JSONObject().apply {
+                    put("reason", reason)
+                    put("profile", org.json.JSONObject(profileToPayload(profile)))
+                }.toString()
+                enqueuePendingAction(uid, "cancel", orderId, payload)
+                postMessage("Pembatalan akan diproses saat koneksi pulih.")
+            } else {
+                postMessage("Gagal membatalkan: ${e.message}")
+            }
         }
     }
 
     fun pickupOrder(orderId: String) = viewModelScope.launch {
+        val uid = _state.value.userId ?: return@launch
         val order = _state.value.active.find { it.id == orderId } ?: return@launch
         try {
             OrderService.pickupOrder(orderId, order.pickupsDone, order.pickupCount)
             postMessage("Status pickup diperbarui.")
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            if (isNetworkError(e)) {
+                enqueuePendingAction(uid, "pickup", orderId)
+                postMessage("Pickup akan diproses saat koneksi pulih.")
+            }
+        }
     }
 
     fun pickupWithCost(orderId: String, actualCost: Long) = viewModelScope.launch {
+        val uid = _state.value.userId ?: return@launch
         val order = _state.value.active.find { it.id == orderId } ?: return@launch
         try {
             OrderService.pickupOrderWithCost(orderId, order.pickupsDone, order.pickupCount, actualCost)
             postMessage("Status pickup diperbarui.")
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            if (isNetworkError(e)) {
+                enqueuePendingAction(uid, "pickup", orderId)
+                postMessage("Pickup akan diproses saat koneksi pulih.")
+            }
+        }
     }
 
     fun completeOrder(orderId: String) = viewModelScope.launch {
-        val order = _state.value.active.find { it.id == orderId }
-            ?: _state.value.allOrders.find { it.id == orderId }
-            ?: return@launch
         val uid = _state.value.userId ?: return@launch
         val profile = _state.value.profile ?: return@launch
+        val order = _state.value.active.find { it.id == orderId }
+            ?: _state.value.allOrders.find { it.id == orderId }
+        if (order == null) return@launch
         try {
             OrderService.completeOrder(
                 orderId = orderId,
@@ -178,15 +225,34 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 serviceFee = order.serviceFee,
             )
             postMessage("Pesanan selesai.")
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            if (isNetworkError(e)) {
+                val payload = org.json.JSONObject().apply {
+                    put("deliveryFee", order.deliveryFee)
+                    put("appServiceFee", order.appServiceFee)
+                    put("subsidizedFee", order.subsidizedFee)
+                    put("serviceType", order.serviceType)
+                    put("serviceFee", order.serviceFee)
+                    put("profile", org.json.JSONObject(profileToPayload(profile)))
+                }.toString()
+                enqueuePendingAction(uid, "complete", orderId, payload)
+                postMessage("Penyelesaian akan diproses saat koneksi pulih.")
+            }
+        }
     }
 
     fun rejectOrder(orderId: String) = viewModelScope.launch {
+        val uid = _state.value.userId ?: return@launch
         try {
             OrderService.rejectOrder(orderId)
             postMessage("Pesanan ditolak.")
         } catch (e: Exception) {
-            postMessage("Gagal menolak pesanan: ${e.message}")
+            if (isNetworkError(e)) {
+                enqueuePendingAction(uid, "reject", orderId)
+                postMessage("Penolakan akan diproses saat koneksi pulih.")
+            } else {
+                postMessage("Gagal menolak pesanan: ${e.message}")
+            }
         }
     }
 
@@ -349,10 +415,16 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                     listenIncoming(uid, isOnline)
                     if (isOnline) {
                         ForegroundService.start(getApplication(), uid)
+                        scheduleBackgroundSync(uid)
                     }
                 } else if (isOnline != prevRtdbIsOnline) {
                     listenIncoming(uid, isOnline)
                     prevRtdbIsOnline = isOnline
+                    if (isOnline) {
+                        scheduleBackgroundSync(uid)
+                    } else {
+                        cancelBackgroundSync()
+                    }
                 }
 
                 val profile = currentProfile ?: return
@@ -387,7 +459,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
                 if (!connected && isOnline) {
                     viewModelScope.launch {
-                        delay(retryDelay)
+                        val jitter = (Math.random() * 0.2 - 0.1) * retryDelay // ±10% jitter
+                        val delayWithJitter = (retryDelay + jitter).toLong().coerceAtLeast(100)
+                        delay(delayWithJitter)
                         retryDelay = (retryDelay * 2).coerceAtMost(30_000L)
                         FirebaseDatabase.getInstance().goOnline()
                         val uid = _state.value.userId
@@ -573,6 +647,49 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         _state.value = _state.value.copy(message = message)
     }
 
+    private val actionDao by lazy {
+        AppDatabase.getInstance(getApplication()).actionQueueDao()
+    }
+
+    private fun isNetworkError(e: Exception): Boolean {
+        return e is java.net.UnknownHostException ||
+               e is java.io.IOException ||
+               e is com.google.firebase.FirebaseNetworkException ||
+               e is kotlinx.coroutines.TimeoutCancellationException
+    }
+
+    private suspend fun enqueuePendingAction(uid: String, type: String, orderId: String, payload: String = "") {
+        actionDao.insert(
+            PendingAction(
+                uid = uid,
+                actionType = type,
+                orderId = orderId,
+                payload = payload,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+        triggerExpeditedSync(uid)
+        Log.i(TAG, "Pending action queued: $type for order $orderId")
+    }
+
+    private fun profileToPayload(profile: com.arodriverkotlin.models.DriverProfile): String {
+        return org.json.JSONObject().apply {
+            put("name", profile.name)
+            put("phone", profile.phone)
+            put("email", profile.email)
+            put("photoUrl", profile.photoUrl)
+            put("vehicleType", profile.vehicleType)
+            put("plateNumber", profile.plateNumber)
+            put("balance", profile.balance)
+            put("isOnline", profile.isOnline)
+            put("status", profile.status)
+        }.toString()
+    }
+
+    companion object {
+        private const val TAG = "DriverViewModel"
+    }
+
     private fun saveFcmToken(uid: String) {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -587,5 +704,38 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
     override fun onCleared() {
         clearListeners()
+    }
+
+    private fun scheduleBackgroundSync(uid: String) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val periodicWork = PeriodicWorkRequest.Builder(BackgroundSyncWorker::class.java, 15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .setInputData(androidx.work.Data.Builder().putString("uid", uid).build())
+            .build()
+
+        WorkManager.getInstance(getApplication())
+            .enqueueUniquePeriodicWork(
+                BackgroundSyncWorker.WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                periodicWork
+            )
+    }
+
+    private fun cancelBackgroundSync() {
+        WorkManager.getInstance(getApplication())
+            .cancelUniqueWork(BackgroundSyncWorker.WORK_NAME)
+    }
+
+    private fun triggerExpeditedSync(uid: String) {
+        val expeditedWork = OneTimeWorkRequest.Builder(BackgroundSyncWorker::class.java)
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .setInputData(androidx.work.Data.Builder().putString("uid", uid).build())
+            .build()
+
+        WorkManager.getInstance(getApplication())
+            .enqueue(expeditedWork)
     }
 }

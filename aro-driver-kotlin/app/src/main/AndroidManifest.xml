@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:name=".AroDriverApplication"
@@ -19,7 +22,7 @@
         android:usesCleartextTraffic="true">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDHfsq6wdr5_iQdKfDjIer2TVdQyQPLAJE" />
+            android:value="@string/maps_api_key" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -29,9 +32,36 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".background.GeofenceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".background.OrderTimeoutReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receiver.WatchdogReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <service
             android:name=".service.MessagingService"
-            android:exported="false">
+            android:exported="false"
+            android:process=":background">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
@@ -39,6 +69,7 @@
         <service
             android:name=".service.ForegroundService"
             android:exported="false"
+            android:process=":background"
             android:foregroundServiceType="dataSync|location" />
     </application>
 </manifest>

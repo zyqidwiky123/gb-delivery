@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">ARO DRIVE</string>
+    <string name="foreground_running">Running background service...</string>
+    <string name="incoming_order_title">ARO DRIVE</string>
+    <string name="incoming_order_body">New order available!</string>
+    <string name="order_accepted">Order accepted.</string>
+    <string name="order_cancelled">Order cancelled.</string>
+    <string name="order_arrived">Arrival status updated.</string>
+    <string name="order_pickup">Pickup status updated.</string>
+    <string name="order_completed">Order completed.</string>
+    <string name="order_rejected">Order rejected.</string>
+    <string name="pending_accept">Order will be processed when connection is restored.</string>
+    <string name="pending_arrive">Arrival will be updated when connection is restored.</string>
+    <string name="pending_pickup">Pickup will be processed when connection is restored.</string>
+    <string name="pending_complete">Completion will be processed when connection is restored.</string>
+    <string name="pending_cancel">Cancellation will be processed when connection is restored.</string>
+    <string name="verification_title">Enter Verification PIN</string>
+    <string name="verification_subtitle">Enter the 4-digit PIN from passenger</string>
+    <string name="verify_button">Verify</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="complete_without_pin">Complete Without PIN</string>
+    <string name="pin_error">Incorrect or expired PIN</string>
+    <string name="arrived_pickup">You have arrived at pickup location</string>
+    <string name="arrived_dropoff">You have arrived at destination</string>
+    <string name="confirm_arrive">Confirm Arrival</string>
+    <string name="confirm_complete">Complete Order</string>
+    <string name="rating_title">My Rating</string>
+    <string name="rating_count">%d reviews</string>
+    <string name="permission_location_lost">Location permission revoked. Navigation limited.</string>
+    <string name="network_error">Network issue. Order will be processed when connection is restored.</string>
+</resources>

@@ -16,9 +16,11 @@ data class DriverProfile(
     val plateNumber: String = "-",
     val level: String = "Mitra",
     val rating: Double = 0.0,
+    val ratingCount: Int = 0,
     val balance: Long = 0,
     val isOnline: Boolean = false,
     val completedOrders: Int = 0,
+    val totalTrips: Int = 0,
     val status: String = "offline",
     val photoUrl: String = "",
     val qrisUrl: String = "",
@@ -29,6 +31,14 @@ data class DriverProfile(
     val lastLocationUpdateTimestamp: Long? = null,
     val todayOnlineMs: Long = 0,
     val onlineSessionStartTimestamp: Long? = null,
+)
+
+data class DriverScore(
+    val acceptanceRate: Float = 0f,
+    val completionRate: Float = 0f,
+    val cancellationRate: Float = 0f,
+    val averageRating: Float = 0f,
+    val totalTrips: Int = 0,
 )
 
 data class Transaction(
