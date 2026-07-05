@@ -1,5 +1,6 @@
 package com.arodriverkotlin.service
 
+import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ServerValue
 import com.google.firebase.firestore.FieldValue
@@ -13,6 +14,7 @@ import kotlin.math.max
 import kotlin.math.roundToLong
 
 object OrderService {
+    private const val TAG = "OrderService"
     private val db = FirebaseFirestore.getInstance()
     private val rtdb = FirebaseDatabase.getInstance().reference
 
