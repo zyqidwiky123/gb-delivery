@@ -8,7 +8,7 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.Constraints
-import com.arodriverkotlin.service.ForegroundService
+import com.arodriverkotlin.service.SessionService
 import java.util.concurrent.TimeUnit
 
 class WatchdogWorker(
@@ -17,12 +17,14 @@ class WatchdogWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val prefs = applicationContext.getSharedPreferences("foreground_service", Context.MODE_PRIVATE)
-        val uid = prefs.getString("driver_uid", null)
-        if (uid != null) {
-            ForegroundService.start(applicationContext, uid)
-            Log.i(TAG, "Health check: service restarted for $uid")
+        val uid = SessionService.getStoredUid(applicationContext) ?: return Result.success()
+
+        if (!SessionService.isOnline) {
+            SessionService.start(applicationContext, uid)
         }
+
+        SessionService.ensureTripServiceRunning(applicationContext)
+
         return Result.success()
     }
 

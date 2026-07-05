@@ -1,0 +1,84 @@
+@font-face
+{
+  font-family: 'SanomatSans-Light-App';
+  src: local('SanomatSans-Light-App'),url('fonts/Sanomat-Light.ttf') format('opentype');
+}
+
+@font-face
+{
+  font-family: 'SanomatSans-Regular-App';
+  src: local('SanomatSans-Regular-App'),url('fonts/Sanomat-Regular.ttf') format('opentype');
+}
+
+body
+{
+  font-family: 'SanomatSans-Light-App';
+  font-size: 14pt;
+  line-height: 1.4;
+  color: #565D6B;
+  margin: 20px;
+}
+a
+{
+  color: #4a90e2;
+  text-decoration: none;
+}
+h1 {
+    color: #363A45;
+    margin: 20px 0px 10px 0px;
+    font-size: 18pt;
+    font-family: 'SanomatSans-Regular-App';
+}
+h2 {
+    color: #363A45;
+    margin: 20px 0px 10px 0px;
+    font-size: 16pt;
+    font-family:'SanomatSans-Regular-App';
+}
+p   {
+    color: #565D6B;
+    max-width: 90%;
+    margin: 15px 0px 15px 0px;
+}
+ol, ul
+{
+    color: #565D6B;
+    margin-bottom: 10px;
+}
+li {
+    color: #565D6B;
+    margin-bottom: 10px;
+}
+table {
+    border-color: #CCD6DD 1px solid;
+    border-collapse: collapse;
+    border: #CCD6DD 1px solid;
+    max-width: 92%;
+    padding: 20px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+td {
+    font-family: sans-serif;
+    text-align: center;
+    margin: 20px 20px 20px 20px;
+    border-bottom: #CCD6DD 1px solid;
+    border-right: #CCD6DD 1px solid;
+    line-height: 1.8;
+}
+th {
+    background-color: #00B13F;
+    color: #FFF;
+    text-align: center;
+    font-weight: bold;
+    line-height: 1.4;
+    padding: 10px 10px 10px 10px;
+}
+footer {
+    color: #898D97;
+    max-width: 90%;
+    margin: 30px 0px 20px 0px;
+    border-top: #CCD6DD 1px solid;
+    padding-top: 40px;
+    font-size: 12pt;
+}

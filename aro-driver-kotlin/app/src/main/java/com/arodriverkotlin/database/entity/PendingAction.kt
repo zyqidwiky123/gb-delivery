@@ -2,6 +2,7 @@ package com.arodriverkotlin.database.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.arodriverkotlin.background.QueuePriority
 
 @Entity(tableName = "pending_actions")
 data class PendingAction(
@@ -13,5 +14,6 @@ data class PendingAction(
     val timestamp: Long,
     var retryCount: Int = 0,
     var lastAttempt: Long = 0,
-    var isSynced: Boolean = false
+    var isSynced: Boolean = false,
+    val priority: Int = QueuePriority.ORDER_ACTION.value
 )

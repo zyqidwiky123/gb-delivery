@@ -13,6 +13,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.HashMap
+import com.arodriverkotlin.background.RealTimeSocket
 
 class BackgroundDiagnostics(
     private val context: Context,
@@ -29,6 +30,10 @@ class BackgroundDiagnostics(
     private var fcmReceived = 0L
     private var geofenceTriggers = 0L
     private var crashes = 0L
+    private var connectionDrops = 0
+    private var reconnections = 0
+    private var queuedActions = 0
+    private var failedActions = 0
 
     private val transitionBuffer = mutableListOf<Map<String, Any?>>()
     private val transitionBufferMaxSize = 50
@@ -64,6 +69,26 @@ class BackgroundDiagnostics(
 
     fun recordCrash() {
         crashes++
+    }
+
+    fun recordWebSocketState(state: RealTimeSocket.ConnectionState) {
+        when (state) {
+            RealTimeSocket.ConnectionState.RECONNECTING -> connectionDrops++
+            RealTimeSocket.ConnectionState.CONNECTED -> if (connectionDrops > 0) reconnections++
+            else -> {}
+        }
+    }
+
+    fun recordOrderReceived() {
+        fcmReceived++
+    }
+
+    fun recordActionQueued() {
+        queuedActions++
+    }
+
+    fun recordActionFailed() {
+        failedActions++
     }
 
     fun recordTransition(fromState: String, toState: String, orderId: String?) {
@@ -111,9 +136,14 @@ class BackgroundDiagnostics(
             put("fcmReceived", fcmReceived)
             put("geofenceTriggers", geofenceTriggers)
             put("crashes", crashes)
+            put("connectionDrops", connectionDrops)
+            put("reconnections", reconnections)
+            put("queuedActions", queuedActions)
+            put("failedActions", failedActions)
             put("appVersion", getAppVersion())
             put("androidVersion", android.os.Build.VERSION.RELEASE)
             put("deviceModel", android.os.Build.MODEL)
+            put("lastKnownState", com.arodriverkotlin.service.TripService.isInTrip.toString())
             put("timestamp", FieldValue.serverTimestamp())
         }
 

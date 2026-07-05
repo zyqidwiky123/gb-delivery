@@ -17,6 +17,9 @@ interface ActionQueueDao {
     @Query("SELECT * FROM pending_actions WHERE uid = :uid AND isSynced = 0 ORDER BY timestamp ASC")
     suspend fun getUnsyncedActions(uid: String): List<PendingAction>
 
+    @Query("SELECT * FROM pending_actions WHERE uid = :uid AND priority = :priority AND isSynced = 0 ORDER BY timestamp ASC")
+    suspend fun getUnsyncedActionsByPriority(uid: String, priority: Int): List<PendingAction>
+
     @Query("SELECT * FROM pending_actions WHERE uid = :uid AND actionType = :type AND isSynced = 0 ORDER BY timestamp ASC LIMIT 1")
     suspend fun getNextAction(uid: String, type: String): PendingAction?
 

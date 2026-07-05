@@ -36,7 +36,6 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 val geofenceId = geofence.requestId
                 Log.i(TAG, "Geofence transition: $geofenceId, type: $transitionType")
 
-                // Forward to GeofenceManager via TripStateMachine
                 GeofenceEventHandler.handleTransition(context, geofenceId, transitionType)
             }
         } finally {
@@ -46,7 +45,6 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
 }
 
 object GeofenceEventHandler {
-    // Static handler that will be set by TripStateMachine/GeofenceManager
     @Volatile private var handler: ((Context, String, Int) -> Unit)? = null
 
     fun setHandler(handler: ((Context, String, Int) -> Unit)?) {

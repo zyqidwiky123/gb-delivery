@@ -60,6 +60,7 @@ import com.arodriverkotlin.ui.theme.SurfaceHigh
 import com.arodriverkotlin.viewmodel.DriverViewModel
 import com.arodriverkotlin.ui.screens.OrdersScreen
 import com.arodriverkotlin.ui.screens.WalletScreen
+import com.arodriverkotlin.ui.components.InAppNotificationBanner
 import com.arodriverkotlin.ui.screens.ProfileScreen
 
 private data class TabItem(
@@ -111,6 +112,7 @@ fun DriverShell(vm: DriverViewModel, state: UiState, onLogout: () -> Unit) {
                 BottomNav(navTabs, selected) { selected = it }
             }
             SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+            InAppNotificationBanner()
 
             if (state.showDisconnectDialog) {
                 AlertDialog(

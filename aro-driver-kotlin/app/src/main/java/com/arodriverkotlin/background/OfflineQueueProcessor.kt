@@ -7,6 +7,8 @@ import com.arodriverkotlin.database.AppDatabase
 import com.arodriverkotlin.database.SyncCoordinator
 import com.arodriverkotlin.database.dao.ActionQueueDao
 import com.arodriverkotlin.database.dao.LocationDao
+import com.arodriverkotlin.background.QueuePriority
+import com.arodriverkotlin.models.ServiceType
 import com.arodriverkotlin.database.entity.PendingAction
 import com.arodriverkotlin.database.entity.PendingLocation
 import com.arodriverkotlin.service.DriverService
@@ -74,10 +76,29 @@ class OfflineQueueProcessor(
     suspend fun processQueue() {
         SyncCoordinator.syncMutex.withLock {
             Log.i(TAG, "Starting queue processing for $uid")
+
+            syncOrderActions()
+
             syncLocations()
-            syncActions()
+
             cleanupStaleEntries()
+
             Log.i(TAG, "Queue processing completed for $uid")
+        }
+    }
+
+    private suspend fun syncOrderActions() {
+        val actions = actionDao.getUnsyncedActionsByPriority(uid, QueuePriority.ORDER_ACTION.value)
+        if (actions.isEmpty()) return
+
+        for (action in actions) {
+            val success = executeActionWithBackoff(action)
+            if (success) {
+                actionDao.markSynced(action.id!!)
+            } else {
+                actionDao.incrementRetry(action.id!!, System.currentTimeMillis())
+                delay(calculateBackoff(action.retryCount))
+            }
         }
     }
 
@@ -112,21 +133,6 @@ class OfflineQueueProcessor(
 
             if (!allSynced) {
                 delay(calculateBackoff(batch.first().retryCount))
-            }
-        }
-    }
-
-    private suspend fun syncActions() {
-        val actions = actionDao.getUnsyncedActions(uid)
-        if (actions.isEmpty()) return
-
-        for (action in actions) {
-            val success = executeActionWithBackoff(action)
-            if (success) {
-                actionDao.markSynced(action.id!!)
-            } else {
-                actionDao.incrementRetry(action.id!!, System.currentTimeMillis())
-                delay(calculateBackoff(action.retryCount))
             }
         }
     }

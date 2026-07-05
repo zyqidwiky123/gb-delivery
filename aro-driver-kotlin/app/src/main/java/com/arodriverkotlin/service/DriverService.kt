@@ -121,6 +121,9 @@ object DriverService {
     }
 
     suspend fun updateTripState(uid: String, state: MutableMap<String, Any>) {
+        if (!state.containsKey("serviceType")) {
+            state["serviceType"] = "transport"
+        }
         rtdb.child("drivers/$uid/tripState").updateChildren(state).await()
     }
 }

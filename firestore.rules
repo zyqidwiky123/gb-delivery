@@ -86,5 +86,14 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if false;
     }
+
+    match /diagnostics/{docId} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+    }
+
+    match /drivers/{driverId}/notificationPrefs/{prefId} {
+      allow read, write: if signedIn() && request.auth.uid == driverId;
+    }
   }
 }

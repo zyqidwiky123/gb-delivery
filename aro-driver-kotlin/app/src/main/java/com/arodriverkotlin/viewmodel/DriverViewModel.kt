@@ -18,7 +18,9 @@ import com.arodriverkotlin.database.entity.PendingAction
 import com.arodriverkotlin.models.UiState
 import com.arodriverkotlin.service.AuthService
 import com.arodriverkotlin.service.DriverService
-import com.arodriverkotlin.service.ForegroundService
+import com.arodriverkotlin.service.SessionService
+import com.arodriverkotlin.service.TripService
+import com.arodriverkotlin.service.ServiceCoordinator
 import com.arodriverkotlin.service.OrderService
 import com.arodriverkotlin.service.WalletService
 import com.arodriverkotlin.service.toOrder
@@ -103,7 +105,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun logout() {
-        ForegroundService.stop(getApplication())
+        ServiceCoordinator.stopAll(getApplication())
         cancelBackgroundSync()
         clearListeners()
         AuthService.logout()
@@ -122,11 +124,11 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         try {
             DriverService.toggleOnline(uid, wasOnline)
             if (newOnline) {
-                ForegroundService.start(getApplication(), uid)
+                ServiceCoordinator.startSession(getApplication(), uid)
                 WatchdogWorker.schedule(getApplication())
                 scheduleBackgroundSync(uid)
             } else {
-                ForegroundService.stop(getApplication())
+                ServiceCoordinator.stopSession(getApplication())
                 WatchdogWorker.cancel(getApplication())
                 cancelBackgroundSync()
             }
@@ -333,7 +335,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         if (uid != null) {
             clearListeners()
             bindListeners(uid)
-            ForegroundService.start(getApplication(), uid)
+            ServiceCoordinator.startSession(getApplication(), uid)
         }
         retryDelay = 1_000L
         disconnectJob?.cancel()
@@ -371,7 +373,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         val db = FirebaseFirestore.getInstance()
 
         // Location permission revoke check
-        if (ForegroundService.locationPermissionRevoked) {
+        if (TripService.locationPermissionRevoked) {
             _state.value = _state.value.copy(locationPermissionRevoked = true)
         }
 
@@ -444,7 +446,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                     prevRtdbIsOnline = isOnline
                     listenIncoming(uid, isOnline)
                     if (isOnline) {
-                        ForegroundService.start(getApplication(), uid)
+                        ServiceCoordinator.startSession(getApplication(), uid)
                         scheduleBackgroundSync(uid)
                     }
                 } else if (isOnline != prevRtdbIsOnline) {
@@ -536,7 +538,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             .addSnapshotListener { snap, _ ->
                 val list = snap?.documents?.map { it.toOrder() } ?: emptyList()
                 _state.value = _state.value.copy(active = list)
-                ForegroundService.currentOrderId = list.firstOrNull()?.id
+                TripService.currentOrderId = list.firstOrNull()?.id
             }
 
         todayListener = db.collection("orders")
@@ -628,7 +630,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
                 if (profile.isOnline) {
                     // Check location permission revoke
-                    if (ForegroundService.locationPermissionRevoked) {
+                    if (TripService.locationPermissionRevoked) {
                         _state.value = _state.value.copy(locationPermissionRevoked = true)
                     }
 

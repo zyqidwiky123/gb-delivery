@@ -1,12 +1,11 @@
 package com.arodriverkotlin
 
 import android.app.Application
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.os.Build
 import android.util.Log
+import com.arodriverkotlin.notification.NotificationChannels
+import com.arodriverkotlin.notification.NotificationEngine
 import com.arodriverkotlin.service.ConfigService
-import com.arodriverkotlin.service.IncomingOrderNotifier
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -16,13 +15,23 @@ import kotlinx.coroutines.launch
 
 class AroDriverApplication : Application() {
 
+    companion object {
+        lateinit var instance: AroDriverApplication
+            private set
+        private const val TAG = "AroDriverApplication"
+    }
+
     override fun onCreate() {
+        instance = this
         super.onCreate()
         // Log device info for diagnostics
         logDeviceInfo()
         // Initialize Crashlytics
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
-        createNotificationChannels()
+
+        NotificationChannels.registerAll(this)
+        NotificationChannels.migrateIfNeeded(this)
+        NotificationEngine.init(this)
 
         // Crash upload handler
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
@@ -56,33 +65,6 @@ class AroDriverApplication : Application() {
         }
     }
 
-    private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-
-        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        try {
-            // Delete old channel v6 if migrating
-            try {
-                nm.deleteNotificationChannel("aro_drive_incoming_v6")
-            } catch (_: Exception) {}
-
-            val fgChannel = NotificationChannel(
-                "aro_drive_foreground_service",
-                "ARO DRIVE",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Layanan latar belakang ARO DRIVE"
-                setShowBadge(false)
-            }
-            nm.createNotificationChannel(fgChannel)
-        } catch (e: Exception) {
-            Log.e("AroDriverApplication", "Gagal buat notif channel", e)
-        }
-
-        IncomingOrderNotifier.createChannel(this)
-    }
-
     private fun logDeviceInfo() {
         try {
             val manufacturer = Build.MANUFACTURER
@@ -102,7 +84,4 @@ class AroDriverApplication : Application() {
         } catch (_: Exception) {}
     }
 
-    companion object {
-        private const val TAG = "AroDriverApplication"
-    }
 }
