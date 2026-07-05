@@ -9,11 +9,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class NotificationActionReceiver : BroadcastReceiver() {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
         val pendingResult = goAsync()
@@ -22,7 +23,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val orderId = intent.getStringExtra(EXTRA_ORDER_ID) ?: run { pendingResult.finish(); return }
         val uid = intent.getStringExtra(EXTRA_UID) ?: run { pendingResult.finish(); return }
 
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         scope.launch {
             try {
                 when (action) {
@@ -40,7 +40,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 Log.e(TAG, "Failed to handle notification action $action for $orderId", e)
             } finally {
                 pendingResult.finish()
-                scope.cancel()
             }
         }
     }

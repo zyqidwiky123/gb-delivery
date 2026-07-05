@@ -57,6 +57,7 @@ import com.arodriverkotlin.background.BatteryOptimizationHelper
 import com.arodriverkotlin.ui.theme.AroBlack
 import com.arodriverkotlin.ui.theme.AroGreen
 import com.arodriverkotlin.ui.theme.Muted
+import com.arodriverkotlin.ui.theme.Warning
 
 @Composable
 fun PermissionsScreen(onAllGranted: () -> Unit) {
@@ -205,6 +206,41 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                 granted = batteryExempt,
             )
 
+            // MIUI-specific guidance
+            if (isXiaomiMiui()) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Penting untuk perangkat Xiaomi:",
+                    color = Warning,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "1. Buka Settings → Apps → ARO DRIVE → Autostart → NYALAKAN\n" +
+                    "2. Di Recent Apps, lock ARO DRIVE (tahan ikon → kunci)",
+                    color = Muted,
+                    fontSize = 10.sp,
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:${ctx.packageName}")
+                        }
+                        ctx.startActivity(intent)
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF333333),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                ) {
+                    Text("BUKA PENGATURAN APLIKASI", fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.5.sp)
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
 
             if (!foregroundStepDone) {
@@ -327,5 +363,16 @@ private fun PermissionItem(
             Text(title, color = if (granted) AroGreen else Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
             Text(desc, color = Muted, fontSize = 11.sp)
         }
+    }
+}
+
+private fun isXiaomiMiui(): Boolean {
+    return try {
+        val manufacturer = Build.MANUFACTURER.lowercase()
+        val brand = Build.BRAND.lowercase()
+        manufacturer.contains("xiaomi") || brand.contains("xiaomi") ||
+            System.getProperty("ro.miui.ui.version.name") != null
+    } catch (_: Exception) {
+        false
     }
 }

@@ -55,36 +55,32 @@ object OrderService {
     }
 
     suspend fun acceptOrder(orderId: String, uid: String, profile: DriverProfile) {
-        try {
-            db.runTransaction { tx ->
-                val orderRef = db.collection("orders").document(orderId)
-                val driverRef = db.collection("drivers").document(uid)
-                val snap = tx.get(orderRef)
-                val driverSnap = tx.get(driverRef)
-                val balance = driverSnap.getLong("balance") ?: 0
-                if (balance < 0) error("Saldo tidak mencukupi. Silakan top up.")
-                if (snap.getString("status") != "searching") error("Order sudah diambil.")
-                if (snap.getString("dispatch.offeredTo") != uid) error("Order ini bukan untuk Anda.")
-                tx.update(orderRef, mapOf(
-                    "status" to "accepted",
-                    "driverId" to uid,
-                    "driverName" to profile.name,
-                    "driverPhone" to (profile.phone.ifEmpty { "" }),
-                    "driverPhoto" to (profile.photoUrl.ifEmpty { "" }),
-                    "acceptedAt" to FieldValue.serverTimestamp(),
-                    "pickupsDone" to 0,
-                    "dispatch.status" to "accepted",
-                ))
-                tx.update(driverRef, "status", "busy")
-            }.await()
-            rtdb.child("drivers/$uid").updateChildren(hashMapOf(
-                "status" to "busy",
-                "lastActive" to ServerValue.TIMESTAMP,
-            )).await()
-            rtdb.child("drivers/$uid/incoming/$orderId").removeValue().await()
-        } catch (e: Exception) {
-            throw e
-        }
+        db.runTransaction { tx ->
+            val orderRef = db.collection("orders").document(orderId)
+            val driverRef = db.collection("drivers").document(uid)
+            val snap = tx.get(orderRef)
+            val driverSnap = tx.get(driverRef)
+            val balance = driverSnap.getLong("balance") ?: 0
+            if (balance < 0) throw AcceptOrderException("Saldo tidak mencukupi. Silakan top up.")
+            if (snap.getString("status") != "searching") throw AcceptOrderException("Order sudah diambil.")
+            if (snap.getString("dispatch.offeredTo") != uid) throw AcceptOrderException("Order ini bukan untuk Anda.")
+            tx.update(orderRef, mapOf(
+                "status" to "accepted",
+                "driverId" to uid,
+                "driverName" to profile.name,
+                "driverPhone" to (profile.phone.ifEmpty { "" }),
+                "driverPhoto" to (profile.photoUrl.ifEmpty { "" }),
+                "acceptedAt" to FieldValue.serverTimestamp(),
+                "pickupsDone" to 0,
+                "dispatch.status" to "accepted",
+            ))
+            tx.update(driverRef, "status", "busy")
+        }.await()
+        rtdb.child("drivers/$uid").updateChildren(hashMapOf(
+            "status" to "busy",
+            "lastActive" to ServerValue.TIMESTAMP,
+        )).await()
+        rtdb.child("drivers/$uid/incoming/$orderId").removeValue().await()
     }
 
     suspend fun arriveAtPickup(orderId: String) {
@@ -255,3 +251,5 @@ object OrderService {
         )).await()
     }
 }
+
+class AcceptOrderException(message: String) : Exception(message)
