@@ -25,6 +25,7 @@ interface LocationCallback {
 }
 
 data class LocationResult(
-    val locations: List<LocationData>,
+    val locations: List<LocationData>
+) {
     val lastLocation: LocationData? get() = locations.lastOrNull()
-)
+}
