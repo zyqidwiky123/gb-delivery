@@ -18,6 +18,8 @@ class AroDriverApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Log device info for diagnostics
+        logDeviceInfo()
         // Initialize Crashlytics
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
         createNotificationChannels()
@@ -60,6 +62,11 @@ class AroDriverApplication : Application() {
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         try {
+            // Delete old channel v6 if migrating
+            try {
+                nm.deleteNotificationChannel("aro_drive_incoming_v6")
+            } catch (_: Exception) {}
+
             val fgChannel = NotificationChannel(
                 "aro_drive_foreground_service",
                 "ARO DRIVE",
@@ -74,5 +81,28 @@ class AroDriverApplication : Application() {
         }
 
         IncomingOrderNotifier.createChannel(this)
+    }
+
+    private fun logDeviceInfo() {
+        try {
+            val manufacturer = Build.MANUFACTURER
+            val model = Build.MODEL
+            val brand = Build.BRAND
+            val isMiui = try {
+                System.getProperty("ro.miui.ui.version.name") != null
+            } catch (_: Exception) { false }
+            Log.i(TAG, "Device: $manufacturer $brand $model (MIUI: $isMiui) SDK: ${Build.VERSION.SDK_INT}")
+            FirebaseCrashlytics.getInstance().apply {
+                setCustomKey("device_manufacturer", manufacturer)
+                setCustomKey("device_model", model)
+                setCustomKey("device_brand", brand)
+                setCustomKey("is_miui", isMiui)
+                setCustomKey("sdk_int", Build.VERSION.SDK_INT)
+            }
+        } catch (_: Exception) {}
+    }
+
+    companion object {
+        private const val TAG = "AroDriverApplication"
     }
 }

@@ -8,13 +8,14 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.arodriverkotlin.MainActivity
 import com.arodriverkotlin.R
 
 object IncomingOrderNotifier {
-    const val CHANNEL_ID = "aro_drive_incoming_v6"
+    const val CHANNEL_ID = "aro_drive_incoming_v7"
     const val GROUP_KEY_ORDERS = "com.arodriverkotlin.orders"
 
     private const val TAG = "IncomingOrderNotifier"
@@ -23,10 +24,34 @@ object IncomingOrderNotifier {
     private const val MAX_REMEMBERED_ORDERS = 50
     private const val ESCALATION_DELAY_MS = 30_000L
 
+    private fun isXiaomiMiui(): Boolean {
+        return try {
+            val manufacturer = Build.MANUFACTURER.lowercase()
+            val brand = Build.BRAND.lowercase()
+            manufacturer.contains("xiaomi") || brand.contains("xiaomi") ||
+                System.getProperty("ro.miui.ui.version.name") != null
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
         try {
+            val notificationManager = context.getSystemService(NotificationManager::class.java)
+
+            // Delete old channel if it existed (v6 → v7 migration)
+            try {
+                notificationManager.deleteNotificationChannel("aro_drive_incoming_v6")
+            } catch (_: Exception) {}
+
+            val soundUri = if (isXiaomiMiui()) {
+                Settings.System.DEFAULT_NOTIFICATION_URI
+            } else {
+                customSoundUri(context)
+            }
+
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Pesanan Masuk",
@@ -35,11 +60,10 @@ object IncomingOrderNotifier {
                 description = "Notifikasi pesanan baru ARO DRIVE"
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 300, 150, 300, 150, 300)
-                setSound(customSoundUri(context), notificationAudioAttributes())
+                setSound(soundUri, notificationAudioAttributes())
                 enableLights(true)
             }
-            context.getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(channel)
         } catch (error: Exception) {
             Log.e(TAG, "Gagal membuat channel pesanan masuk", error)
         }
@@ -118,7 +142,7 @@ object IncomingOrderNotifier {
             }
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-                builder.setSound(customSoundUri(context))
+                builder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
             }
 
             val notificationId = if (orderId.isBlank()) {

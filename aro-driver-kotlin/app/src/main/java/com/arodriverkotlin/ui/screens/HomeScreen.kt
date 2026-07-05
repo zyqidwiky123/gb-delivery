@@ -207,6 +207,7 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
                         items(incoming, key = { it.id }) { order ->
                             IncomingOrderCard(
                                 order = order,
+                                loading = vm.isAcceptingOrder(order.id),
                                 onAccept = { vm.acceptOrder(order.id) },
                                 onReject = { vm.rejectOrder(order.id) },
                             )
@@ -361,6 +362,7 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
 @Composable
 private fun IncomingOrderCard(
     order: DriverOrder,
+    loading: Boolean = false,
     onAccept: () -> Unit,
     onReject: () -> Unit,
 ) {
@@ -381,6 +383,12 @@ private fun IncomingOrderCard(
             } catch (_: Exception) {
                 // Silent — expansionTrigger cloud function handles expired offer
             }
+        }
+    }
+
+    DisposableEffect(order.id) {
+        onDispose {
+            autoRejected = true
         }
     }
 
@@ -491,6 +499,7 @@ private fun IncomingOrderCard(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 Button(
                     onClick = onReject,
+                    enabled = !loading,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333), contentColor = Color.White.copy(alpha = 0.6f)),
                     modifier = Modifier.weight(1f)
@@ -499,11 +508,16 @@ private fun IncomingOrderCard(
                 }
                 Button(
                     onClick = onAccept,
+                    enabled = !loading,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = AroGreen, contentColor = AroBlack),
                     modifier = Modifier.weight(2f)
                 ) {
-                    Text("Terima Pesanan", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    if (loading) {
+                        Text("Memproses...", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    } else {
+                        Text("Terima Pesanan", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             }
         }

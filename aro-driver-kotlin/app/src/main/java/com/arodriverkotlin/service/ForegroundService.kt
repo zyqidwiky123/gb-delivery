@@ -399,6 +399,7 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
             } else {
                 ctx.startService(intent)
             }
+            com.arodriverkotlin.background.WatchdogWorker.schedule(ctx)
         }
 
         fun stop(ctx: Context) {

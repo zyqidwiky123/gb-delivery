@@ -59,6 +59,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private var rtdbProfileListener: ValueEventListener? = null
     private var prevRtdbIsOnline: Boolean? = null
 
+    private val acceptingOrderIds = mutableSetOf<String>()
+
     private var prevIncomingCount = 0
     private var sessionJob: kotlinx.coroutines.Job? = null
 
@@ -82,6 +84,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         prevIncomingCount = current
         return hadNew
     }
+
+    fun isAcceptingOrder(orderId: String): Boolean = orderId in acceptingOrderIds
 
     fun login(email: String, password: String) = viewModelScope.launch {
         if (email.isBlank() || password.isBlank()) {
@@ -134,8 +138,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun acceptOrder(orderId: String) = viewModelScope.launch {
-        val uid = _state.value.userId ?: return@launch
-        val profile = _state.value.profile ?: return@launch
+        if (!acceptingOrderIds.add(orderId)) return@launch
+        val uid = _state.value.userId ?: run { acceptingOrderIds.remove(orderId); return@launch }
+        val profile = _state.value.profile ?: run { acceptingOrderIds.remove(orderId); return@launch }
         try {
             OrderService.acceptOrder(orderId, uid, profile)
             postMessage("Pesanan diterima.")
@@ -146,6 +151,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             } else {
                 postMessage(e.message ?: "Gagal menerima pesanan.")
             }
+        } finally {
+            acceptingOrderIds.remove(orderId)
         }
     }
 
