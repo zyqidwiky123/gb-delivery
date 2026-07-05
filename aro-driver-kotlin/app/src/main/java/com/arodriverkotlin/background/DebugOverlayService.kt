@@ -16,6 +16,7 @@ import android.view.WindowManager
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import com.arodriverkotlin.database.AppDatabase
+import com.arodriverkotlin.service.TripService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -105,16 +106,15 @@ class DebugOverlayService : Service() {
             val tripState = db.tripStateDao().getState(uid)
             val tripStateStr = tripState?.state ?: "IDLE"
 
-            val foregroundService = com.arodriverkotlin.service.ForegroundService
-            val currentLat = foregroundService.latestLat
-            val currentLng = foregroundService.latestLng
-            val hasActiveTrip = foregroundService.currentOrderId != null
+            val currentLat = TripService.latestLat
+            val currentLng = TripService.latestLng
+            val hasActiveTrip = TripService.currentOrderId != null
 
             val text = StringBuilder()
             text.appendLine("UID: $uid")
             text.appendLine("State: $tripStateStr")
             text.appendLine("Active: ${if (hasActiveTrip) "YES" else "NO"}")
-            text.appendLine("Order: ${foregroundService.currentOrderId ?: "N/A"}")
+            text.appendLine("Order: ${TripService.currentOrderId ?: "N/A"}")
             text.appendLine("GPS: ${if (currentLat != null) String.format("%.6f, %.6f", currentLat, currentLng) else "N/A"}")
             text.appendLine("Pending Loc: $pendingCount")
             text.appendLine("Pending Act: $pendingActions")

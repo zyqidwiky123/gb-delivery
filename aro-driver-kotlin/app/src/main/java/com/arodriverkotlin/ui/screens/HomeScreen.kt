@@ -60,7 +60,7 @@ import com.arodriverkotlin.map.MapScreen
 import com.arodriverkotlin.models.DriverOrder
 import com.arodriverkotlin.models.UiState
 import com.arodriverkotlin.service.DirectionsService
-import com.arodriverkotlin.service.ForegroundService
+import com.arodriverkotlin.service.TripService
 import com.arodriverkotlin.service.LocationData
 import com.arodriverkotlin.service.rupiah
 import com.google.android.gms.maps.model.LatLng
@@ -86,8 +86,8 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
     val ctx = LocalContext.current
     val loc = state.currentLat?.let { lat ->
         state.currentLng?.let { lng -> LocationData(lat, lng) }
-    } ?: ForegroundService.latestLat?.let { lat ->
-        ForegroundService.latestLng?.let { lng -> LocationData(lat, lng) }
+    } ?: TripService.latestLat?.let { lat ->
+        TripService.latestLng?.let { lng -> LocationData(lat, lng) }
     }
     val activeJob = state.active.firstOrNull()
 
@@ -95,7 +95,7 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
         var costModalOrderId by remember { mutableStateOf("") }
         var costAmount by remember { mutableStateOf("") }
 
-    // Notification sound on new incoming order is now handled by ForegroundService
+    // Notification sound on new incoming order is now handled by IncomingOrderNotifier
 
     // Route polyline from Directions API (30m origin / 5m dest throttle)
     var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }

@@ -22,8 +22,8 @@ android {
         applicationId 'com.arodrivedriver'
         minSdk 24
         targetSdk 35
-        versionCode 25
-        versionName '1.4.0'
+        versionCode 26
+        versionName '1.5.0'
     }
 
     signingConfigs {
@@ -96,6 +96,9 @@ dependencies {
     implementation 'androidx.work:work-runtime-ktx:2.9.1'
 
     implementation 'io.coil-kt:coil-compose:2.7.0'
+
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.8.7'
 
     implementation 'com.google.android.gms:play-services-location:21.3.0'
     implementation 'com.google.android.gms:play-services-maps:19.0.0'

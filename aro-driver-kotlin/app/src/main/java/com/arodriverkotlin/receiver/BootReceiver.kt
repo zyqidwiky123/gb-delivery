@@ -4,10 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.arodriverkotlin.service.ForegroundService
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.auth.FirebaseAuth
+import com.arodriverkotlin.service.SessionService
 
 class BootReceiver : BroadcastReceiver() {
 
@@ -22,34 +19,12 @@ class BootReceiver : BroadcastReceiver() {
             "android.intent.action.QUICKBOOT_POWERON",
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
                 Log.i(TAG, "Boot event received: $action")
-                WatchdogReceiver.schedule(context)
-                checkAndStartForegroundService(context)
-            }
-        }
-    }
-
-    private fun checkAndStartForegroundService(context: Context) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid == null) {
-            Log.d(TAG, "No authenticated user, skipping service start")
-            return
-        }
-
-        val rtdb = FirebaseDatabase.getInstance().reference
-        rtdb.child("drivers/$uid/isOnline").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
-                val isOnline = snapshot.getValue(Boolean::class.java) ?: false
-                if (isOnline) {
-                    Log.i(TAG, "Driver was online, restarting ForegroundService")
-                    ForegroundService.start(context, uid)
-                } else {
-                    Log.d(TAG, "Driver was offline, not starting service")
+                val uid = SessionService.getStoredUid(context)
+                if (uid != null) {
+                    SessionService.start(context, uid)
+                    SessionService.ensureTripServiceRunning(context)
                 }
             }
-
-            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
-                Log.w(TAG, "Failed to read isOnline from RTDB: ${error.message}")
-            }
-        })
+        }
     }
 }

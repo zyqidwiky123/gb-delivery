@@ -2,6 +2,9 @@ package com.arodriverkotlin.service
 
 import android.util.Log
 import com.arodriverkotlin.background.SmartWakeLock
+import com.arodriverkotlin.notification.NotificationEngine
+import com.arodriverkotlin.notification.NotificationModel
+import com.arodriverkotlin.notification.NotificationType
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -24,7 +27,7 @@ class MessagingService : FirebaseMessagingService() {
 
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        ForegroundService.start(this, uid)
+        ServiceCoordinator.startSession(this, uid)
 
         val fcmWakeLock = SmartWakeLock.acquireForFcm(this)
         try {
@@ -35,8 +38,14 @@ class MessagingService : FirebaseMessagingService() {
                 val body = data["body"] ?: getString(com.arodriverkotlin.R.string.incoming_order_body)
                 if (orderId != null) {
                     Log.d(TAG, "NEW_ORDER FCM received: $orderId")
-                    IncomingOrderNotifier.createChannel(this)
-                    IncomingOrderNotifier.show(this, orderId, title, body, uid)
+                    NotificationEngine.handle(this, NotificationModel(
+                        id = orderId,
+                        type = NotificationType.ORDER,
+                        title = title,
+                        body = body,
+                        deepLink = "order/$orderId",
+                        payload = mapOf("orderId" to orderId, "uid" to uid)
+                    ))
                 }
             }
         } finally {

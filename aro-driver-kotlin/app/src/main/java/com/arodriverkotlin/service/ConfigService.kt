@@ -20,6 +20,7 @@ object ConfigService {
         "buffer_flush_interval_ms" to 30000L,
         "buffer_max_size" to 50L,
         "max_backoff_ms" to 120000L,
+        "websocket_url" to "",
     )
 
     init {

@@ -74,4 +74,6 @@ data class DriverOrder(
     val balanceAfter: Long = 0,
     val completedAt: Timestamp? = null,
     val acceptedAt: Timestamp? = null,
-)
+) {
+    val serviceTypeEnum: ServiceType get() = ServiceType.fromString(serviceType)
+}

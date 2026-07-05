@@ -59,11 +59,18 @@ jobs:
             ## ARO DRIVE Driver v${{ github.ref_name }}
 
             ### Perubahan:
-            - Notifikasi seperti WhatsApp: notif tetap muncul meski app diclose (FCM notification payload + channel_id)
-            - Restart foreground service otomatis saat FCM diterima
-            - WakeLock biar proses gak mati sebelum notif muncul
-            - Location heartbeat tiap 5 menit (sebelumnya 15 menit)
-            - Maks umur lokasi driver 10 menit (sebelumnya 5 menit)
-            - Hapus filter inactivity redundant di dispatch
-            - Hapus tombol "Nanti Saja" di izin baterai (wajib)
+            - Split ForegroundService menjadi SessionService + TripService
+            - ServiceCoordinator untuk lifecycle management
+            - RealTimeSocket WebSocket persistent connection dengan auto-reconnect
+            - Priority queue (ORDER_ACTION > LOCATION > DIAGNOSTICS) di OfflineQueueProcessor
+            - Multi-layer CrashReporter (Firebase + local file)
+            - LocationKit abstraction: support GMS (Google) dan non-GMS (Huawei)
+            - LocationQualityMonitor: GPS quality + mock detection
+            - Multi-channel notification (order/chat/promo/system/safety/foreground)
+            - In-app notification banner saat foreground
+            - Deep link routing (order/wallet/profile/chat/history)
+            - Multi-service type: Transport, Food, Express, Send, Shop
+            - Generic OrderStateMachine dengan validasi state transition
+            - OrderCardProvider dengan card berbeda per service type
+            - Tab filter by service type di OrdersScreen
           files: aro-driver-kotlin/app/build/outputs/apk/release/app-release.apk

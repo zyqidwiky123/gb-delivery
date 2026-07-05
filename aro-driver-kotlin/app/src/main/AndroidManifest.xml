@@ -30,6 +30,14 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="arodriver" android:host="order" />
+                <data android:scheme="arodriver" android:host="wallet" />
+                <data android:scheme="arodriver" android:host="profile" />
+            </intent-filter>
         </activity>
 
         <receiver
@@ -76,11 +84,19 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
         <service
-            android:name=".service.ForegroundService"
+            android:name=".service.SessionService"
             android:exported="false"
             android:process=":background"
-            android:foregroundServiceType="dataSync|location" />
+            android:foregroundServiceType="location" />
+
+        <service
+            android:name=".service.TripService"
+            android:exported="false"
+            android:process=":background"
+            android:foregroundServiceType="location|dataSync" />
+
         <service
             android:name=".background.DebugOverlayService"
             android:exported="false"

@@ -64,6 +64,102 @@ function getDispatchRegionConfig(regionType) {
     return DISPATCH_REGION_CONFIG[regionType] || DISPATCH_REGION_CONFIG.kota;
 }
 
+const SERVICE_TYPE_ALIAS = {
+    transport: ['jek', 'car', 'ride', 'ojek'],
+    food: ['makanan'],
+    send: ['kirim'],
+    shop: ['belanja'],
+};
+
+function normalizeServiceType(raw) {
+    if (!raw) return 'transport';
+    for (const [canonical, aliases] of Object.entries(SERVICE_TYPE_ALIAS)) {
+        if (canonical === raw || aliases.includes(raw)) return canonical;
+    }
+    return raw;
+}
+
+const DISPATCH_CONFIG = {
+    transport: { initRadiusKm: 3, maxRadiusKm: 15, offerTimeoutMs: 60000 },
+    food:     { initRadiusKm: 2, maxRadiusKm: 8,  offerTimeoutMs: 45000 },
+    express:  { initRadiusKm: 4, maxRadiusKm: 20, offerTimeoutMs: 60000 },
+    send:     { initRadiusKm: 3, maxRadiusKm: 15, offerTimeoutMs: 60000 },
+    shop:     { initRadiusKm: 2, maxRadiusKm: 8,  offerTimeoutMs: 60000 },
+};
+
+const VALID_TRANSITIONS = {
+    transport: {
+        OFFERED: ['ACCEPTED', 'EXPIRED'],
+        ACCEPTED: ['ARRIVING', 'CANCELLED'],
+        ARRIVING: ['ON_BOARD', 'CANCELLED'],
+        ON_BOARD: ['EN_ROUTE'],
+        EN_ROUTE: ['DROPPED_OFF', 'CANCELLED'],
+        DROPPED_OFF: ['COMPLETED'],
+        COMPLETED: [],
+        CANCELLED: [],
+        EXPIRED: [],
+    },
+    food: {
+        OFFERED: ['ACCEPTED', 'EXPIRED'],
+        ACCEPTED: ['ARRIVING', 'CANCELLED'],
+        ARRIVING: ['WAITING_FOOD', 'PICKED_UP', 'CANCELLED'],
+        WAITING_FOOD: ['PICKED_UP', 'CANCELLED'],
+        PICKED_UP: ['EN_ROUTE'],
+        EN_ROUTE: ['DELIVERED', 'CANCELLED'],
+        DELIVERED: ['COMPLETED'],
+        COMPLETED: [],
+        CANCELLED: [],
+        EXPIRED: [],
+    },
+    express: {
+        OFFERED: ['ACCEPTED', 'EXPIRED'],
+        ACCEPTED: ['AT_WAREHOUSE', 'CANCELLED'],
+        AT_WAREHOUSE: ['PICKED_UP', 'CANCELLED'],
+        PICKED_UP: ['EN_ROUTE'],
+        EN_ROUTE: ['DELIVERED', 'CANCELLED'],
+        DELIVERED: ['COMPLETED'],
+        COMPLETED: [],
+        CANCELLED: [],
+        EXPIRED: [],
+    },
+    send: {
+        OFFERED: ['ACCEPTED', 'EXPIRED'],
+        ACCEPTED: ['AT_PICKUP', 'CANCELLED'],
+        AT_PICKUP: ['PICKED_UP', 'CANCELLED'],
+        PICKED_UP: ['EN_ROUTE'],
+        EN_ROUTE: ['DELIVERED', 'CANCELLED'],
+        DELIVERED: ['COMPLETED'],
+        COMPLETED: [],
+        CANCELLED: [],
+        EXPIRED: [],
+    },
+    shop: {
+        OFFERED: ['ACCEPTED', 'EXPIRED'],
+        ACCEPTED: ['AT_MERCHANT', 'CANCELLED'],
+        AT_MERCHANT: ['SHOPPING', 'CANCELLED'],
+        SHOPPING: ['PICKED_UP', 'CANCELLED'],
+        PICKED_UP: ['EN_ROUTE'],
+        EN_ROUTE: ['DELIVERED', 'CANCELLED'],
+        DELIVERED: ['COMPLETED'],
+        COMPLETED: [],
+        CANCELLED: [],
+        EXPIRED: [],
+    },
+};
+
+async function getPricing(serviceType) {
+    try {
+        const doc = await admin.firestore().collection("settings").doc("pricing").get();
+        if (doc.exists) {
+            const data = doc.data();
+            return data[serviceType] || data.transport || data.jek || { commissionRate: 0.1 };
+        }
+    } catch (e) {
+        console.error("Error reading pricing:", e);
+    }
+    return { commissionRate: 0.1 };
+}
+
 function getTimestampMillis(value) {
     if (!value && value !== 0) return null;
     if (typeof value === "number") return value;
@@ -145,56 +241,65 @@ exports.onOrderCreated = onDocumentCreated(
     const orderData = event.data.data();
     const orderId = event.params.orderId;
     let { merchantId, serviceType, total, pickupLocation, pickupAddress, items } = orderData;
+    serviceType = normalizeServiceType(serviceType || "transport");
     if (!pickupLocation) {
         pickupLocation = orderData.pickup;
     }
 
-    // Fix: PWA cache might cause old versions to send array. Convert to object.
     if (Array.isArray(pickupLocation) && pickupLocation.length >= 2) {
         pickupLocation = { lat: Number(pickupLocation[0]), lng: Number(pickupLocation[1]) };
     }
 
-    // Fix: extract merchantId from items if missing at top level (common in Food orders)
     if (!merchantId && Array.isArray(items) && items.length > 0) {
         merchantId = items[0].merchantId;
     }
 
-    // 1. Send Notification to Merchant
-    if (merchantId) {
-        // FCM Notification
+    if (merchantId && (serviceType === "food" || serviceType === "shop")) {
         await sendNotificationToMerchant(merchantId, {
             title: "Pesanan Masuk! 🍕",
             body: `Ada pesanan baru #${orderId.slice(-6).toUpperCase()} senilai Rp ${total?.toLocaleString()}. Cek di Dashboard sekarang!`,
         });
 
-        // WhatsApp Notification (Only for admin-registered merchants)
         try {
             const mDoc = await admin.firestore().collection("merchants").doc(merchantId).get();
             if (mDoc.exists) {
                 const merchantData = mDoc.data();
                 if (merchantData.phone) {
                     const waTemplates = require("./templates");
-                    // Format items text for the message
                     let itemsText = "";
                     if (serviceType === "food" && Array.isArray(items)) {
                         itemsText = items.map(item => `- ${item.desc || item.name} (${item.qty}x)`).join("\n");
                     } else if (typeof items === "string") {
                         itemsText = items;
                     }
-                    
                     if (waTemplates.system && typeof waTemplates.system.newOrder === "function") {
                         const merchantMsg = waTemplates.system.newOrder(orderId, serviceType, total, merchantData.name || "Merchant", itemsText);
                         await sendWAFonnte(merchantData.phone, merchantMsg);
-                        console.log(`[WA] New order notification sent to merchant: ${merchantData.phone}`);
                     }
                 }
             }
         } catch (err) {
-            console.error("Error sending WA notification to merchant:", err);
+            console.error("Error sending WA to merchant:", err);
         }
     }
 
-    // Send WhatsApp Notification to Customer (if Manual Order)
+    if (serviceType === "express" || serviceType === "send") {
+        try {
+            const waNumber = orderData.customer?.wa;
+            if (waNumber) {
+                const waTemplates = require("./templates");
+                const shortId = orderId.slice(-5).toUpperCase();
+                const customerName = orderData.customer?.name || "Kak";
+                const msg = waTemplates[serviceType]?.accepted
+                    ? waTemplates[serviceType].accepted(customerName, shortId)
+                    : `Halo ${customerName}, pesanan ${serviceType} (#${shortId}) sedang diproses.`;
+                await sendWAFonnte(waNumber, msg);
+            }
+        } catch (e) {
+            console.error("Error sending WA to sender:", e);
+        }
+    }
+
     try {
         if (orderData.customer?.isManual && orderData.customer?.wa) {
             const waTemplates = require("./templates");
@@ -219,34 +324,25 @@ exports.onOrderCreated = onDocumentCreated(
         const targetDriverId = orderData.dispatch.assignedTo;
         console.log(`[TargetedDispatch] Order ${orderId} admin-assigned to driver ${targetDriverId}.`);
 
-        // Initialize dispatch context (same as normal dispatch)
-        const BLITAR_CENTER = { lat: -8.098, lng: 112.164 };
+        const dispatchCfg = DISPATCH_CONFIG[serviceType] || DISPATCH_CONFIG.transport;
         if (pickupLocation && pickupLocation.lat) {
-            const distToCenter = calculateDistance(
-                pickupLocation.lat, pickupLocation.lng,
-                BLITAR_CENTER.lat, BLITAR_CENTER.lng
-            );
-            const isKabupaten = distToCenter > 7;
-            const regionType = isKabupaten ? "kabupaten" : "kota";
-            const regionConfig = getDispatchRegionConfig(regionType);
-
-            const dispatchInit = {
-                status: "targeted",
-                assignedTo: targetDriverId,
-                offeredTo: targetDriverId,
-                offerExpiresAt: admin.firestore.Timestamp.fromDate(
-                    new Date(Date.now() + DRIVER_OFFER_TIMEOUT_MS)
-                ),
-                regionType,
-                currentRadius: regionConfig.initialRadius,
-                iteration: 1,
-                notifiedDrivers: [targetDriverId],
-                rejectedDrivers: [],
-                lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
-                startedSearchingAt: admin.firestore.FieldValue.serverTimestamp(),
-                nextExpansionAt: new Date(Date.now() + RADIUS_EXPANSION_INTERVAL_MS),
-                assignedAt: orderData.dispatch.assignedAt || admin.firestore.FieldValue.serverTimestamp(),
-            };
+                const dispatchInit = {
+                    status: "targeted",
+                    assignedTo: targetDriverId,
+                    offeredTo: targetDriverId,
+                    offerExpiresAt: admin.firestore.Timestamp.fromDate(
+                        new Date(Date.now() + dispatchCfg.offerTimeoutMs)
+                    ),
+                    serviceType,
+                    currentRadius: dispatchCfg.initRadiusKm,
+                    iteration: 1,
+                    notifiedDrivers: [targetDriverId],
+                    rejectedDrivers: [],
+                    lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
+                    startedSearchingAt: admin.firestore.FieldValue.serverTimestamp(),
+                    nextExpansionAt: new Date(Date.now() + 60000),
+                    assignedAt: orderData.dispatch.assignedAt || admin.firestore.FieldValue.serverTimestamp(),
+                };
 
             await admin.firestore().collection("orders").doc(orderId).update({
                 dispatch: dispatchInit
@@ -291,20 +387,12 @@ exports.onOrderCreated = onDocumentCreated(
 
     // 4. Initialize Dispatch System (Only if pickupLocation exists)
     if (pickupLocation && pickupLocation.lat) {
-        // Default reference center is still Blitar as per user request
-        const BLITAR_CENTER = { lat: -8.098, lng: 112.164 };
-        const distToCenter = calculateDistance(pickupLocation.lat, pickupLocation.lng, BLITAR_CENTER.lat, BLITAR_CENTER.lng);
-        
-        // Outside 7km from Blitar center is considered 'kabupaten' (larger radius)
-        // For expansion regions (outside Blitar), this will default to 'kabupaten' which is safer for driver discovery.
-        const isKabupaten = distToCenter > 7;
-        const regionType = isKabupaten ? "kabupaten" : "kota";
-        const regionConfig = getDispatchRegionConfig(regionType);
+        const dispatchCfg = DISPATCH_CONFIG[serviceType] || DISPATCH_CONFIG.transport;
 
         const dispatchInit = {
             status: "searching",
-            regionType,
-            currentRadius: regionConfig.initialRadius,
+            serviceType,
+            currentRadius: dispatchCfg.initRadiusKm,
             iteration: 1,
             notifiedDrivers: [],
             lastAttemptAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -431,6 +519,12 @@ exports.autoOfflineLongOnlineDrivers = onSchedule("every 3 minutes", async () =>
             onlineSessionStartAt: driver.onlineSessionStartAt,
             onlineAt: driver.onlineAt,
         };
+
+        // Skip drivers with active trip
+        const tripState = driver.tripState || merged.tripState;
+        if (tripState && tripState.orderId) {
+            return;
+        }
 
         if (isDriverInactive(merged, now)) {
             inactiveDrivers.push({ id: driver.id, driver: merged, ref: driverRefs[driver.id]?.ref });
@@ -617,7 +711,8 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         pickupLocation = { lat: Number(pickupLocation[0]), lng: Number(pickupLocation[1]) };
     }
     
-    const { serviceType } = orderData;
+    const serviceType = normalizeServiceType(orderData.serviceType || "transport");
+    const dispatchCfg = DISPATCH_CONFIG[serviceType] || DISPATCH_CONFIG.transport;
     const { currentRadius, notifiedDrivers } = dispatchState;
     const rejectedDrivers = dispatchState.rejectedDrivers || [];
 
@@ -670,17 +765,23 @@ async function dispatchOrder(orderId, orderData, dispatchState) {
         return false; // Signal: no driver found
     }
 
-    /**
-     * QUEUE RE-BALANCING LOGIC
-     * Sort by:
-     * 1. Distance (ASC) - Driver terdekat diprioritaskan
-     * 2. Idle time (lastJobAt ASC) - Jika jarak sama, driver yang nganggur paling lama diprioritaskan
-     * 3. Rating (DESC) - Jika jarak dan waktu tunggu sama, pakai rating tertinggi
-     */
     candidates.sort((a, b) => {
-        if (a.distance !== b.distance) return a.distance - b.distance;
-        if (a.lastJobAt !== b.lastJobAt) return a.lastJobAt - b.lastJobAt;
-        return b.rating - a.rating;
+        switch (serviceType) {
+            case 'food':
+            case 'shop':
+                if (a.rating !== b.rating) return b.rating - a.rating;
+                if (a.distance !== b.distance) return a.distance - b.distance;
+                return a.lastJobAt - b.lastJobAt;
+            case 'express':
+            case 'send':
+                if (a.distance !== b.distance) return a.distance - b.distance;
+                if (a.lastJobAt !== b.lastJobAt) return a.lastJobAt - b.lastJobAt;
+                return b.rating - a.rating;
+            default:
+                if (a.distance !== b.distance) return a.distance - b.distance;
+                if (a.lastJobAt !== b.lastJobAt) return a.lastJobAt - b.lastJobAt;
+                return b.rating - a.rating;
+        }
     });
 
     // OFFER-BASED: Pick top 1 driver only (exclusive offer)
@@ -837,6 +938,39 @@ exports.onOrderUpdate = onDocumentUpdated(
     async (event) => {
     const newValue = event.data.after.data();
     const previousValue = event.data.before.data();
+    const serviceType = normalizeServiceType(newValue.serviceType || "transport");
+
+    if (newValue.status && newValue.status !== previousValue.status) {
+        const validNext = VALID_TRANSITIONS[serviceType]?.[previousValue.status] || [];
+        if (!validNext.includes(newValue.status)) {
+            console.warn(`Invalid transition: ${previousValue.status} → ${newValue.status} for ${serviceType} (order ${event.params.orderId})`);
+            await event.data.after.ref.update({ status: previousValue.status });
+            return null;
+        }
+    }
+
+    // Type-specific state handling
+    if (newValue.status === "WAITING_FOOD" && previousValue.status !== "WAITING_FOOD") {
+        console.log(`[Food] Order ${event.params.orderId} — driver waiting for food preparation`);
+        if (newValue.merchantId) {
+            await sendNotificationToMerchant(newValue.merchantId, {
+                title: "Driver Menunggu 🍕",
+                body: `Driver sudah sampai dan menunggu pesanan #${event.params.orderId.slice(-5).toUpperCase()}.`,
+            });
+        }
+    }
+
+    if (newValue.status === "SHOPPING" && previousValue.status !== "SHOPPING") {
+        console.log(`[Shop] Order ${event.params.orderId} — driver shopping`);
+    }
+
+    if (newValue.status === "DROPPED_OFF" && previousValue.status !== "DROPPED_OFF") {
+        console.log(`[Transport] Order ${event.params.orderId} — passenger dropped off`);
+    }
+
+    if (newValue.status === "DELIVERED" && previousValue.status !== "DELIVERED") {
+        console.log(`[Delivery] Order ${event.params.orderId} — delivered`);
+    }
 
     // Watch for immediate dispatch rejection
     const dispatchChangedToRejected = newValue.dispatch?.status === "rejected" && previousValue.dispatch?.status !== "rejected";
@@ -960,8 +1094,9 @@ exports.onOrderUpdate = onDocumentUpdated(
                 }
 
                 const waTemplates = require("./templates");
-                const serviceKey = waTemplates[type] ? type : (type === 'tip' ? 'shop' : 'jek');
-                const templateFn = waTemplates[serviceKey][status];
+                const normalizedType = normalizeServiceType(type);
+                const serviceKey = waTemplates[normalizedType] ? normalizedType : 'transport';
+                const templateFn = waTemplates[serviceKey]?.[status];
                 
                 let extraData = null;
                 if (status === "completed") {
@@ -1139,6 +1274,35 @@ async function sendWAFonnte(target, message) {
         console.error("[Fonnte] Error sending WA:", error);
     }
 }
+
+/**
+ * Endpoint untuk menerima crash log dari aplikasi driver
+ */
+exports.receiveCrashLog = onRequest({ cors: true }, async (req, res) => {
+    if (req.method !== "POST") {
+        res.status(405).send("Method Not Allowed");
+        return;
+    }
+
+    const { uid, crashData, timestamp, appVersion, deviceInfo } = req.body;
+
+    if (!uid || !crashData) {
+        res.status(400).send("Missing required fields");
+        return;
+    }
+
+    await admin.firestore().collection("diagnostics").add({
+        type: "crash",
+        uid,
+        crashData: (crashData || "").substring(0, 2000),
+        timestamp: timestamp ? new Date(timestamp) : admin.firestore.FieldValue.serverTimestamp(),
+        appVersion: appVersion || "",
+        deviceInfo: deviceInfo || {},
+        source: "crash_reporter",
+    });
+
+    res.status(200).json({ success: true });
+});
 
 /**
  * Admin function to delete a user account from Firebase Auth

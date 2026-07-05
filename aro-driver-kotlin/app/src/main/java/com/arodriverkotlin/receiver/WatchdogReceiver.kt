@@ -5,16 +5,16 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.arodriverkotlin.background.WatchdogWorker
-import com.arodriverkotlin.service.ForegroundService
+import com.arodriverkotlin.service.SessionService
 
 class WatchdogReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
-        val prefs = context.getSharedPreferences("foreground_service", Context.MODE_PRIVATE)
-        val uid = prefs.getString("driver_uid", null)
+        val uid = SessionService.getStoredUid(context)
         if (uid != null) {
-            ForegroundService.start(context, uid)
-            Log.i("WATCHDOG", "Health check: service restarted for $uid")
+            SessionService.start(context, uid)
+            SessionService.ensureTripServiceRunning(context)
+            Log.i("WATCHDOG", "Health check: services restarted for $uid")
         }
     }
 
