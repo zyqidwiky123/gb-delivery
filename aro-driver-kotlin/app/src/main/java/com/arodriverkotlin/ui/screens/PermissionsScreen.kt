@@ -91,14 +91,19 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
 
     val foregroundStepDone = locationGranted && notifGranted
 
-    val allPermissionsGranted = locationGranted && notifGranted && (android.os.Build.VERSION.SDK_INT < 30 || bgLocationGranted) && fullScreenIntentGranted
+    val allPermissionsGranted = locationGranted && notifGranted && fullScreenIntentGranted
 
-    var requested by remember { mutableStateOf(allPermissionsGranted && (android.os.Build.VERSION.SDK_INT < 30 || bgLocationGranted)) }
+    var requested by remember { mutableStateOf(allPermissionsGranted) }
 
     // Step 2: Background location (API 30+ only, must be requested separately)
+    var bgLocationDeniedOnce by remember { mutableStateOf(false) }
+    var bgLocationSkipped by remember { mutableStateOf(false) }
     val bgLocationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { requested = true }
+    ) { granted ->
+        if (!granted) bgLocationDeniedOnce = true
+        requested = true
+    }
 
     // Step 1: Foreground permissions (location + notif)
     val foregroundLauncher = rememberLauncherForActivityResult(
@@ -109,18 +114,13 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
             granted[Manifest.permission.POST_NOTIFICATIONS] == true
         else true
         if (locOk && notifOk) {
-            // After foreground granted, request background location on API 30+
-            if (android.os.Build.VERSION.SDK_INT >= 30 &&
-                ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
-            ) {
-                bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            } else {
-                requested = true
-            }
+            requested = true
         }
     }
 
-    if (allPermissionsGranted) {
+    val bgLocationDone = bgLocationGranted || bgLocationSkipped || android.os.Build.VERSION.SDK_INT < 30
+
+    if (allPermissionsGranted && bgLocationDone) {
         onAllGranted()
         return
     }
@@ -291,6 +291,94 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                         "BUKA PENGATURAN LAYAR PENUH",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
+                        letterSpacing = 1.sp,
+                    )
+                }
+            }
+
+            // Background location (API 30+)
+            if (foregroundStepDone && android.os.Build.VERSION.SDK_INT >= 30 && !bgLocationGranted) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Lokasi Latar Belakang",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "ARO DRIVE perlu lokasi latar belakang untuk mengirim posisi kamu saat aplikasi tidak aktif.",
+                    color = Muted,
+                    fontSize = 11.sp,
+                )
+                Spacer(Modifier.height(8.dp))
+                if (bgLocationDeniedOnce) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF333333),
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier.weight(1f).height(44.dp)
+                        ) {
+                            Text("COBA LAGI", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        }
+                        Button(
+                            onClick = {
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.parse("package:${ctx.packageName}")
+                                }
+                                ctx.startActivity(intent)
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF333333),
+                                contentColor = Color.White.copy(alpha = 0.7f)
+                            ),
+                            modifier = Modifier.weight(1f).height(44.dp)
+                        ) {
+                            Text("PENGATURAN", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            bgLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AroGreen,
+                            contentColor = AroBlack
+                        ),
+                        modifier = Modifier.fillMaxWidth().height(52.dp)
+                    ) {
+                        Text(
+                            "IZINKAN LOKASI BACKGROUND",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            letterSpacing = 1.sp,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { bgLocationSkipped = true },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF333333),
+                        contentColor = Color.White.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                ) {
+                    Text(
+                        "LEWATI",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
                         letterSpacing = 1.sp,
                     )
                 }
