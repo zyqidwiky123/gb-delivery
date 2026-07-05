@@ -8,15 +8,13 @@ import androidx.room.TypeConverters
 import com.arodriverkotlin.database.dao.LocationDao
 import com.arodriverkotlin.database.dao.ActionQueueDao
 import com.arodriverkotlin.database.dao.TripStateDao
-import com.arodriverkotlin.database.dao.NavigationManeuverDao
 import com.arodriverkotlin.database.entity.PendingLocation
 import com.arodriverkotlin.database.entity.PendingAction
 import com.arodriverkotlin.database.entity.TripState
-import com.arodriverkotlin.database.entity.NavigationManeuver
 import com.arodriverkotlin.database.converter.Converters
 
 @Database(
-    entities = [PendingLocation::class, PendingAction::class, TripState::class, NavigationManeuver::class],
+    entities = [PendingLocation::class, PendingAction::class, TripState::class],
     version = 1,
     exportSchema = true
 )
@@ -25,7 +23,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun locationDao(): LocationDao
     abstract fun actionQueueDao(): ActionQueueDao
     abstract fun tripStateDao(): TripStateDao
-    abstract fun navigationManeuverDao(): NavigationManeuverDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

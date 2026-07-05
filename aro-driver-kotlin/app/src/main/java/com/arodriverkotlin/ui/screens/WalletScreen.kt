@@ -2,6 +2,7 @@ package com.arodriverkotlin.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.filled.AddCard
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -85,7 +85,9 @@ fun WalletScreen(state: UiState, vm: DriverViewModel) {
                 .collection("settings").document("pricing")
                 .get().await()
             pricing = snap.data
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w("WalletScreen", "Gagal fetch pricing settings", e)
+        }
     }
 
     // Daily earnings grouping

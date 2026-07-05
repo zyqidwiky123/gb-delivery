@@ -11,7 +11,6 @@ object ConfigService {
         "maps_api_key" to "",
         "accept_timeout_seconds" to 20L,
         "geofence_radius_meters" to 100L,
-        "location_interval_active_ms" to 3000L,
         "location_interval_idle_ms" to 30000L,
         "location_interval_offline_ms" to 30000L,
         "location_min_interval_active_ms" to 1500L,
@@ -40,8 +39,6 @@ object ConfigService {
     fun getAcceptTimeoutMs(): Long = remoteConfig.getLong("accept_timeout_seconds") * 1000
 
     fun getGeofenceRadiusMeters(): Float = remoteConfig.getLong("geofence_radius_meters").toFloat()
-
-    fun getLocationIntervalActiveMs(): Long = remoteConfig.getLong("location_interval_active_ms")
 
     fun getLocationIntervalIdleMs(): Long = remoteConfig.getLong("location_interval_idle_ms")
 

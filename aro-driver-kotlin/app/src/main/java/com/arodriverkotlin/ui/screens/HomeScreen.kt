@@ -2,9 +2,8 @@ package com.arodriverkotlin.ui.screens
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Bundle
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -64,11 +64,11 @@ import com.arodriverkotlin.service.ForegroundService
 import com.arodriverkotlin.service.LocationData
 import com.arodriverkotlin.service.rupiah
 import com.google.android.gms.maps.model.LatLng
-import com.arodriverkotlin.R
 import com.arodriverkotlin.ui.components.OrderCard
 import com.arodriverkotlin.ui.components.currentPickupAddress
 import com.arodriverkotlin.ui.components.SummaryCard
 import com.arodriverkotlin.ui.theme.AroBlack
+
 import com.arodriverkotlin.ui.theme.AroGreen
 import com.arodriverkotlin.ui.theme.Error
 import com.arodriverkotlin.ui.theme.Muted
@@ -78,10 +78,7 @@ import com.arodriverkotlin.ui.theme.SurfaceHigh
 import com.arodriverkotlin.ui.theme.SurfaceLow
 import com.arodriverkotlin.ui.theme.Warning
 import com.arodriverkotlin.viewmodel.DriverViewModel
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
+import com.arodriverkotlin.util.LocationUtils
 
 @Composable
 fun HomeScreen(vm: DriverViewModel, state: UiState) {
@@ -320,6 +317,44 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
             }
         }
     }
+
+    if (state.locationPermissionRevoked) {
+        AlertDialog(
+            onDismissRequest = { vm.dismissLocationRevoke() },
+            title = {
+                Text("Izin Lokasi Dicabut", fontWeight = FontWeight.Bold, color = Color.White)
+            },
+            text = {
+                Text(
+                    "Aplikasi tidak dapat melacak lokasi Anda. Izinkan lokasi di Pengaturan untuk melanjutkan.",
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        vm.dismissLocationRevoke()
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:${ctx.packageName}")
+                        }
+                        ctx.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AroGreen, contentColor = AroBlack)
+                ) {
+                    Text("BUKA PENGATURAN")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { vm.dismissLocationRevoke() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333), contentColor = Color.White.copy(alpha = 0.6f))
+                ) {
+                    Text("TUTUP")
+                }
+            },
+            containerColor = AroBlack,
+        )
+    }
 }
 
 @Composable
@@ -506,13 +541,4 @@ private fun ActiveOrderCard(order: DriverOrder, vm: DriverViewModel, onPickupCli
     )
 }
 
-private fun distanceMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
-    val R = 6371000.0
-    val dLat = Math.toRadians(lat2 - lat1)
-    val dLng = Math.toRadians(lng2 - lng1)
-    val a = sin(dLat / 2) * sin(dLat / 2) +
-            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-            sin(dLng / 2) * sin(dLng / 2)
-    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    return R * c
-}
+

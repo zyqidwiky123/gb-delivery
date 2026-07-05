@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.util.Log
 import com.arodriverkotlin.database.AppDatabase
+import com.arodriverkotlin.database.SyncCoordinator
 import com.arodriverkotlin.database.dao.ActionQueueDao
 import com.arodriverkotlin.database.dao.LocationDao
 import com.arodriverkotlin.database.entity.PendingAction
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import kotlin.math.pow
 
@@ -36,6 +38,12 @@ class OfflineQueueProcessor(
 
     fun onStart() {
         scope.launch { observeConnectivity() }
+        scope.launch {
+            while (true) {
+                delay(SYNC_INTERVAL_MS)
+                processQueue()
+            }
+        }
     }
 
     fun onStop() {
@@ -63,10 +71,20 @@ class OfflineQueueProcessor(
     }.launchIn(scope)
 
     suspend fun processQueue() {
-        Log.i(TAG, "Starting queue processing for $uid")
-        syncLocations()
-        syncActions()
-        Log.i(TAG, "Queue processing completed for $uid")
+        SyncCoordinator.syncMutex.withLock {
+            Log.i(TAG, "Starting queue processing for $uid")
+            syncLocations()
+            syncActions()
+            cleanupStaleEntries()
+            Log.i(TAG, "Queue processing completed for $uid")
+        }
+    }
+
+    private suspend fun cleanupStaleEntries() {
+        val cutoff = System.currentTimeMillis() - TTL_MS
+        locationDao.deleteOldLocations(uid, cutoff)
+        actionDao.deleteOldSynced(uid, cutoff)
+        Log.i(TAG, "Cleaned up stale entries older than ${TTL_MS / 86_400_000} days")
     }
 
     private suspend fun syncLocations() {
@@ -114,7 +132,7 @@ class OfflineQueueProcessor(
 
     private suspend fun uploadLocationWithBackoff(loc: PendingLocation): Boolean {
         var retries = loc.retryCount
-        while (true) {
+        while (retries < MAX_RETRY_ATTEMPTS) {
             try {
                 DriverService.updateLocation(uid, loc.lat, loc.lng)
                 if (loc.orderId != null) {
@@ -127,11 +145,14 @@ class OfflineQueueProcessor(
                 delay(calculateBackoff(retries))
             }
         }
+        Log.e(TAG, "Location ${loc.id} exceeded max retries ($MAX_RETRY_ATTEMPTS), removing from queue")
+        locationDao.deleteByIds(listOf(loc.id!!))
+        return false
     }
 
     private suspend fun executeActionWithBackoff(action: PendingAction): Boolean {
         var retries = action.retryCount
-        while (true) {
+        while (retries < MAX_RETRY_ATTEMPTS) {
             try {
                 return when (action.actionType) {
                     "accept" -> {
@@ -147,7 +168,11 @@ class OfflineQueueProcessor(
                         true
                     }
                     "pickup" -> {
-                        OrderService.pickupOrder(action.orderId, 0, 1)
+                        val orderSnap = FirebaseFirestore.getInstance()
+                            .collection("orders").document(action.orderId).get().await()
+                        val pickupsDone = orderSnap.getLong("pickupsDone") ?: 0L
+                        val pickupCount = orderSnap.getLong("pickupCount")?.toInt() ?: 1
+                        OrderService.pickupOrder(action.orderId, pickupsDone, pickupCount)
                         true
                     }
                     "complete" -> {
@@ -177,6 +202,9 @@ class OfflineQueueProcessor(
                 delay(calculateBackoff(retries))
             }
         }
+        Log.e(TAG, "Action ${action.id} (${action.actionType}) exceeded max retries ($MAX_RETRY_ATTEMPTS), marking as dead letter")
+        actionDao.markSynced(action.id!!)
+        return false
     }
 
     private fun calculateBackoff(retryCount: Int): Long {
@@ -221,5 +249,7 @@ class OfflineQueueProcessor(
         private const val MAX_BACKOFF_MS = 120_000L
         private const val BATCH_SIZE = 20
         private const val SYNC_INTERVAL_MS = 30_000L
+        private const val MAX_RETRY_ATTEMPTS = 50
+        private const val TTL_MS = 86_400_000L // 24 jam
     }
 }

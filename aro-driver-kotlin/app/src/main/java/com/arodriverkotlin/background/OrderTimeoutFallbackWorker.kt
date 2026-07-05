@@ -50,7 +50,8 @@ class OrderTimeoutFallbackWorker(
             val snap = com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("orders").document(orderId).get().await()
             return snap.exists() && snap.getString("status") == "searching"
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal cek order pending", e)
             return false
         }
     }

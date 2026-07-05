@@ -104,7 +104,9 @@ object OrderService {
         if (uid != null) {
             try {
                 rtdb.child("drivers/$uid/incoming/$orderId").removeValue().await()
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w(TAG, "Gagal hapus incoming RTDB node", e)
+            }
         }
     }
 
@@ -151,7 +153,9 @@ object OrderService {
                         )).await()
                 }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal hapus driverRef in cancelOrder", e)
+        }
     }
 
     suspend fun pickupOrder(orderId: String, pickupsDone: Long, pickupCount: Int) {
@@ -210,7 +214,9 @@ object OrderService {
                         if (commission != null) rate = commission / 100.0
                     }
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w(TAG, "Gagal baca commission type", e)
+            }
             val commissionBase = max(0.0, (deliveryFee - appServiceFee).toDouble())
             (commissionBase * rate).roundToLong() + appServiceFee
         }

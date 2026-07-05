@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -63,10 +64,7 @@ import kotlinx.coroutines.launch
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.tasks.await
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
+import com.arodriverkotlin.util.LocationUtils
 
 @Composable
 fun MapScreen(
@@ -96,7 +94,7 @@ fun MapScreen(
     LaunchedEffect(driverLocation) {
         if (driverLocation != null && autoFollow) {
             val current = LatLng(driverLocation.lat, driverLocation.lng)
-            val shouldAnimate = lastCameraLatLng == null || distanceMeters(
+            val shouldAnimate = lastCameraLatLng == null || LocationUtils.calculateDistance(
                 lastCameraLatLng!!.latitude, lastCameraLatLng!!.longitude,
                 driverLocation.lat, driverLocation.lng
             ) > 15.0
@@ -124,7 +122,9 @@ fun MapScreen(
             try {
                 cameraState.animate(CameraUpdateFactory.newLatLngBounds(builder.build(), 120))
                 didFitBounds = true
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w("MapScreen", "Gagal animate camera ke bounds", e)
+            }
         }
     }
 
@@ -139,7 +139,9 @@ fun MapScreen(
                     LatLng(loc.latitude, loc.longitude), 16f
                 ))
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w("MapScreen", "Gagal request single location", e)
+        }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -305,13 +307,4 @@ private fun createPickupMarkerIcon(number: Int, isActive: Boolean, isDone: Boole
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
 
-private fun distanceMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
-    val R = 6371000.0
-    val dLat = Math.toRadians(lat2 - lat1)
-    val dLng = Math.toRadians(lng2 - lng1)
-    val a = sin(dLat / 2) * sin(dLat / 2) +
-            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-            sin(dLng / 2) * sin(dLng / 2)
-    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    return R * c
-}
+

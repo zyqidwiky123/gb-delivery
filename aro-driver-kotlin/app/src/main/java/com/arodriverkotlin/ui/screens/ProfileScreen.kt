@@ -2,6 +2,7 @@ package com.arodriverkotlin.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -97,7 +98,9 @@ fun ProfileScreen(
                 try {
                     val url = DriverService.uploadPhoto(state.userId ?: return@launch, it)
                     vm.updateProfileFields(photoUrl = url)
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("ProfileScreen", "Gagal upload foto profil", e)
+                }
             }
         }
     }
@@ -107,7 +110,9 @@ fun ProfileScreen(
                 try {
                     val url = DriverService.uploadQris(state.userId ?: return@launch, it)
                     vm.updateProfileFields(qrisUrl = url)
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("ProfileScreen", "Gagal upload QRIS", e)
+                }
             }
         }
     }

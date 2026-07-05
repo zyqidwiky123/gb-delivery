@@ -3,6 +3,7 @@ package com.arodriverkotlin.service
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -28,7 +29,10 @@ object LocationService {
         return try {
             val loc = fused.lastLocation.await()
             loc?.let { LocationData(it.latitude, it.longitude) }
-        } catch (_: Exception) { null }
+        } catch (e: Exception) {
+            Log.w("LocationService", "Gagal get last location", e)
+            null
+        }
     }
 
     fun observeLocation(fused: FusedLocationProviderClient): Flow<LocationData> = callbackFlow {
@@ -43,7 +47,9 @@ object LocationService {
             .build()
         try {
             fused.requestLocationUpdates(request, callback, null)
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w("LocationService", "Gagal request location updates", e)
+        }
         awaitClose { fused.removeLocationUpdates(callback) }
     }
 }
