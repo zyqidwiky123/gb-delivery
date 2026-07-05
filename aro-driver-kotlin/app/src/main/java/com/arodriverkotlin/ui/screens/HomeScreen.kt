@@ -79,6 +79,7 @@ import com.arodriverkotlin.ui.theme.SurfaceLow
 import com.arodriverkotlin.ui.theme.Warning
 import com.arodriverkotlin.viewmodel.DriverViewModel
 import com.arodriverkotlin.util.LocationUtils
+import com.arodriverkotlin.util.distanceMeters
 
 @Composable
 fun HomeScreen(vm: DriverViewModel, state: UiState) {
