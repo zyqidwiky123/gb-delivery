@@ -3,7 +3,8 @@ package com.arodriverkotlin.ui.screens
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.PowerManager
+import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -51,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.arodriverkotlin.R
+import com.arodriverkotlin.background.BatteryOptimizationHelper
 import com.arodriverkotlin.ui.theme.AroBlack
 import com.arodriverkotlin.ui.theme.AroGreen
 import com.arodriverkotlin.ui.theme.Muted
@@ -67,23 +70,29 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     else true
 
-    val powerManager = ctx.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager
-    var batteryExempt by remember { mutableStateOf(powerManager.isIgnoringBatteryOptimizations(ctx.packageName)) }
+    val fullScreenIntentGranted = if (android.os.Build.VERSION.SDK_INT >= 34)
+        ContextCompat.checkSelfPermission(ctx, Manifest.permission.USE_FULL_SCREEN_INTENT) == PackageManager.PERMISSION_GRANTED
+    else true
+
+    val batteryHelper = remember { BatteryOptimizationHelper(ctx) }
+    var batteryExempt by remember { mutableStateOf(batteryHelper.isIgnoringBatteryOptimizations()) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                batteryExempt = powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
+                batteryExempt = batteryHelper.isIgnoringBatteryOptimizations()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val permissionsStepDone = locationGranted && notifGranted
+    val foregroundStepDone = locationGranted && notifGranted
 
-    var requested by remember { mutableStateOf(permissionsStepDone && (android.os.Build.VERSION.SDK_INT < 30 || bgLocationGranted)) }
+    val allPermissionsGranted = locationGranted && notifGranted && (android.os.Build.VERSION.SDK_INT < 30 || bgLocationGranted) && fullScreenIntentGranted
+
+    var requested by remember { mutableStateOf(allPermissionsGranted && (android.os.Build.VERSION.SDK_INT < 30 || bgLocationGranted)) }
 
     // Step 2: Background location (API 30+ only, must be requested separately)
     val bgLocationLauncher = rememberLauncherForActivityResult(
@@ -110,7 +119,7 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
         }
     }
 
-    if (requested && batteryExempt) {
+    if (allPermissionsGranted) {
         onAllGranted()
         return
     }
@@ -178,6 +187,16 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                 )
             }
 
+            if (android.os.Build.VERSION.SDK_INT >= 34) {
+                Spacer(Modifier.height(12.dp))
+                PermissionItem(
+                    icon = Icons.Default.Fullscreen,
+                    title = "Layar Penuh",
+                    desc = "Notifikasi pesanan muncul dalam layar penuh",
+                    granted = fullScreenIntentGranted,
+                )
+            }
+
             Spacer(Modifier.height(12.dp))
             PermissionItem(
                 icon = Icons.Default.BatteryFull,
@@ -188,7 +207,7 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
 
             Spacer(Modifier.height(24.dp))
 
-            if (!permissionsStepDone) {
+            if (!foregroundStepDone) {
                 Button(
                     onClick = {
                         val perms = mutableListOf(
@@ -216,7 +235,32 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                 }
             }
 
-            if (permissionsStepDone && !batteryExempt) {
+            if (foregroundStepDone && !fullScreenIntentGranted && android.os.Build.VERSION.SDK_INT >= 34) {
+                Button(
+                    onClick = {
+                        val intent = Intent(
+                            Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                            Uri.parse("package:${ctx.packageName}")
+                        )
+                        ctx.startActivity(intent)
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AroGreen,
+                        contentColor = AroBlack
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) {
+                    Text(
+                        "BUKA PENGATURAN LAYAR PENUH",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        letterSpacing = 1.sp,
+                    )
+                }
+            }
+
+            if (allPermissionsGranted && !batteryExempt) {
                 Button(
                     onClick = {
                         val intent = Intent(
@@ -240,7 +284,24 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                     )
                 }
 
+                Spacer(Modifier.height(8.dp))
 
+                Button(
+                    onClick = { onAllGranted() },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF333333),
+                        contentColor = Color.White.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) {
+                    Text(
+                        "LEWATI",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        letterSpacing = 1.sp,
+                    )
+                }
             }
         }
     }

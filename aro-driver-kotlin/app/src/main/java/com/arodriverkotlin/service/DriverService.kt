@@ -72,7 +72,9 @@ object DriverService {
                         val elapsed = System.currentTimeMillis() - fsSessionStart
                         fsUpdate["todayOnlineMs"] = fsTodayMs + elapsed
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {
+                    Log.w("DRIVER", "Gagal baca FS session for fallback accumulation", e)
+                }
             }
         }
         rtdb.child("drivers/$uid").updateChildren(rtdbUpdate).await()

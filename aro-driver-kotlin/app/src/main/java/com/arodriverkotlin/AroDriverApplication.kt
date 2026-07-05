@@ -37,7 +37,9 @@ class AroDriverApplication : Application() {
                             "error" to throwable.message
                         ))
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.e("AroDriverApplication", "Gagal upload crash diagnostics", e)
+            }
             defaultHandler?.uncaughtException(thread, throwable)
         }
 
@@ -67,7 +69,9 @@ class AroDriverApplication : Application() {
                 setShowBadge(false)
             }
             nm.createNotificationChannel(fgChannel)
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("AroDriverApplication", "Gagal buat notif channel", e)
+        }
 
         IncomingOrderNotifier.createChannel(this)
     }

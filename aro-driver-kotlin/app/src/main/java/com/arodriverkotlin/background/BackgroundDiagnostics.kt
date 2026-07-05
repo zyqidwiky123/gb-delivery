@@ -94,7 +94,9 @@ class BackgroundDiagnostics(
                     .collection("diagnostics").add(entry + mapOf("type" to "transition"))
                     .await()
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal upload transitions", e)
+        }
     }
 
     private suspend fun uploadDiagnostics() {
@@ -131,7 +133,8 @@ class BackgroundDiagnostics(
     private fun getAppVersion(): String {
         return try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal dapetin app version", e)
             "unknown"
         }
     }

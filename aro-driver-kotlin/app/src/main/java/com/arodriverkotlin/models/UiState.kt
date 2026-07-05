@@ -16,4 +16,6 @@ data class UiState(
     val allTransactions: List<Transaction> = emptyList(),
     val isConnected: Boolean = true,
     val showDisconnectDialog: Boolean = false,
+    val locationPermissionRevoked: Boolean = false,
+    val showBatteryReminder: Boolean = false,
 )

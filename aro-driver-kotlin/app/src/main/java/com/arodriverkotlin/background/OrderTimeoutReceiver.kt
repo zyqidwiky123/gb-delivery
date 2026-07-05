@@ -14,16 +14,21 @@ import com.arodriverkotlin.service.OrderService
 
 class OrderTimeoutReceiver : BroadcastReceiver() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != OrderTimeoutManager.ALARM_ACTION) return
 
-        val orderId = intent.getStringExtra("orderId") ?: return
-        val uid = intent.getStringExtra("uid") ?: return
+        val pendingResult = goAsync()
+
+        val orderId = intent.getStringExtra("orderId") ?: run {
+            pendingResult.finish(); return
+        }
+        val uid = intent.getStringExtra("uid") ?: run {
+            pendingResult.finish(); return
+        }
 
         Log.i(TAG, "Alarm fired for order $orderId - auto-rejecting")
 
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         scope.launch {
             try {
                 if (!checkOrderStillPending(orderId)) {
@@ -34,6 +39,9 @@ class OrderTimeoutReceiver : BroadcastReceiver() {
                 Log.i(TAG, "Order $orderId auto-rejected, re-dispatch triggered")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to auto-reject order $orderId", e)
+            } finally {
+                pendingResult.finish()
+                scope.cancel()
             }
         }
     }
@@ -43,7 +51,8 @@ class OrderTimeoutReceiver : BroadcastReceiver() {
             val snap = FirebaseFirestore.getInstance()
                 .collection("orders").document(orderId).get().await()
             snap.exists() && snap.getString("status") == "searching"
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal cek order pending", e)
             false
         }
     }

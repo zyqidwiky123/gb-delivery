@@ -5,41 +5,53 @@ import android.os.PowerManager
 
 class SmartWakeLock(private val context: Context) {
     private val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-    private var orderWakeLock: PowerManager.WakeLock? = null
-    private var fcmWakeLock: PowerManager.WakeLock? = null
+    private var tripWakeLock: PowerManager.WakeLock? = null
+    private var incomingWakeLock: PowerManager.WakeLock? = null
 
-    fun acquireForOrder() {
-        releaseOrder()
-        orderWakeLock = powerManager.newWakeLock(
-            PowerManager.SCREEN_DIM_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
-            "ARO:OrderWakeLock"
-        ).apply { acquire(10 * 60 * 1000L) }
+    fun acquireForActiveTrip() {
+        releaseTrip()
+        tripWakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "ARO:TripWakeLock"
+        ).apply { acquire() }
     }
 
-    fun acquireForFcm() {
-        releaseFcm()
-        fcmWakeLock = powerManager.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK,
-            "ARO:FcmWakeLock"
+    fun acquireForIncomingOrder() {
+        releaseIncoming()
+        incomingWakeLock = powerManager.newWakeLock(
+            PowerManager.SCREEN_DIM_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+            "ARO:IncomingWakeLock"
         ).apply { acquire(10_000L) }
     }
 
     fun releaseAll() {
-        releaseOrder()
-        releaseFcm()
+        releaseTrip()
+        releaseIncoming()
     }
 
-    private fun releaseOrder() {
-        orderWakeLock?.let {
+    private fun releaseTrip() {
+        tripWakeLock?.let {
             if (it.isHeld) it.release()
-            orderWakeLock = null
+            tripWakeLock = null
         }
     }
 
-    private fun releaseFcm() {
-        fcmWakeLock?.let {
+    private fun releaseIncoming() {
+        incomingWakeLock?.let {
             if (it.isHeld) it.release()
-            fcmWakeLock = null
+            incomingWakeLock = null
+        }
+    }
+
+    companion object {
+        fun acquireForFcm(context: Context): PowerManager.WakeLock {
+            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val wakeLock = pm.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "ARO:FcmWakeLock"
+            )
+            wakeLock.acquire(10_000L)
+            return wakeLock
         }
     }
 }

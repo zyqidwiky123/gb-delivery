@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.arodriverkotlin.database.AppDatabase
+import com.arodriverkotlin.database.SyncCoordinator
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -39,8 +41,10 @@ class BackgroundSyncWorker(
 
             val uid = inputData.getString("uid")
             if (uid != null) {
-                syncPendingLocations(uid)
-                syncPendingActions(uid)
+                SyncCoordinator.syncMutex.withLock {
+                    syncPendingLocations(uid)
+                    syncPendingActions(uid)
+                }
             }
 
             Log.i(TAG, "Background sync completed successfully")
@@ -131,7 +135,11 @@ class BackgroundSyncWorker(
                         true
                     }
                     "pickup" -> {
-                        com.arodriverkotlin.service.OrderService.pickupOrder(action.orderId, 0, 1)
+                        val orderSnap = FirebaseFirestore.getInstance()
+                            .collection("orders").document(action.orderId).get().await()
+                        val pickupsDone = orderSnap.getLong("pickupsDone") ?: 0L
+                        val pickupCount = orderSnap.getLong("pickupCount")?.toInt() ?: 1
+                        com.arodriverkotlin.service.OrderService.pickupOrder(action.orderId, pickupsDone, pickupCount)
                         true
                     }
                     "complete" -> {

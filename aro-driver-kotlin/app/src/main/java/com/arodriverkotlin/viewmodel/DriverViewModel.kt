@@ -11,6 +11,8 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.arodriverkotlin.background.BackgroundSyncWorker
+import com.arodriverkotlin.background.BatteryOptimizationHelper
+import com.arodriverkotlin.background.WatchdogWorker
 import com.arodriverkotlin.database.AppDatabase
 import com.arodriverkotlin.database.entity.PendingAction
 import com.arodriverkotlin.models.UiState
@@ -117,9 +119,11 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             DriverService.toggleOnline(uid, wasOnline)
             if (newOnline) {
                 ForegroundService.start(getApplication(), uid)
+                WatchdogWorker.schedule(getApplication())
                 scheduleBackgroundSync(uid)
             } else {
                 ForegroundService.stop(getApplication())
+                WatchdogWorker.cancel(getApplication())
                 cancelBackgroundSync()
             }
         } catch (e: Exception) {
@@ -261,7 +265,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         try {
             WalletService.requestTopup(uid, name, amount, method)
             postMessage("Top up diajukan.")
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal request topup", e)
+        }
     }
 
     fun updateProfile(data: Map<String, Any>) = viewModelScope.launch {
@@ -269,7 +275,9 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
         try {
             DriverService.updateProfile(uid, data)
             postMessage("Profile diperbarui.")
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal update profile", e)
+        }
     }
 
     fun updateProfileFields(
@@ -294,12 +302,18 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 DriverService.updateProfile(uid, data)
                 postMessage("Profile diperbarui.")
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w(TAG, "Gagal update profile fields", e)
+            }
         }
     }
 
     fun dismissMessage() {
         _state.value = _state.value.copy(message = null)
+    }
+
+    fun dismissLocationRevoke() {
+        _state.value = _state.value.copy(locationPermissionRevoked = false)
     }
 
     fun dismissDisconnectDialog() {
@@ -348,6 +362,16 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun bindListeners(uid: String) {
         val db = FirebaseFirestore.getInstance()
+
+        // Location permission revoke check
+        if (ForegroundService.locationPermissionRevoked) {
+            _state.value = _state.value.copy(locationPermissionRevoked = true)
+        }
+
+        // Battery optimization reminder
+        if (!BatteryOptimizationHelper(getApplication()).isIgnoringBatteryOptimizations()) {
+            postMessage("Aktifkan 'Tanpa Batasan Baterai' di Pengaturan untuk performa terbaik")
+        }
 
         profileListener = db.collection("drivers").document(uid)
             .addSnapshotListener { snap, error ->
@@ -587,7 +611,8 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                         .collection("settings").document("platform")
                         .get()
                         .await()
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    Log.w(TAG, "Firestore health check failed", e)
                     if (_state.value.profile?.isOnline == true) {
                         reconnect()
                     }
@@ -595,12 +620,19 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
                 }
 
                 if (profile.isOnline) {
+                    // Check location permission revoke
+                    if (ForegroundService.locationPermissionRevoked) {
+                        _state.value = _state.value.copy(locationPermissionRevoked = true)
+                    }
+
                     // Daily limit check: >=12 jam hari ini
                     if (profile.todayOnlineMs >= 12 * 3600_000L) {
                         try {
                             DriverService.toggleOnline(uid, true)
                             postMessage("Batas online 12 jam hari ini tercapai.")
-                        } catch (_: Exception) {}
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Gagal toggle offline after daily limit", e)
+                        }
                         continue
                     }
 

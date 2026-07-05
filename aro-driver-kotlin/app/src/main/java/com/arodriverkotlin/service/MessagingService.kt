@@ -1,8 +1,7 @@
 package com.arodriverkotlin.service
 
-import android.content.Context
-import android.os.PowerManager
 import android.util.Log
+import com.arodriverkotlin.background.SmartWakeLock
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,9 +26,7 @@ class MessagingService : FirebaseMessagingService() {
 
         ForegroundService.start(this, uid)
 
-        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        val wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ARO_DRIVE:FCM")
-        wakeLock.acquire(10_000)
+        val fcmWakeLock = SmartWakeLock.acquireForFcm(this)
         try {
             val data = message.data
             if (data["type"] == "NEW_ORDER") {
@@ -39,11 +36,11 @@ class MessagingService : FirebaseMessagingService() {
                 if (orderId != null) {
                     Log.d(TAG, "NEW_ORDER FCM received: $orderId")
                     IncomingOrderNotifier.createChannel(this)
-                    IncomingOrderNotifier.show(this, orderId, title, body)
+                    IncomingOrderNotifier.show(this, orderId, title, body, uid)
                 }
             }
         } finally {
-            if (wakeLock.isHeld) wakeLock.release()
+            if (fcmWakeLock.isHeld) fcmWakeLock.release()
         }
     }
 

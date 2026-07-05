@@ -1,5 +1,6 @@
 package com.arodriverkotlin.service
 
+import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,8 @@ object DirectionsService {
                 .getJSONObject("overview_polyline")
                 .getString("points")
             PolyUtil.decode(points)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("DirectionsService", "Gagal decode directions polyline", e)
             emptyList()
         }
     }

@@ -51,6 +51,8 @@ class TripStateMachine(
     @Volatile private var pickupLng: Double? = null
     @Volatile private var dropoffLat: Double? = null
     @Volatile private var dropoffLng: Double? = null
+    @Volatile private var isLoaded = false
+    private val pendingGeofenceEvents = mutableListOf<Pair<String, Int>>()
 
     fun getCurrentState(): String = currentState
     fun getCurrentOrderId(): String? = currentOrderId
@@ -150,7 +152,9 @@ class TripStateMachine(
     private suspend fun acknowledgeOrder(orderId: String) {
         try {
             rtdbRef.child("drivers/$uid/incoming/$orderId").removeValue().await()
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal hapus incoming RTDB node", e)
+        }
     }
 
     private fun clearOrder() {
@@ -162,6 +166,14 @@ class TripStateMachine(
     }
 
     fun handleGeofenceTransition(geofenceId: String, transitionType: Int) {
+        if (!isLoaded) {
+            synchronized(pendingGeofenceEvents) {
+                pendingGeofenceEvents.add(geofenceId to transitionType)
+            }
+            Log.d(TAG, "Geofence event queued (loading): $geofenceId")
+            return
+        }
+
         scope.launch {
             val orderId = geofenceId.substringAfter("_")
             if (orderId != currentOrderId) return@launch
@@ -212,15 +224,35 @@ class TripStateMachine(
                     version = snap.child("version").getValue(Int::class.java) ?: 0
                 )
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal sync trip state", e)
+        }
 
         val stateToUse = when {
             rtdbState != null && localState != null && rtdbState.version > localState.version -> rtdbState
             rtdbState != null && localState == null -> rtdbState
             localState != null -> localState
-            else -> return
+            else -> null
         }
-        applyState(stateToUse)
+        if (stateToUse != null) {
+            applyState(stateToUse)
+        }
+        isLoaded = true
+        flushPendingGeofenceEvents()
+    }
+
+    private fun flushPendingGeofenceEvents() {
+        val events: List<Pair<String, Int>>
+        synchronized(pendingGeofenceEvents) {
+            events = pendingGeofenceEvents.toList()
+            pendingGeofenceEvents.clear()
+        }
+        if (events.isNotEmpty()) {
+            Log.i(TAG, "Processing ${events.size} queued geofence events after load")
+            events.forEach { (geofenceId, transitionType) ->
+                handleGeofenceTransition(geofenceId, transitionType)
+            }
+        }
     }
 
     private fun applyState(state: TripState) {

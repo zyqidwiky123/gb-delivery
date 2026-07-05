@@ -147,7 +147,7 @@ class DebugOverlayService : Service() {
         private const val UPDATE_INTERVAL_MS = 2000L
         fun start(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(Intent(context, DebugOverlayService::class.java))
+                context.startService(Intent(context, DebugOverlayService::class.java))
             } else {
                 context.startService(Intent(context, DebugOverlayService::class.java))
             }

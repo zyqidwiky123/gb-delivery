@@ -16,7 +16,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.arodriverkotlin.MainActivity
 import com.arodriverkotlin.background.BackgroundDiagnostics
-import com.arodriverkotlin.background.BackgroundNavigationManager
 import com.arodriverkotlin.background.GeofenceEventHandler
 import com.arodriverkotlin.background.GeofenceManager
 import com.arodriverkotlin.background.OfflineQueueProcessor
@@ -25,6 +24,7 @@ import com.arodriverkotlin.background.TripStateMachine
 import com.arodriverkotlin.background.SmartWakeLock
 import com.arodriverkotlin.database.AppDatabase
 import com.arodriverkotlin.database.entity.PendingLocation
+import com.arodriverkotlin.util.LocationUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -42,7 +42,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.math.*
 
 class ForegroundService : Service() {
 
@@ -53,6 +52,8 @@ class ForegroundService : Service() {
     @Volatile private var lastUploadedLng = 0.0
     @Volatile private var lastUploadTime = 0L
     @Volatile private var latestSpeed: Float? = null
+    private var smoothedSpeed = 0f
+    private val speedSmoothingFactor = 0.3f
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var realtimeOrderListener: RealtimeOrderListener? = null
@@ -60,11 +61,9 @@ class ForegroundService : Service() {
     private var offlineQueueProcessor: OfflineQueueProcessor? = null
     private var tripStateMachine: TripStateMachine? = null
     private var geofenceManager: GeofenceManager? = null
-    private var navigationManager: BackgroundNavigationManager? = null
     private var orderTimeoutManager: OrderTimeoutManager? = null
     private var diagnostics: BackgroundDiagnostics? = null
     private var smartWakeLock: SmartWakeLock? = null
-    private var permissionMonitor: PermissionMonitor? = null
 
     private var driverUid: String? = null
 
@@ -83,32 +82,38 @@ class ForegroundService : Service() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
-                val loc = result.lastLocation ?: return
-                val uid = driverUid ?: return
+                try {
+                    val loc = result.lastLocation ?: return
+                    val uid = driverUid ?: return
 
-                latestLat = loc.latitude
-                latestLng = loc.longitude
-                latestSpeed = loc.speed
+                    latestLat = loc.latitude
+                    latestLng = loc.longitude
+                    latestSpeed = loc.speed
+                    smoothedSpeed = smoothedSpeed * (1f - speedSmoothingFactor) + (loc.speed ?: 0f) * speedSmoothingFactor
 
-                val now = System.currentTimeMillis()
-                val distance = if (lastUploadTime > 0L) {
-                    calculateDistance(lastUploadedLat, lastUploadedLng, loc.latitude, loc.longitude)
-                } else Double.MAX_VALUE
+                    val now = System.currentTimeMillis()
+                    val distance = if (lastUploadTime > 0L) {
+                        LocationUtils.calculateDistance(lastUploadedLat, lastUploadedLng, loc.latitude, loc.longitude)
+                    } else Double.MAX_VALUE
 
-                val timeSinceLastUpload = now - lastUploadTime
-                val hasActiveOrder = currentOrderId != null
+                    val timeSinceLastUpload = now - lastUploadTime
+                    val hasActiveOrder = currentOrderId != null
 
-                val shouldUpload =
-                    distance >= ConfigService.getMovementThresholdM() ||
-                    (!hasActiveOrder && timeSinceLastUpload >= ConfigService.getIdleHeartbeatMs())
+                    val shouldUpload =
+                        distance >= ConfigService.getMovementThresholdM() ||
+                        (!hasActiveOrder && timeSinceLastUpload >= ConfigService.getIdleHeartbeatMs())
 
-                bufferLocation(uid, loc.latitude, loc.longitude, currentOrderId)
+                    bufferLocation(uid, loc.latitude, loc.longitude, currentOrderId)
 
-                if (shouldUpload) {
-                    lastUploadedLat = loc.latitude
-                    lastUploadedLng = loc.longitude
-                    lastUploadTime = now
-                    flushLocationBuffer(uid)
+                    if (shouldUpload) {
+                        lastUploadedLat = loc.latitude
+                        lastUploadedLng = loc.longitude
+                        lastUploadTime = now
+                        flushLocationBuffer(uid)
+                    }
+                } catch (e: SecurityException) {
+                    Log.w(TAG, "Location permission revoked during callback", e)
+                    locationPermissionRevoked = true
                 }
             }
         }
@@ -153,20 +158,10 @@ class ForegroundService : Service() {
         val locationDao = db.locationDao()
         serviceScope.launch {
             locationDao.insertAll(toFlush)
-            offlineQueueProcessor?.let { it.processQueue() }
         }
     }
 
-    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371000.0
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = (sin(dLat / 2).pow(2) +
-                cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-                sin(dLon / 2).pow(2)).coerceIn(0.0, 1.0)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
-    }
+
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = buildNotification()
@@ -176,6 +171,7 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
         if (uid != null) {
             driverUid = uid
             persistDriverUid(uid)
+            locationPermissionRevoked = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
             startLocationUpdates()
             fetchAndUploadLastLocation(uid)
             orderTimeoutManager = OrderTimeoutManager(this, uid, ConfigService.getAcceptTimeoutMs())
@@ -190,7 +186,7 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
                 onTripStateChanged = { hasActiveTrip ->
                     com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance()
                         .setCustomKey("last_state", tripStateMachine?.getCurrentState() ?: "none")
-                    if (hasActiveTrip) smartWakeLock?.acquireForOrder()
+                    if (hasActiveTrip) smartWakeLock?.acquireForActiveTrip()
                     else smartWakeLock?.releaseAll()
                     updateLocationIntervalForTripState(hasActiveTrip)
                 }
@@ -201,17 +197,8 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
             GeofenceEventHandler.setHandler { ctx, geofenceId, transitionType ->
                 tripStateMachine?.handleGeofenceTransition(geofenceId, transitionType)
             }
-            navigationManager = BackgroundNavigationManager(this, uid)
             diagnostics = BackgroundDiagnostics(this, uid).apply { start() }
             smartWakeLock = SmartWakeLock(this)
-            permissionMonitor = PermissionMonitor(this) { permission ->
-                Log.w(TAG, "Permission lost: $permission")
-                if (permission == Manifest.permission.ACCESS_FINE_LOCATION) {
-                    currentPriority = Priority.PRIORITY_LOW_POWER
-                    fusedLocationClient.removeLocationUpdates(locationCallback)
-                    startLocationUpdates()
-                }
-            }
             offlineQueueProcessor = OfflineQueueProcessor(this, uid).apply {
                 onStart()
             }
@@ -229,8 +216,10 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
         super.onTrimMemory(level)
         when (level) {
             ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> {
-                Log.d(TAG, "TRIM_MEMORY_UI_HIDDEN - reducing non-critical resources")
-                // Clear non-essential caches
+                val uid = driverUid
+                if (uid != null) {
+                    flushLocationBuffer(uid)
+                }
                 synchronized(locationBuffer) {
                     if (locationBuffer.size > 20) {
                         locationBuffer.clear()
@@ -251,9 +240,9 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
         fusedLocationClient.removeLocationUpdates(locationCallback)
         realtimeOrderListener?.stopListening()
         firestoreOrderFallback?.remove()
+        GeofenceEventHandler.setHandler(null)
         geofenceManager?.shutdown()
         tripStateMachine?.shutdown()
-        navigationManager?.shutdown()
         orderTimeoutManager?.shutdown()
         offlineQueueProcessor?.onStop()
         smartWakeLock?.releaseAll()
@@ -268,9 +257,14 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
             .build()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            locationPermissionRevoked = false
             try {
                 fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w(TAG, "Gagal request location updates", e)
+            }
+        } else {
+            locationPermissionRevoked = true
         }
     }
 
@@ -288,12 +282,14 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
                         }
                     }
                 }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Gagal fetch last location", e)
+        }
     }
 
     fun updateLocationIntervalForTripState(hasActiveTrip: Boolean) {
         if (hasActiveTrip) {
-            val speed = (latestSpeed ?: 0f) * 3.6f
+            val speed = smoothedSpeed * 3.6f
             currentLocationIntervalMs = when {
                 speed > 40f -> 5000L
                 speed > 20f -> 3000L
@@ -318,11 +314,13 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
     private fun startListeningForOrders(uid: String) {
         if (realtimeOrderListener != null) return
         realtimeOrderListener = RealtimeOrderListener(uid) { orderId ->
+            smartWakeLock?.acquireForIncomingOrder()
             IncomingOrderNotifier.show(
                 context = this@ForegroundService,
                 orderId = orderId,
                 title = getString(com.arodriverkotlin.R.string.incoming_order_title),
                 body = getString(com.arodriverkotlin.R.string.incoming_order_body),
+                uid = uid,
             )
             orderTimeoutManager?.startAcceptanceTimeout(orderId, ConfigService.getAcceptTimeoutMs())
         }
@@ -345,11 +343,13 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
                     ?.filter { it.type == DocumentChange.Type.ADDED }
                     ?.forEach { change ->
                         val orderId = change.document.id
+                        smartWakeLock?.acquireForIncomingOrder()
                         IncomingOrderNotifier.show(
                             context = this@ForegroundService,
                             orderId = orderId,
                             title = getString(com.arodriverkotlin.R.string.incoming_order_title),
                             body = getString(com.arodriverkotlin.R.string.incoming_order_body),
+                            uid = uid,
                         )
                         orderTimeoutManager?.startAcceptanceTimeout(orderId, ConfigService.getAcceptTimeoutMs())
                     }
@@ -366,7 +366,7 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
         )
 
         return NotificationCompat.Builder(this, FOREGROUND_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(com.arodriverkotlin.R.drawable.ic_notification)
             .setContentTitle("ARO DRIVE")
             .setContentText("Menjalankan layanan latar belakang...")
             .setOngoing(true)
@@ -376,7 +376,10 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
     }
 
     companion object {
-        @Volatile var currentOrderId: String? = null
+        @Volatile
+    var currentOrderId: String? = null
+    @Volatile
+    var locationPermissionRevoked = false
         @Volatile var latestLat: Double? = null
         @Volatile var latestLng: Double? = null
 
@@ -403,6 +406,7 @@ val uid = intent?.getStringExtra(EXTRA_UID) ?: storedDriverUid()
                 .edit()
                 .remove(STORED_DRIVER_UID)
                 .apply()
+            com.arodriverkotlin.background.WatchdogWorker.cancel(ctx)
             ctx.stopService(Intent(ctx, ForegroundService::class.java))
         }
     }
