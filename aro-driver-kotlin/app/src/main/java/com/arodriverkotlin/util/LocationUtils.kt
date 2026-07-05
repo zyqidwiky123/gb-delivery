@@ -12,3 +12,7 @@ object LocationUtils {
         return R * c
     }
 }
+
+fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    return LocationUtils.calculateDistance(lat1, lon1, lat2, lon2)
+}
