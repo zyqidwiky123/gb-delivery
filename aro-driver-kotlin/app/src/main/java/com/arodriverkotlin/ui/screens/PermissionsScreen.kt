@@ -63,6 +63,24 @@ import com.arodriverkotlin.ui.theme.Warning
 fun PermissionsScreen(onAllGranted: () -> Unit) {
     val ctx = LocalContext.current
 
+    val batteryHelper = remember { BatteryOptimizationHelper(ctx) }
+    var batteryExempt by remember { mutableStateOf(batteryHelper.isIgnoringBatteryOptimizations()) }
+
+    // Force recomposition on every resume to re-check permission states
+    var resumeTick by remember { mutableStateOf(0) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                batteryExempt = batteryHelper.isIgnoringBatteryOptimizations()
+                resumeTick++
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Re-check permissions on every recomposition (resumeTick forces this)
     val locationGranted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     val bgLocationGranted = if (android.os.Build.VERSION.SDK_INT >= 30)
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -70,30 +88,15 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
     val notifGranted = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     else true
-
     val fullScreenIntentGranted = if (android.os.Build.VERSION.SDK_INT >= 34)
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.USE_FULL_SCREEN_INTENT) == PackageManager.PERMISSION_GRANTED
     else true
 
-    val batteryHelper = remember { BatteryOptimizationHelper(ctx) }
-    var batteryExempt by remember { mutableStateOf(batteryHelper.isIgnoringBatteryOptimizations()) }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                batteryExempt = batteryHelper.isIgnoringBatteryOptimizations()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
     val foregroundStepDone = locationGranted && notifGranted
-
     val allPermissionsGranted = locationGranted && notifGranted && fullScreenIntentGranted
 
-    var requested by remember { mutableStateOf(allPermissionsGranted) }
+    // Force recomposition trigger — always set in callbacks regardless of results
+    var requested by remember { mutableStateOf(false) }
 
     // Step 2: Background location (API 30+ only, must be requested separately)
     var bgLocationDeniedOnce by remember { mutableStateOf(false) }
@@ -102,28 +105,29 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (!granted) bgLocationDeniedOnce = true
-        requested = true
+        requested = !requested
     }
 
     // Step 1: Foreground permissions (location + notif)
     val foregroundLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { granted ->
-        val locOk = granted[Manifest.permission.ACCESS_FINE_LOCATION] == true
-        val notifOk = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
-            granted[Manifest.permission.POST_NOTIFICATIONS] == true
-        else true
-        if (locOk && notifOk) {
-            requested = true
-        }
+    ) {
+        requested = !requested
     }
 
-    val bgLocationDone = bgLocationGranted || bgLocationSkipped || android.os.Build.VERSION.SDK_INT < 30
+    // Full screen intent skip flag
+    var fullScreenSkipped by remember { mutableStateOf(false) }
 
-    if (allPermissionsGranted && bgLocationDone) {
+    val requiredGranted = locationGranted && notifGranted
+    val bgLocationDone = bgLocationGranted || bgLocationSkipped || android.os.Build.VERSION.SDK_INT < 30
+    val fullScreenDone = fullScreenIntentGranted || fullScreenSkipped || android.os.Build.VERSION.SDK_INT < 34
+
+    if (requiredGranted && bgLocationDone && fullScreenDone && batteryExempt) {
         onAllGranted()
         return
     }
+
+
 
     Box(
         Modifier.fillMaxSize().background(AroBlack),
@@ -294,6 +298,25 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                         letterSpacing = 1.sp,
                     )
                 }
+
+                Spacer(Modifier.height(8.dp))
+
+                Button(
+                    onClick = { fullScreenSkipped = true },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF333333),
+                        contentColor = Color.White.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                ) {
+                    Text(
+                        "LEWATI",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        letterSpacing = 1.sp,
+                    )
+                }
             }
 
             // Background location (API 30+)
@@ -384,7 +407,7 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
                 }
             }
 
-            if (allPermissionsGranted && !batteryExempt) {
+            if (requiredGranted && bgLocationDone && fullScreenDone && !batteryExempt) {
                 Button(
                     onClick = {
                         val intent = Intent(
