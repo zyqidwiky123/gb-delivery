@@ -61,7 +61,7 @@ import com.arodriverkotlin.models.DriverOrder
 import com.arodriverkotlin.models.UiState
 import com.arodriverkotlin.service.DirectionsService
 import com.arodriverkotlin.service.TripService
-import com.arodriverkotlin.service.LocationData
+import com.arodriverkotlin.location.LocationData
 import com.arodriverkotlin.service.rupiah
 import com.google.android.gms.maps.model.LatLng
 import com.arodriverkotlin.ui.components.OrderCard
@@ -85,9 +85,9 @@ import com.arodriverkotlin.util.distanceMeters
 fun HomeScreen(vm: DriverViewModel, state: UiState) {
     val ctx = LocalContext.current
     val loc = state.currentLat?.let { lat ->
-        state.currentLng?.let { lng -> LocationData(lat, lng) }
+        state.currentLng?.let { lng -> LocationData(latitude = lat, longitude = lng) }
     } ?: TripService.latestLat?.let { lat ->
-        TripService.latestLng?.let { lng -> LocationData(lat, lng) }
+        TripService.latestLng?.let { lng -> LocationData(latitude = lat, longitude = lng) }
     }
     val activeJob = state.active.firstOrNull()
 
@@ -103,7 +103,7 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
     var lastRouteDest by remember { mutableStateOf<LatLng?>(null) }
     LaunchedEffect(activeJob?.id, activeJob?.status, loc) {
         if (activeJob != null && loc != null) {
-            val origin = LatLng(loc.lat, loc.lng)
+            val origin = LatLng(loc.latitude, loc.longitude)
             val pickupTarget = if (activeJob.pickups.isNotEmpty()) {
                     val idx = activeJob.pickupsDone.toInt()
                     val target = activeJob.pickups.getOrNull(idx)

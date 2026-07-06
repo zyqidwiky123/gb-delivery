@@ -71,7 +71,6 @@ class GoogleLocationEngine(private val context: Context) : LocationEngine {
         }
         return LocationRequest.Builder(priority, config.intervalMs)
             .setMinUpdateIntervalMillis(config.minIntervalMs)
-            .setSmallestDisplacement(config.smallestDisplacementM)
             .setMaxUpdateDelayMillis(config.maxWaitTimeMs)
             .build()
     }
@@ -81,12 +80,6 @@ class GoogleLocationEngine(private val context: Context) : LocationEngine {
             override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
                 val locations = result.locations?.map { it.toLocationData() } ?: emptyList()
                 callback.onLocationResult(LocationResult(locations))
-            }
-            override fun onProviderEnabled(provider: String) {
-                callback.onProviderEnabled(provider)
-            }
-            override fun onProviderDisabled(provider: String) {
-                callback.onProviderDisabled(provider)
             }
         }
     }

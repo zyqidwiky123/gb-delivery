@@ -44,7 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arodriverkotlin.models.DriverOrder
-import com.arodriverkotlin.service.LocationData
+import com.arodriverkotlin.location.LocationData
 import com.arodriverkotlin.ui.theme.AroGreen
 import com.arodriverkotlin.ui.theme.GlassBg
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -85,7 +85,7 @@ fun MapScreen(
 
     val cameraState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
-            LatLng(driverLocation?.lat ?: -8.0983, driverLocation?.lng ?: 112.1681),
+            LatLng(driverLocation?.latitude ?: -8.0983, driverLocation?.longitude ?: 112.1681),
             15f
         )
     }
@@ -93,10 +93,10 @@ fun MapScreen(
     // Auto-follow when driver location updates (15m threshold to avoid jitter)
     LaunchedEffect(driverLocation) {
         if (driverLocation != null && autoFollow) {
-            val current = LatLng(driverLocation.lat, driverLocation.lng)
+            val current = LatLng(driverLocation.latitude, driverLocation.longitude)
             val shouldAnimate = lastCameraLatLng == null || LocationUtils.calculateDistance(
                 lastCameraLatLng!!.latitude, lastCameraLatLng!!.longitude,
-                driverLocation.lat, driverLocation.lng
+                driverLocation.latitude, driverLocation.longitude
             ) > 15.0
             if (shouldAnimate) {
                 cameraState.animate(CameraUpdateFactory.newLatLngZoom(current, 16f))
@@ -110,7 +110,7 @@ fun MapScreen(
     LaunchedEffect(routePoints, activeOrder) {
         if (!didFitBounds && routePoints.size > 1 && activeOrder != null && driverLocation != null) {
             val builder = LatLngBounds.builder()
-            builder.include(LatLng(driverLocation.lat, driverLocation.lng))
+            builder.include(LatLng(driverLocation.latitude, driverLocation.longitude))
             routePoints.forEach { builder.include(it) }
             activeOrder.pickups.forEach { p ->
                 if (p.lat != null && p.lng != null) builder.include(LatLng(p.lat, p.lng))
@@ -220,7 +220,7 @@ fun MapScreen(
                     if (driverLocation != null) {
                         scope.launch {
                             cameraState.animate(CameraUpdateFactory.newLatLngZoom(
-                                LatLng(driverLocation.lat, driverLocation.lng), 16f
+                                LatLng(driverLocation.latitude, driverLocation.longitude), 16f
                             ))
                         }
                     } else {
@@ -250,7 +250,7 @@ fun MapScreen(
                     else -> null
                 }
                 if (dest != null) {
-                    val uri = "https://www.google.com/maps/dir/?api=1&origin=${driverLocation.lat},${driverLocation.lng}&destination=$dest&travelmode=driving"
+                    val uri = "https://www.google.com/maps/dir/?api=1&origin=${driverLocation.latitude},${driverLocation.longitude}&destination=$dest&travelmode=driving"
                     Row(
                         Modifier
                             .clip(RoundedCornerShape(14.dp))
