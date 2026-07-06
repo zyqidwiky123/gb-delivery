@@ -39,7 +39,7 @@ object OrderDispatcher {
             serviceType = serviceType,
             uid = uid,
             orderId = orderId,
-            stateClass = stateClass as Class<Enum<*>>,
+            stateClass = stateClass as Class<out Enum<*>>,
             onStateChanged = onStateChanged as? ((Enum<*>, Boolean) -> Unit)
         )
         activeMachines[orderId] = machine

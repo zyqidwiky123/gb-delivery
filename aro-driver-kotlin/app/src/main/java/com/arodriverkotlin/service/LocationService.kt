@@ -8,6 +8,7 @@ import com.arodriverkotlin.location.LocationData
 import com.arodriverkotlin.location.LocationKit
 import com.arodriverkotlin.location.LocationConfig
 import com.arodriverkotlin.location.LocationPriority
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 

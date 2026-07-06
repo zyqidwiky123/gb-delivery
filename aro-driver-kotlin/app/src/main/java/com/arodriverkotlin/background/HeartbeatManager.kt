@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ServerValue
 import kotlinx.coroutines.*
+import kotlinx.coroutines.tasks.await
 
 class HeartbeatManager(
     private val context: Context,
@@ -49,9 +50,5 @@ class HeartbeatManager(
     fun shutdown() {
         stop()
         scope.cancel()
-    }
-
-    private suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T {
-        return kotlinx.coroutines.tasks.await(this)
     }
 }

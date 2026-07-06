@@ -3,7 +3,7 @@ package com.arodriverkotlin.location
 import android.content.Context
 import android.util.Log
 
-class LocationKit(context: Context) {
+class LocationKit(private val context: Context) {
 
     val engine: LocationEngine
     val qualityMonitor: LocationQualityMonitor
