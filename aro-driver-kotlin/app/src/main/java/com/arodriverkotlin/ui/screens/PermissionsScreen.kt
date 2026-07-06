@@ -32,14 +32,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,21 +66,20 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
     val batteryHelper = remember { BatteryOptimizationHelper(ctx) }
     var batteryExempt by remember { mutableStateOf(batteryHelper.isIgnoringBatteryOptimizations()) }
 
-    // Force recomposition on every resume to re-check permission states
-    var resumeTick by remember { mutableStateOf(0) }
+    // Force recomposition on EVERY onResume — no dependency on launcher callbacks
+    var refreshKey by remember { mutableStateOf(0) }
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                batteryExempt = batteryHelper.isIgnoringBatteryOptimizations()
-                resumeTick++
-            }
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            batteryExempt = batteryHelper.isIgnoringBatteryOptimizations()
+            refreshKey++
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
+    // Establish read dependency so LaunchedEffect writes trigger recomposition
+    @Suppress("UNUSED_EXPRESSION")
+    refreshKey
 
-    // Re-check permissions on every recomposition (resumeTick forces this)
+    // Re-evaluated on EVERY recomposition (guaranteed by refreshKey on every resume)
     val locationGranted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     val bgLocationGranted = if (android.os.Build.VERSION.SDK_INT >= 30)
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -95,9 +94,6 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
     val foregroundStepDone = locationGranted && notifGranted
     val allPermissionsGranted = locationGranted && notifGranted && fullScreenIntentGranted
 
-    // Force recomposition trigger — always set in callbacks regardless of results
-    var requested by remember { mutableStateOf(false) }
-
     // Step 2: Background location (API 30+ only, must be requested separately)
     var bgLocationDeniedOnce by remember { mutableStateOf(false) }
     var bgLocationSkipped by remember { mutableStateOf(false) }
@@ -105,15 +101,12 @@ fun PermissionsScreen(onAllGranted: () -> Unit) {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (!granted) bgLocationDeniedOnce = true
-        requested = !requested
     }
 
     // Step 1: Foreground permissions (location + notif)
     val foregroundLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        requested = !requested
-    }
+    ) { }
 
     // Full screen intent skip flag
     var fullScreenSkipped by remember { mutableStateOf(false) }
