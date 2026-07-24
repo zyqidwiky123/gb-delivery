@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase/config';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAdminStore } from '../store/adminStore';
 
 function Login() {
@@ -19,56 +19,22 @@ function Login() {
     setError('');
 
     try {
-      // 1. Authenticate with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Check for 'admin' role in Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
+
       if (userDoc.exists() && userDoc.data().role === 'admin') {
         setAdminUser({ ...user, role: 'admin' });
         navigate('/');
       } else {
-        // Fallback: Jika ini email admin khusus dan data belum ada di Firestore
-        if (email === 'zyqidwiky@gmail.com') {
-          await setDoc(doc(db, 'users', user.uid), {
-            email: user.email,
-            role: 'admin',
-            createdAt: new Date().toISOString()
-          });
-          setAdminUser({ ...user, role: 'admin' });
-          navigate('/');
-        } else {
-          await auth.signOut();
-          setError('Akses Ditolak: Akun Anda tidak memiliki hak akses Admin.');
-        }
+        await auth.signOut();
+        setError('Akses Ditolak: Akun Anda tidak memiliki hak akses Admin.');
       }
     } catch (err) {
       console.error("Firebase Auth Error:", err);
-      
-      // Kasus khusus: Jika akun belum ada di Auth, kita coba daftarkan otomatis (hanya untuk email ini)
-      if ((err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') && email === 'zyqidwiky@gmail.com') {
-        try {
-          const newCredential = await createUserWithEmailAndPassword(auth, email, password);
-          const newUser = newCredential.user;
-          await setDoc(doc(db, 'users', newUser.uid), {
-            email: newUser.email,
-            role: 'admin',
-            createdAt: new Date().toISOString()
-          });
-          setAdminUser({ ...newUser, role: 'admin' });
-          navigate('/');
-          return;
-        } catch (createErr) {
-          console.error("Registry Error:", createErr);
-          if (createErr.code === 'auth/operation-not-allowed') {
-            setError('Error: Metode Email/Password belum diaktifkan di Firebase Console.');
-          } else {
-            setError('Gagal membuat akun Admin: ' + createErr.message);
-          }
-        }
-      } else if (err.code === 'auth/invalid-credential') {
+
+      if (err.code === 'auth/invalid-credential') {
         setError('Email atau Password salah.');
       } else if (err.code === 'auth/operation-not-allowed') {
         setError('Metode Login Email/Password belum diaktifkan di Firebase Console.');

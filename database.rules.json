@@ -1,14 +1,14 @@
 {
   "rules": {
     "drivers": {
-      ".read": "auth != null",
-      "$uid": {
-        ".read": "auth != null",
-        ".write": "auth.uid === $uid",
-        "location": {
-          ".read": "auth != null",
-          ".write": "auth.uid === $uid"
-        }
+      ".read": "auth != null && (
+        root.child('users').child(auth.uid).child('role').val() === 'admin'
+      )",
+      "$driverId": {
+        ".write": "auth.uid === $driverId ||
+          root.child('users').child(auth.uid).child('role').val() === 'admin'",
+        ".read": "auth.uid === $driverId ||
+          root.child('users').child(auth.uid).child('role').val() === 'admin'"
       }
     }
   }

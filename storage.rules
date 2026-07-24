@@ -1,21 +1,40 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    match /qris/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+
+    function isAdmin() {
+      return firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid))
+        || (firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+          && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == "admin");
     }
-    
+
+    match /merchants/{merchantId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /drivers/{driverId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth.uid == driverId || isAdmin();
+    }
+
+    match /qris/{driverId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth.uid == driverId || isAdmin();
+    }
+
+    match /merchant_menus/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /profile_pics/{userId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Allow general access to authenticated users for other folders
     match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

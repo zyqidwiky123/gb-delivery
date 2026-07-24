@@ -2,6 +2,7 @@
 **/dist/
 .env
 .env.local
+.env.production
 .firebase/
 .firebaserc
 firestore.rules
@@ -10,3 +11,14 @@ firestore.indexes.json
 .DS_Store
 *Sync
 .opencode/
+
+aro-driver-kotlin/grab-driver/
+*.apk
+*.aab
+*.zip
+output.log
+
+# Secrets & credentials
+**/keystore.properties
+**/service-account*.json
+**/gmaps*.txt
