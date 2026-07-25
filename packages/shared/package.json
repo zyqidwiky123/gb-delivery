@@ -1,0 +1,17 @@
+{
+  "name": "@aro/shared",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "main": "index.js",
+  "exports": {
+    "./mapConfig": "./mapConfig.js",
+    "./LocationPickerModal": "./LocationPickerModal.jsx",
+    "./firebase": "./firebase.js",
+    "./pricing": "./pricing.js",
+    "./utils": "./utils.js"
+  },
+  "peerDependencies": {
+    "firebase": ">=12.0.0"
+  }
+}

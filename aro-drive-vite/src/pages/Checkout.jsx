@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/orderStore';
 import { useUserStore } from '../store/userStore';
 import { createOrder } from '../firebase/orderService';
-import { calculateDistance } from '../utils/mapConfig';
+import { calculateDistance } from '@aro/shared/mapConfig';
 import { useAdminStore } from '../store/adminStore';
 import { db, auth } from '../firebase/config';
 import { collection, query, where, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc } from 'firebase/firestore';

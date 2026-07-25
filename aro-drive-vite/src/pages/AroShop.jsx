@@ -9,7 +9,7 @@ import { useUserStore } from '../store/userStore';
 import {
   calculateDistance,
   getMapOptions
-} from '../utils/mapConfig';
+} from '@aro/shared/mapConfig';
 import { useThemeStore } from '../store/themeStore';
 
 function AroShop() {

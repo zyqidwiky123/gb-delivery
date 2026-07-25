@@ -16,7 +16,7 @@ import {
   createMarkerIcon,
   getMapOptions,
   autocompleteOptions,
-} from '../utils/mapConfig';
+} from '@aro/shared/mapConfig';
 import { useThemeStore } from '../store/themeStore';
 
 const containerStyle = { width: '100%', height: '100%' };

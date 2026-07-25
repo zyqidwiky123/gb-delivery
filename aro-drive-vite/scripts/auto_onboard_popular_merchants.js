@@ -8,8 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // CONFIGURATION
-const API_KEY = "AIzaSyAMdIaOkJQ8t_rokwEDkBWTJjjw9tmYzUk";
-const SERVICE_ACCOUNT_PATH = '/home/marco/.gemini/antigravity/brain/210be323-7bdc-4fe3-aaae-e0abf5b9c6be/scratch/service-account.json';
+const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const SERVICE_ACCOUNT_PATH = process.env.SERVICE_ACCOUNT_PATH || './service-account.json';
 const BLITAR_LOCATION = "-8.0983,112.1682"; // Blitar Center
 const SEARCH_RADIUS = 10000; // 10km radius
 

@@ -4,10 +4,10 @@ importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging-comp
 
 // Initialize the Firebase app in the service worker
 firebase.initializeApp({
-  apiKey: "REPLACE_WITH_YOUR_API_KEY", // Note: The user should ideally pass these or we use the ones from .env
+  apiKey: "REPLACE_WITH_YOUR_API_KEY",
   authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId: "gb-delivery-41bf6",
-  storageBucket: "gb-delivery-41bf6.firebasestorage.app",
+  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
+  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
   messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
   appId: "REPLACE_WITH_YOUR_APP_ID",
 });

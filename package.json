@@ -1,6 +1,7 @@
 {
   "name": "aro-drive-monorepo",
   "private": true,
+  "license": "MIT",
   "workspaces": [
     "aro-drive-vite",
     "aro-drive-driver-vite",

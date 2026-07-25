@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/orderStore';
 import { useUserStore } from '../store/userStore';
-import { calculateDistance } from '../utils/mapConfig';
+import { calculateDistance } from '@aro/shared/mapConfig';
 import { useAdminStore } from '../store/adminStore';
 
 function AroSendDetails() {

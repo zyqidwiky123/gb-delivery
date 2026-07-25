@@ -1,18 +1,9 @@
-/**
- * Google Maps Configuration & Helpers
- * Konfigurasi peta dan fungsi-fungsi pendukung untuk ARO DRIVE
- */
-
-// API Key dari environment
 export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-// Libraries yang dibutuhkan Google Maps
 export const GOOGLE_MAPS_LIBRARIES = ['places'];
 
-// Pusat kota Blitar (Tetap sebagai pusat operasional awal)
 export const BLITAR_CENTER = { lat: -8.0983, lng: 112.1681 };
 
-// Batas area operasional Jawa Timur
 export const JATIM_BOUNDS = {
   north: -6.7,
   south: -8.8,
@@ -20,17 +11,14 @@ export const JATIM_BOUNDS = {
   west: 111.0,
 };
 
-// Restriction untuk peta (agar tidak keluar area Jatim)
 export const JATIM_RESTRICTION = {
   latLngBounds: JATIM_BOUNDS,
   strictBounds: false,
 };
 
-// Default zoom
 export const DEFAULT_ZOOM = 15;
 export const MIN_ZOOM = 12;
 
-// Icon URLs (tetap pakai icon custom neon)
 export const MARKER_ICONS = {
   pickup: {
     url: 'https://cdn0.iconfinder.com/data/icons/small-n-flat/24/678111-map-marker-512.png',
@@ -59,11 +47,6 @@ export const MARKER_ICONS = {
   }
 };
 
-/**
- * Buat icon object untuk Google Maps MarkerF
- * @param {'pickup'|'dropoff'|'driver'} type 
- * @returns {google.maps.Icon}
- */
 export const createMarkerIcon = (type) => {
   const config = MARKER_ICONS[type];
   if (!config || !window.google) return undefined;
@@ -74,16 +57,9 @@ export const createMarkerIcon = (type) => {
   };
 };
 
-/**
- * Hitung jarak antara dua titik (dalam kilometer)
- * Menggunakan rumus Haversine
- * @param {{lat: number, lng: number}} p1 
- * @param {{lat: number, lng: number}} p2 
- * @returns {number} jarak dalam km
- */
 export const calculateDistance = (p1, p2) => {
   if (!p1 || !p2) return 0;
-  const R = 6371; // Radius bumi dalam km
+  const R = 6371;
   const dLat = toRad(p2.lat - p1.lat);
   const dLng = toRad(p2.lng - p1.lng);
   const a =
@@ -96,11 +72,6 @@ export const calculateDistance = (p1, p2) => {
 
 const toRad = (deg) => deg * (Math.PI / 180);
 
-/**
- * Cek apakah koordinat berada di dalam area operasional Jawa Timur
- * @param {{lat: number, lng: number}} coords 
- * @returns {boolean}
- */
 export const isInsideBounds = (coords) => {
   if (!coords) return false;
   return (
@@ -111,10 +82,6 @@ export const isInsideBounds = (coords) => {
   );
 };
 
-/**
- * Google Maps Dark Mode Style
- * Tema gelap premium sesuai estetika ARO DRIVE (#0A0A0A)
- */
 export const darkMapStyles = [
   { elementType: 'geometry', stylers: [{ color: '#0d0d0d' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#0d0d0d' }] },
@@ -167,7 +134,7 @@ export const darkMapStyles = [
   {
     featureType: 'road.highway',
     elementType: 'labels.text.fill',
-    stylers: [{ color: '#cafd00' }],  // Neon primary color for major roads
+    stylers: [{ color: '#cafd00' }],
   },
   {
     featureType: 'transit',
@@ -200,16 +167,8 @@ export const darkMapStyles = [
   },
 ];
 
-/**
- * Google Maps Light Mode Style (Standard)
- */
-export const lightMapStyles = []; // Default Google Maps look for Light Mode
+export const lightMapStyles = [];
 
-/**
- * Mendapatkan opsi peta berdasarkan tema
- * @param {'light'|'dark'} theme 
- * @returns {google.maps.MapOptions}
- */
 export const getMapOptions = (theme) => ({
   disableDefaultUI: true,
   zoomControl: false,
@@ -223,14 +182,8 @@ export const getMapOptions = (theme) => ({
   clickableIcons: false,
 });
 
-/**
- * Opsi default untuk GoogleMap component (Legacy support)
- */
 export const defaultMapOptions = getMapOptions('dark');
 
-/**
- * Opsi untuk Autocomplete (batasi wilayah Indonesia / Jawa Timur)
- */
 export const autocompleteOptions = {
   componentRestrictions: { country: 'id' },
   fields: ['formatted_address', 'geometry', 'name'],

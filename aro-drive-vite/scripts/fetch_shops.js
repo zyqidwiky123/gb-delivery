@@ -2,18 +2,17 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, setDoc, getDocs, query, where, updateDoc } from "firebase/firestore";
 import axios from "axios";
 
-// Firebase Config
 const firebaseConfig = {
-  apiKey: "AIzaSyDHfsq6wdr5_iQdKfDjIer2TVdQyQPLAJE",
-  authDomain: "gb-delivery-41bf6.firebaseapp.com",
-  projectId: "gb-delivery-41bf6",
-  storageBucket: "gb-delivery-41bf6.firebasestorage.app",
-  messagingSenderId: "512031290884",
-  appId: "1:512031290884:web:e3c980592d19d134076751",
-  measurementId: "G-M3Z1RM8GLK"
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID
 };
 
-const MAPS_API_KEY = "AIzaSyAMdIaOkJQ8t_rokwEDkBWTJjjw9tmYzUk";
+const MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 

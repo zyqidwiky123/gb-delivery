@@ -13,7 +13,7 @@ import {
   BLITAR_CENTER,
   createMarkerIcon,
   defaultMapOptions,
-} from '../utils/mapConfig';
+} from '@aro/shared/mapConfig';
 import { useAdminStore } from '../store/adminStore';
 
 const containerStyle = { width: '100%', height: '100%' };

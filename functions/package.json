@@ -6,7 +6,8 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "jest"
   },
   "engines": {
     "node": "22"
@@ -19,5 +20,9 @@
     "firebase-functions": "^7.2.5",
     "sharp": "^0.34.5"
   },
-  "private": true
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
 }
