@@ -647,5 +647,5 @@ Gunakan ini untuk track progress:
 ### Fase 4 — Dokumentasi & Packaging
 - [x] 4.1 Setup guide — `docs/SETUP.md` lengkap dengan prasyarat, 13 langkah, env table, struktur proyek, troubleshooting
 - [x] 4.2 Update README.md — hapus ref stale, update struktur/Tech Stack/CI/CD/scripts/env/copyright, tambah What's Included + Known Limitations
-- [x] 4.3 Git history cleanup — BFG: `gmaps api.txt`, `*.zip`, `grab-driver/`, `scratch/` dihapus dari history (kecuali tagged releases)
-- [ ] 4.4 Data room (opsional)
+- [x] 4.3 Git history cleanup — BFG: `gmaps api.txt`, `*.zip`, `grab-driver/`, `scratch/` dihapus dari history; filter-branch: remnant `aro-driver-kotlin.zip` juga dibersihkan (kecuali tagged releases)
+- [x] 4.4 Data room (opsional) — 8 dokumen (MD + PDF) di `~/Desktop/ARO-DRIVE-Data-Room/`, termasuk executive summary, feature list, arsitektur, inventory, deployment, maintenance cost, roadmap, terms of sale
