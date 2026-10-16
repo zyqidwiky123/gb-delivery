@@ -73,5 +73,6 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: aro-driver-release-${{ github.ref_name }}
+          # run_number dipakai agar nama valid (ref branch mengandung slash)
+          name: aro-driver-release-run-${{ github.run_number }}
           path: aro-driver-kotlin/app/build/outputs/apk/release/app-release.apk
