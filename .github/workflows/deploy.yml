@@ -22,6 +22,12 @@ jobs:
         run: |
           npm install --no-audit --legacy-peer-deps
 
+      - name: Run Tests
+        run: |
+          npm test --prefix functions
+          npm test --prefix aro-drive-vite
+          npm test --prefix aro-admin-vite
+
       - name: Build User App
         run: |
           cd aro-drive-vite
@@ -35,6 +41,8 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_MAP_PROVIDER: ${{ secrets.VITE_MAP_PROVIDER }}
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
 
       - name: Build Admin App
         run: |
@@ -49,12 +57,8 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
-
-      - name: Run Tests
-        run: |
-          npm test --prefix functions
-          npm test --prefix aro-drive-vite
-          npm test --prefix aro-admin-vite
+          VITE_MAP_PROVIDER: ${{ secrets.VITE_MAP_PROVIDER }}
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -77,12 +81,15 @@ jobs:
           name: aro-driver-kotlin-debug
           path: aro-driver-kotlin/app/build/outputs/apk/debug/*.apk
 
-      - name: Deploy Functions
-        uses: w9jds/firebase-action@master
-        with:
-          args: deploy --only functions --project gb-delivery-41bf6
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      # FASE 1 — DINONAKTIFKAN sementara: deploy Cloud Functions v2/scheduler
+      # butuh Blaze (billing GCP). Aktifkan lagi saat billing pulih.
+      # Ubah: hapus komentar blok di bawah ini.
+      # - name: Deploy Functions
+      #   uses: w9jds/firebase-action@master
+      #   with:
+      #     args: deploy --only functions --project gb-delivery-41bf6
+      #   env:
+      #     FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Deploy Hosting
         continue-on-error: true

@@ -1,5 +1,6 @@
 {
   "name": "functions",
+  "type": "commonjs",
   "description": "Cloud Functions for ARO DRIVE",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
@@ -23,6 +24,7 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "jest": "^30.4.2"
   }
 }

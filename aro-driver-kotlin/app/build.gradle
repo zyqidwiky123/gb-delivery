@@ -22,8 +22,8 @@ android {
         applicationId 'com.arodrivedriver'
         minSdk 24
         targetSdk 35
-        versionCode 26
-        versionName '1.5.0'
+        versionCode 27
+        versionName '1.6.0'
     }
 
     signingConfigs {
@@ -101,9 +101,11 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-process:2.8.7'
 
     implementation 'com.google.android.gms:play-services-location:21.3.0'
-    implementation 'com.google.android.gms:play-services-maps:19.0.0'
-    implementation 'com.google.maps.android:maps-compose:6.4.1'
-    implementation 'com.google.maps.android:android-maps-utils:3.9.0'
+    // FASE 3 (mode gratis/OSM): peta pakai osmdroid, routing pakai OSRM.
+    // play-services-maps, maps-compose, android-maps-utils DIHAPUS (butuh billing GCP).
+    // Lokasi (FusedLocation + Geofence, on-device, gratis) tetap via play-services-location.
+    // Kode Google Maps tersimpan di git history untuk rollback.
+    implementation 'org.osmdroid:osmdroid-android:6.1.20'
 
     debugImplementation 'androidx.compose.ui:ui-tooling'
 }

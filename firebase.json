@@ -38,11 +38,7 @@
     {
       "site": "gb-delivery-41bf6",
       "public": "aro-landing-page",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {
           "source": "/sw.js",
@@ -76,11 +72,7 @@
     {
       "site": "aro-drive-user",
       "public": "aro-drive-vite/dist",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {
           "source": "/sw.js",
@@ -120,11 +112,7 @@
     {
       "site": "aro-drive-admin",
       "public": "aro-admin-vite/dist",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {
           "source": "/assets/**",
@@ -144,16 +132,22 @@
       ]
     }
   ],
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "auth": {
+      "port": 9099
+    },
+    "ui": {
+      "enabled": false
+    }
+  },
   "functions": [
     {
       "source": "functions",
       "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-functions-test"
-      ]
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-functions-test"]
     }
   ]
 }

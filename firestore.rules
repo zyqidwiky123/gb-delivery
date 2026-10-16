@@ -67,9 +67,13 @@ service cloud.firestore {
       }
     }
 
-    match /settings/{doc} {
+    match /settings/public/{doc} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    match /settings/configs/{doc} {
+      allow read, write: if isAdmin();
     }
     
     match /banners/{bannerId} {

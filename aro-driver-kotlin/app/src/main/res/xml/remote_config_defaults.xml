@@ -5,6 +5,14 @@
         <value></value>
     </entry>
     <entry>
+        <key>osrm_url</key>
+        <value>https://router.project-osrm.org/route/v1/driving</value>
+    </entry>
+    <entry>
+        <key>nominatim_url</key>
+        <value>https://nominatim.openstreetmap.org</value>
+    </entry>
+    <entry>
         <key>accept_timeout_seconds</key>
         <value>20</value>
     </entry>

@@ -57,13 +57,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arodriverkotlin.map.MapScreen
+import com.arodriverkotlin.map.RoutePoint
 import com.arodriverkotlin.models.DriverOrder
 import com.arodriverkotlin.models.UiState
-import com.arodriverkotlin.service.DirectionsService
+import com.arodriverkotlin.service.ConfigService
+import com.arodriverkotlin.service.OsrmRouteService
 import com.arodriverkotlin.service.TripService
 import com.arodriverkotlin.location.LocationData
 import com.arodriverkotlin.service.rupiah
-import com.google.android.gms.maps.model.LatLng
 import com.arodriverkotlin.ui.components.OrderCard
 import com.arodriverkotlin.ui.components.currentPickupAddress
 import com.arodriverkotlin.ui.components.SummaryCard
@@ -97,34 +98,35 @@ fun HomeScreen(vm: DriverViewModel, state: UiState) {
 
     // Notification sound on new incoming order is now handled by IncomingOrderNotifier
 
-    // Route polyline from Directions API (30m origin / 5m dest throttle)
-    var routePoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
-    var lastRouteOrigin by remember { mutableStateOf<LatLng?>(null) }
-    var lastRouteDest by remember { mutableStateOf<LatLng?>(null) }
+    // Route polyline dari OSRM (FASE 3, gratis) — throttle 30m origin / 5m dest.
+    // Gagal -> emptyList, MapScreen menggambar garis lurus sebagai fallback.
+    var routePoints by remember { mutableStateOf<List<RoutePoint>>(emptyList()) }
+    var lastRouteOrigin by remember { mutableStateOf<RoutePoint?>(null) }
+    var lastRouteDest by remember { mutableStateOf<RoutePoint?>(null) }
     LaunchedEffect(activeJob?.id, activeJob?.status, loc) {
         if (activeJob != null && loc != null) {
-            val origin = LatLng(loc.latitude, loc.longitude)
+            val origin = RoutePoint(loc.latitude, loc.longitude)
             val pickupTarget = if (activeJob.pickups.isNotEmpty()) {
                     val idx = activeJob.pickupsDone.toInt()
                     val target = activeJob.pickups.getOrNull(idx)
-                    if (target?.lat != null && target?.lng != null) LatLng(target.lat, target.lng) else null
+                    if (target?.lat != null && target?.lng != null) RoutePoint(target.lat, target.lng) else null
                 } else if (activeJob.pickupLat != null && activeJob.pickupLng != null)
-                    LatLng(activeJob.pickupLat, activeJob.pickupLng) else null
+                    RoutePoint(activeJob.pickupLat, activeJob.pickupLng) else null
             val dest = when (activeJob.status) {
                 "picked_up" -> if (activeJob.dropLat != null && activeJob.dropLng != null)
-                    LatLng(activeJob.dropLat, activeJob.dropLng) else null
+                    RoutePoint(activeJob.dropLat, activeJob.dropLng) else null
                 else -> pickupTarget
             }
             val shouldFetch = dest != null && (
                 routePoints.isEmpty() ||
                 lastRouteOrigin == null || lastRouteDest == null ||
-                distanceMeters(origin.latitude, origin.longitude, lastRouteOrigin!!.latitude, lastRouteOrigin!!.longitude) > 30.0 ||
-                distanceMeters(dest.latitude, dest.longitude, lastRouteDest!!.latitude, lastRouteDest!!.longitude) > 5.0
+                distanceMeters(origin.lat, origin.lng, lastRouteOrigin!!.lat, lastRouteOrigin!!.lng) > 30.0 ||
+                distanceMeters(dest.lat, dest.lng, lastRouteDest!!.lat, lastRouteDest!!.lng) > 5.0
             )
             if (shouldFetch) {
                 routePoints = emptyList()
-                val apiKey = com.arodriverkotlin.service.ConfigService.getMapsApiKey()
-                routePoints = DirectionsService.fetchRoute(origin, dest!!, apiKey)
+                val osrmUrl = ConfigService.getOsrmUrl()
+                routePoints = OsrmRouteService.fetchRoute(origin, dest!!, osrmUrl)
                 lastRouteOrigin = origin
                 lastRouteDest = dest
             }

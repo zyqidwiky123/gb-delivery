@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - 'v*'
+  # FASE 3: tombol build manual dari GitHub UI (Actions > Build Android Release
+  # APK > Run workflow) — pilih branch (mis. feat/osm-fase-0-3) tanpa perlu tag
+  # dan tanpa menyentuh main.
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -52,25 +56,22 @@ jobs:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
 
       - name: Create Release
+        # Hanya saat trigger tag (v*). Saat build manual (workflow_dispatch),
+        # APK diupload sebagai artifact di bawah ini.
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: ARO DRIVE Driver v${{ github.ref_name }}
           body: |
             ## ARO DRIVE Driver v${{ github.ref_name }}
 
-            ### Perubahan:
-            - Split ForegroundService menjadi SessionService + TripService
-            - ServiceCoordinator untuk lifecycle management
-            - RealTimeSocket WebSocket persistent connection dengan auto-reconnect
-            - Priority queue (ORDER_ACTION > LOCATION > DIAGNOSTICS) di OfflineQueueProcessor
-            - Multi-layer CrashReporter (Firebase + local file)
-            - LocationKit abstraction: support GMS (Google) dan non-GMS (Huawei)
-            - LocationQualityMonitor: GPS quality + mock detection
-            - Multi-channel notification (order/chat/promo/system/safety/foreground)
-            - In-app notification banner saat foreground
-            - Deep link routing (order/wallet/profile/chat/history)
-            - Multi-service type: Transport, Food, Express, Send, Shop
-            - Generic OrderStateMachine dengan validasi state transition
-            - OrderCardProvider dengan card berbeda per service type
-            - Tab filter by service type di OrdersScreen
+            Build production dari tag ${{ github.ref_name }}.
+            Lihat riwayat commit untuk detail perubahan.
           files: aro-driver-kotlin/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload APK Artifact (manual build)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aro-driver-release-${{ github.ref_name }}
+          path: aro-driver-kotlin/app/build/outputs/apk/release/app-release.apk

@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+.firebase
+.kilo
+*.config.js
+*.config.mjs
+package.json
+package-lock.json
+coverage

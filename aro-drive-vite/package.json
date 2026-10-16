@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/gen-messaging-sw.js",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -16,12 +17,13 @@
     "@react-google-maps/api": "^2.20.8",
     "axios": "^1.15.2",
     "firebase": "^12.11.0",
-    "firebase-admin": "^13.8.0",
     "framer-motion": "^12.38.0",
     "fuse.js": "^7.3.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.1.0",
     "vaul": "^1.1.0",
     "zustand": "^5.0.12"

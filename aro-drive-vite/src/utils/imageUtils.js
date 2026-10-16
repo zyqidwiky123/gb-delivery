@@ -1,15 +1,20 @@
 /**
  * Mengoptimalkan URL gambar merchant agar ukurannya pas dan tidak membebani RAM.
- * 
+ *
  * @param {string} url - URL asli gambar
  * @param {object} options - Konfigurasi resize (width, height, quality, fit)
  * @returns {string} URL yang sudah dioptimalkan
  */
 export const getOptimizedImageUrl = (url, options = {}) => {
   if (!url || typeof url !== 'string') return url;
-  
+
   // Abaikan jika berupa base64 atau path lokal
-  if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
+  if (
+    url.startsWith('data:') ||
+    url.startsWith('/') ||
+    url.startsWith('./') ||
+    url.startsWith('../')
+  ) {
     return url;
   }
 
@@ -27,14 +32,11 @@ export const getOptimizedImageUrl = (url, options = {}) => {
       return urlObj.toString();
     }
 
-    // 2. Google Maps Places API Photo optimization
+    // 2. FASE 2: Google Places Photo tidak lagi dipakai (mode OSM gratis).
+    // URL lama maps.googleapis.com/.../place/photo dibiarkan apa adanya
+    // (tidak bisa diakses tanpa billing) agar tidak error.
     if (url.includes('maps.googleapis.com') && url.includes('/place/photo')) {
-      const urlObj = new URL(url);
-      urlObj.searchParams.set('maxwidth', width);
-      if (height && height > width) {
-        urlObj.searchParams.set('maxheight', height);
-      }
-      return urlObj.toString();
+      return url;
     }
 
     // 3. CDN/Proxy Fallback untuk raw/large images (Firebase Storage, dll.)
@@ -51,7 +53,7 @@ export const getOptimizedImageUrl = (url, options = {}) => {
     proxyUrl.searchParams.set('fit', fit);
     proxyUrl.searchParams.set('q', quality);
     proxyUrl.searchParams.set('output', 'webp');
-    
+
     return proxyUrl.toString();
   } catch (error) {
     console.error('Error optimizing image URL:', error);

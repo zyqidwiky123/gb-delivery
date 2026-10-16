@@ -59,7 +59,8 @@ export default defineConfig({
           'framer-vendor': ['framer-motion'],
           'icons-vendor': ['lucide-react'],
           'ui-vendor': ['vaul'],
-          'maps-vendor': ['@react-google-maps/api'],
+          // FASE 2: 'maps-vendor' (@react-google-maps/api) dihapus — tidak ada
+          // import lagi. Dep tetap terinstall untuk rollback ke Google.
         },
       },
     },

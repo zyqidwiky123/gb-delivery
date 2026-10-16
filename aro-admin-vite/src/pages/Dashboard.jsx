@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
-import { db } from '../firebase/config';
+import { db } from '@aro/shared/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import DashboardLayout from './DashboardLayout';
@@ -18,7 +18,15 @@ import TopupManagement from './TopupManagement';
 function Dashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
   const navigate = useNavigate();
-  const { setAdminUser, setAllPricing, setBanners, setDrivers, setTransactions, setTopupRequests, setUsers } = useAdminStore();
+  const {
+    setAdminUser,
+    setAllPricing,
+    setBanners,
+    setDrivers,
+    setTransactions,
+    setTopupRequests,
+    setUsers,
+  } = useAdminStore();
 
   useEffect(() => {
     const auth = getAuth();
@@ -34,30 +42,30 @@ function Dashboard() {
 
   useEffect(() => {
     const unsubTransactions = onSnapshot(
-      query(collection(db, "orders"), orderBy("createdAt", "desc")),
+      query(collection(db, 'orders'), orderBy('createdAt', 'desc')),
       (snapshot) => {
-        setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setTransactions(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       }
     );
     const unsubDrivers = onSnapshot(
-      query(collection(db, "drivers"), orderBy("name", "asc")),
+      query(collection(db, 'drivers'), orderBy('name', 'asc')),
       (snapshot) => {
-        setDrivers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setDrivers(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       }
     );
-    const unsubBanners = onSnapshot(collection(db, "banners"), (snapshot) => {
-      setBanners(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubBanners = onSnapshot(collection(db, 'banners'), (snapshot) => {
+      setBanners(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
     const unsubTopups = onSnapshot(
-      query(collection(db, "topup_requests"), orderBy("createdAt", "desc")),
+      query(collection(db, 'topup_requests'), orderBy('createdAt', 'desc')),
       (snapshot) => {
-        setTopupRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setTopupRequests(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       }
     );
     const unsubUsers = onSnapshot(
-      query(collection(db, "users"), orderBy("loyaltyPoints", "desc")),
+      query(collection(db, 'users'), orderBy('loyaltyPoints', 'desc')),
       (snapshot) => {
-        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setUsers(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       }
     );
     return () => {

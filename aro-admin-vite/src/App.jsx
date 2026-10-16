@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
-import { auth, db } from './firebase/config';
+import { auth, db } from '@aro/shared/firebase';
 
 const AdminOrderCreate = lazy(() => import('./pages/AdminOrderCreate'));
 import { onAuthStateChanged } from 'firebase/auth';
@@ -18,14 +18,16 @@ function App() {
     // Diagnostic connection check
     const checkConnection = async () => {
       try {
-        console.log("Memulai diagnostik koneksi Firebase...");
+        console.log('Memulai diagnostik koneksi Firebase...');
         const testDoc = await getDoc(doc(db, 'system', 'connection_test'));
-        console.log("Firebase Terhubung! (Status Firestore: OK)");
+        console.log('Firebase Terhubung! (Status Firestore: OK)');
       } catch (err) {
         if (err.code === 'permission-denied') {
-          console.log("Firebase Terhubung! (Status Firestore: Terdeteksi tapi akses ditolak - ini normal jika belum login)");
+          console.log(
+            'Firebase Terhubung! (Status Firestore: Terdeteksi tapi akses ditolak - ini normal jika belum login)'
+          );
         } else {
-          console.error("Firebase Connection Error:", err.code, err.message);
+          console.error('Firebase Connection Error:', err.code, err.message);
         }
       }
     };
@@ -42,7 +44,7 @@ function App() {
             setAdminUser(null);
           }
         } catch (error) {
-          console.error("Error fetching admin role:", error);
+          console.error('Error fetching admin role:', error);
           setAdminUser(null);
         }
       } else {
@@ -57,13 +59,13 @@ function App() {
   return (
     <div className="min-h-screen bg-background text-textPrimary font-sans">
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          } 
+          }
         />
         <Route path="/login" element={<Login />} />
         <Route

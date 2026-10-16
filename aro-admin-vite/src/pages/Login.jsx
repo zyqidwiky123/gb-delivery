@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase/config';
+import { auth, db } from '@aro/shared/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAdminStore } from '../store/adminStore';
@@ -32,7 +32,7 @@ function Login() {
         setError('Akses Ditolak: Akun Anda tidak memiliki hak akses Admin.');
       }
     } catch (err) {
-      console.error("Firebase Auth Error:", err);
+      console.error('Firebase Auth Error:', err);
 
       if (err.code === 'auth/invalid-credential') {
         setError('Email atau Password salah.');
@@ -54,7 +54,10 @@ function Login() {
         <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[120px]"></div>
         <div className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[100px]"></div>
         {/* Abstract "Neon Nocturne" Map Lines */}
-        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          className="absolute inset-0 w-full h-full opacity-10"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <path d="M-100 200 L400 600 L1200 100" fill="none" stroke="#f3ffca" strokeWidth="2" />
           <path d="M1400 800 L800 400 L200 900" fill="none" stroke="#f3ffca" strokeWidth="1" />
           <circle cx="400" cy="600" fill="#f3ffca" r="4" />
@@ -66,7 +69,9 @@ function Login() {
       <main className="relative z-10 w-full max-w-md px-6">
         {/* Brand Identity */}
         <div className="text-center mb-12">
-          <h1 className="font-headline font-black text-4xl tracking-tighter text-primary-container mb-2 text-[#f3ffca]">ARO DRIVE</h1>
+          <h1 className="font-headline font-black text-4xl tracking-tighter text-primary-container mb-2 text-[#f3ffca]">
+            ARO DRIVE
+          </h1>
           <p className="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant">
             SUPER ADMIN DASHBOARD
           </p>
@@ -79,10 +84,7 @@ function Login() {
             <p className="text-on-surface-variant text-sm mt-1">Authorized access only.</p>
           </div>
 
-          <form 
-            className="space-y-6" 
-            onSubmit={handleLogin}
-          >
+          <form className="space-y-6" onSubmit={handleLogin}>
             {error && (
               <div className="bg-error/10 text-error p-3 rounded-lg text-xs font-bold border border-error/20 animate-pulse">
                 {error}
@@ -91,18 +93,21 @@ function Login() {
 
             {/* Username/Email Field */}
             <div className="space-y-2">
-              <label className="font-label text-xs uppercase tracking-wider text-on-surface-variant block ml-1" htmlFor="identifier">
+              <label
+                className="font-label text-xs uppercase tracking-wider text-on-surface-variant block ml-1"
+                htmlFor="identifier"
+              >
                 Email Address
               </label>
               <div className="relative group">
                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">
                   alternate_email
                 </span>
-                <input 
-                  className="w-full bg-[#1e1e1e] border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all duration-300" 
-                  id="identifier" 
-                  placeholder="admin@arodrive.id" 
-                  type="email" 
+                <input
+                  className="w-full bg-[#1e1e1e] border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all duration-300"
+                  id="identifier"
+                  placeholder="admin@arodrive.id"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -113,7 +118,10 @@ function Login() {
             {/* Password Field */}
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
-                <label className="font-label text-xs uppercase tracking-wider text-on-surface-variant block" htmlFor="password">
+                <label
+                  className="font-label text-xs uppercase tracking-wider text-on-surface-variant block"
+                  htmlFor="password"
+                >
                   Password
                 </label>
               </div>
@@ -121,11 +129,11 @@ function Login() {
                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">
                   lock
                 </span>
-                <input 
-                  className="w-full bg-[#1e1e1e] border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all duration-300" 
-                  id="password" 
-                  placeholder="••••••••••••" 
-                  type="password" 
+                <input
+                  className="w-full bg-[#1e1e1e] border-none rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary transition-all duration-300"
+                  id="password"
+                  placeholder="••••••••••••"
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -134,7 +142,7 @@ function Login() {
             </div>
 
             {/* CTA Button */}
-            <button 
+            <button
               disabled={isLoading}
               className={`w-full bg-gradient-to-br from-[#ccff00] to-[#f3ffca] text-black font-headline font-extrabold text-sm tracking-widest py-5 rounded-full shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
               type="submit"
@@ -153,14 +161,27 @@ function Login() {
           {/* Security Footer */}
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
             <div className="flex items-center gap-2 text-[10px] text-on-surface-variant uppercase tracking-widest">
-              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+              <span
+                className="material-symbols-outlined text-sm"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                verified_user
+              </span>
               End-to-End Encrypted Terminal
             </div>
             <div className="flex gap-6">
-              <div className="h-10 w-10 bg-surface-container-highest rounded-full flex items-center justify-center hover:bg-surface-container-high cursor-pointer transition-colors" title="Biometric Unlock">
-                <span className="material-symbols-outlined text-on-surface-variant">fingerprint</span>
+              <div
+                className="h-10 w-10 bg-surface-container-highest rounded-full flex items-center justify-center hover:bg-surface-container-high cursor-pointer transition-colors"
+                title="Biometric Unlock"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant">
+                  fingerprint
+                </span>
               </div>
-              <div className="h-10 w-10 bg-surface-container-highest rounded-full flex items-center justify-center hover:bg-surface-container-high cursor-pointer transition-colors" title="Hardware Token">
+              <div
+                className="h-10 w-10 bg-surface-container-highest rounded-full flex items-center justify-center hover:bg-surface-container-high cursor-pointer transition-colors"
+                title="Hardware Token"
+              >
                 <span className="material-symbols-outlined text-on-surface-variant">key</span>
               </div>
             </div>
@@ -174,10 +195,14 @@ function Login() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
             </span>
-            <span className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest">System Online</span>
+            <span className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest">
+              System Online
+            </span>
           </div>
           <div className="w-1 h-1 rounded-full bg-outline-variant"></div>
-          <span className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest">v4.2.0-Stable</span>
+          <span className="text-[10px] font-label text-on-surface-variant uppercase tracking-widest">
+            v4.2.0-Stable
+          </span>
         </div>
       </main>
 

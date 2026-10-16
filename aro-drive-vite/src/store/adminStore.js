@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db } from '../firebase/config';
+import { db } from '@aro/shared/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 export const useAdminStore = create((set, get) => ({
@@ -8,8 +8,24 @@ export const useAdminStore = create((set, get) => ({
   ratePerKm: 2500,
   minDistance: 3.5,
   weightFareRate: 2000, // Tarif per kelipatan 2 KG (setelah 1 KG pertama)
-  adminWhatsApp: "6285748343842",
-  categories: ['All', 'Makanan', 'Minuman', 'Camilan', 'Nasi', 'Mie', 'Bakso', 'Seblak', 'Ayam', 'Bebek', 'Cafe', 'Pecel', 'Lesehan', 'Pentol', 'Lalapan'],
+  adminWhatsApp: '6285748343842',
+  categories: [
+    'All',
+    'Makanan',
+    'Minuman',
+    'Camilan',
+    'Nasi',
+    'Mie',
+    'Bakso',
+    'Seblak',
+    'Ayam',
+    'Bebek',
+    'Cafe',
+    'Pecel',
+    'Lesehan',
+    'Pentol',
+    'Lalapan',
+  ],
   promoHeadline: '',
   bentoPromos: [],
   vouchers: [],
@@ -29,7 +45,7 @@ export const useAdminStore = create((set, get) => ({
       shopLabel: 'ARO TIP',
       shopSub: 'Belanja',
       trendingLabel: 'Lagi Trending di Blitar',
-      seeAll: 'Lihat Semua'
+      seeAll: 'Lihat Semua',
     },
     welcome: {
       title: 'ARO DRIVE',
@@ -38,7 +54,7 @@ export const useAdminStore = create((set, get) => ({
       guestBtn: 'Lanjut sbg Guest',
       installBtn: 'Install Aplikasi ARO DRIVE',
       alreadyInstalled: 'Aplikasi Sudah Terpasang',
-      or: 'ATAU'
+      or: 'ATAU',
     },
     aroFood: {
       detectingLoc: 'Mendeteksi lokasi...',
@@ -48,14 +64,14 @@ export const useAdminStore = create((set, get) => ({
       topRatedLabel: 'Top Rated🔥',
       exploreLabel: 'Eksplorasi Rasa',
       modalTitle: 'Kirim Ke Mana?',
-      mapBtn: 'Pilih di Peta'
+      mapBtn: 'Pilih di Peta',
     },
     foodSearch: {
       placeholder: 'Contoh: Mie Gacoan, Nasi Goreng...',
       trendingLabel: 'Sedang Trending 🔥',
       noResultsTitle: 'Hmm, tidak ketemu',
       noResultsDesc: 'Kami tidak dapat menemukan "{query}". Coba gunakan kata kunci lain.',
-      clearBtn: 'Hapus Pencarian'
+      clearBtn: 'Hapus Pencarian',
     },
     merchantDetail: {
       manualOrderTitle: 'Tulis Pesanan Manual',
@@ -71,7 +87,8 @@ export const useAdminStore = create((set, get) => ({
       noPhoto: 'Foto Menu Belum Tersedia',
       scrollHint: 'Geser Horizontal untuk Lihat Menu ↔️',
       tipsTitle: 'Tips Memesan',
-      tipsDesc: 'Sebutkan porsi, tingkat kepedasan, atau request khusus di kolom pesanan agar driver lebih mudah membelikan.'
+      tipsDesc:
+        'Sebutkan porsi, tingkat kepedasan, atau request khusus di kolom pesanan agar driver lebih mudah membelikan.',
     },
     aroRide: {
       title: 'ARO JEK',
@@ -107,60 +124,74 @@ export const useAdminStore = create((set, get) => ({
       emptyCart: 'Keranjang Kosong',
     },
     header: {
-      loginBtn: 'Login / Daftar'
+      loginBtn: 'Login / Daftar',
     },
     nav: {
       beranda: 'Beranda',
       aktivitas: 'Aktivitas',
       pay: 'Pay',
       lacak: 'Lacak',
-      akun: 'Akun'
+      akun: 'Akun',
     },
     common: {
       loadingPeta: 'Memuat peta...',
       errorLocation: 'Gagal mendapatkan lokasi. Pastikan GPS aktif.',
       errorIncomplete: 'Mohon lengkapi semua data dan titik di peta.',
-    }
+    },
   },
   isLoading: false,
-  
+
   // Actions
   // Real-time synchronization
   initSettings: () => {
-    const unsubPlatform = onSnapshot(doc(db, "settings", "platform"), (docSnap) => {
+    const unsubPlatform = onSnapshot(doc(db, 'settings', 'platform'), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        set({ 
+        set({
           platformFeePercent: data.platformFeePercent || 10,
           pointsPerTenk: data.pointsPerTenk || 1000,
           pointsToRedeem: data.pointsToRedeem || 5000,
-          adminWhatsApp: data.whatsapp || "6285748343842",
-          categories: data.foodCategories || ['All', 'Makanan', 'Minuman', 'Camilan', 'Nasi', 'Mie', 'Bakso', 'Seblak', 'Ayam', 'Bebek', 'Cafe', 'Pecel', 'Lesehan', 'Pentol', 'Lalapan'],
+          adminWhatsApp: data.whatsapp || '6285748343842',
+          categories: data.foodCategories || [
+            'All',
+            'Makanan',
+            'Minuman',
+            'Camilan',
+            'Nasi',
+            'Mie',
+            'Bakso',
+            'Seblak',
+            'Ayam',
+            'Bebek',
+            'Cafe',
+            'Pecel',
+            'Lesehan',
+            'Pentol',
+            'Lalapan',
+          ],
           promoHeadline: data.promoHeadline || '',
           bentoPromos: data.bentoPromos || [],
           vouchers: data.vouchers || [],
-          defaultDeliveryTime: data.defaultDeliveryTime || "20-30",
+          defaultDeliveryTime: data.defaultDeliveryTime || '20-30',
           ui: {
             ...get().ui,
-            ...(data.ui || {})
-          }
+            ...(data.ui || {}),
+          },
         });
       }
     });
 
-
-
-    const unsubPricing = onSnapshot(doc(db, "settings", "pricing"), (docSnap) => {
+    const unsubPricing = onSnapshot(doc(db, 'settings', 'pricing'), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const jek = data.jek || {};
         const send = data.send || {};
-        set({ 
+        set({
           baseFare: jek.baseFare || 10000,
           ratePerKm: jek.ratePerKm || 2500,
           minDistance: jek.minDistance || 3.5,
           weightFareRate: send.weightFareRate || 2000,
-          serviceFeePercent: 0 // Explicitly set to 0 as per previous user request
+          serviceFeePercent: 0, // Explicitly set to 0 as per previous user request
         });
       }
     });
@@ -170,6 +201,4 @@ export const useAdminStore = create((set, get) => ({
       unsubPricing();
     };
   },
-
 }));
-

@@ -1,10 +1,11 @@
 const { calculatePickupFee } = require('../src/pricing');
 
+const mockGet = jest.fn();
 jest.mock('firebase-admin', () => ({
   firestore: () => ({
     collection: () => ({
       doc: () => ({
-        get: jest.fn().mockResolvedValue({ exists: false }),
+        get: mockGet,
       }),
     }),
   }),
@@ -67,5 +68,49 @@ describe('calculatePickupFee', () => {
     );
     expect(result.fee).toBeGreaterThanOrEqual(0);
     expect(result.distance).toBeGreaterThan(0);
+  });
+});
+
+describe('getPricing', () => {
+  const { getPricing } = require('../src/pricing');
+
+  beforeEach(() => {
+    mockGet.mockReset();
+  });
+
+  test('returns pricing for given service type', async () => {
+    mockGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        food: { commissionRate: 0.15, baseFare: 5000 },
+        transport: { commissionRate: 0.1 },
+      }),
+    });
+    const result = await getPricing('food');
+    expect(result).toEqual({ commissionRate: 0.15, baseFare: 5000 });
+  });
+
+  test('falls back to transport when service type not found', async () => {
+    mockGet.mockResolvedValue({
+      exists: true,
+      data: () => ({
+        transport: { commissionRate: 0.1 },
+        food: { commissionRate: 0.15 },
+      }),
+    });
+    const result = await getPricing('express');
+    expect(result).toEqual({ commissionRate: 0.1 });
+  });
+
+  test('returns default commissionRate when doc does not exist', async () => {
+    mockGet.mockResolvedValue({ exists: false });
+    const result = await getPricing('food');
+    expect(result).toEqual({ commissionRate: 0.1 });
+  });
+
+  test('returns default commissionRate on Firestore error', async () => {
+    mockGet.mockRejectedValue(new Error('Firestore error'));
+    const result = await getPricing('food');
+    expect(result).toEqual({ commissionRate: 0.1 });
   });
 });

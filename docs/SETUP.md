@@ -31,6 +31,7 @@ firebase deploy --only firestore,storage,database
 ```
 
 Ini akan deploy rules dari:
+
 - `firestore.rules`
 - `storage.rules`
 - `database.rules.json`
@@ -63,38 +64,71 @@ cp aro-admin-vite/.env.example aro-admin-vite/.env
 
 **Root `.env`:**
 
-| Variable | Deskripsi |
-|----------|-----------|
+| Variable                   | Deskripsi           |
+| -------------------------- | ------------------- |
 | `VITE_GOOGLE_MAPS_API_KEY` | Google Maps API Key |
 
 **`aro-drive-vite/.env` (User App):**
 
-| Variable | Deskripsi |
-|----------|-----------|
-| `VITE_FIREBASE_API_KEY` | Firebase Web API Key |
-| `VITE_FIREBASE_AUTH_DOMAIN` | `project.firebaseapp.com` |
-| `VITE_FIREBASE_DATABASE_URL` | RTDB URL |
-| `VITE_FIREBASE_PROJECT_ID` | Project ID |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Storage bucket |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Sender ID |
-| `VITE_FIREBASE_APP_ID` | App ID |
-| `VITE_FIREBASE_MEASUREMENT_ID` | Measurement ID (opsional) |
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps API Key |
+| Variable                            | Deskripsi                 |
+| ----------------------------------- | ------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase Web API Key      |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | `project.firebaseapp.com` |
+| `VITE_FIREBASE_DATABASE_URL`        | RTDB URL                  |
+| `VITE_FIREBASE_PROJECT_ID`          | Project ID                |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Storage bucket            |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Sender ID                 |
+| `VITE_FIREBASE_APP_ID`              | App ID                    |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | Measurement ID (opsional) |
+| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key       |
 
 **`aro-admin-vite/.env` (Admin Dashboard):**
 
-| Variable | Deskripsi |
-|----------|-----------|
-| `VITE_FIREBASE_API_KEY` | Firebase Web API Key |
-| `VITE_FIREBASE_AUTH_DOMAIN` | `project.firebaseapp.com` |
-| `VITE_FIREBASE_DATABASE_URL` | RTDB URL |
-| `VITE_FIREBASE_PROJECT_ID` | Project ID |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Storage bucket |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Sender ID |
-| `VITE_FIREBASE_APP_ID` | App ID |
-| `VITE_FIREBASE_MEASUREMENT_ID` | Measurement ID (opsional) |
-| `VITE_USER_APP_URL` | URL user app (contoh: `http://localhost:5173`) |
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps API Key |
+| Variable                            | Deskripsi                                      |
+| ----------------------------------- | ---------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase Web API Key                           |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | `project.firebaseapp.com`                      |
+| `VITE_FIREBASE_DATABASE_URL`        | RTDB URL                                       |
+| `VITE_FIREBASE_PROJECT_ID`          | Project ID                                     |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Storage bucket                                 |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Sender ID                                      |
+| `VITE_FIREBASE_APP_ID`              | App ID                                         |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | Measurement ID (opsional)                      |
+| `VITE_USER_APP_URL`                 | URL user app (contoh: `http://localhost:5173`) |
+| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key                            |
+
+### 3.1 Klasifikasi Environment Variables
+
+Beberapa variable bersifat **public** (aman di frontend), dan beberapa **secret** (hanya untuk backend / CI/CD).
+
+**Public** — bisa di `.env` frontend, ter-ekspos ke browser:
+
+| Variable                            | Scope                                      |
+| ----------------------------------- | ------------------------------------------ |
+| `VITE_FIREBASE_API_KEY`             | User App, Admin                            |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | User App, Admin                            |
+| `VITE_FIREBASE_DATABASE_URL`        | User App, Admin                            |
+| `VITE_FIREBASE_PROJECT_ID`          | User App, Admin                            |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | User App, Admin                            |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | User App, Admin                            |
+| `VITE_FIREBASE_APP_ID`              | User App, Admin                            |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | User App, Admin (opsional)                 |
+| `VITE_USER_APP_URL`                 | Admin Dashboard                            |
+| `VITE_GOOGLE_MAPS_API_KEY`          | User App, Admin (HTTP referrer-restricted) |
+
+**Secret** — **JANGAN** di `.env` frontend, hanya di backend / CI/CD:
+
+| Variable              | Scope                      | Dari Mana                                        |
+| --------------------- | -------------------------- | ------------------------------------------------ |
+| `FONNTE_TOKEN`        | Cloud Functions            | [Fonnte Dashboard](https://md.fonnte.com/) → API |
+| `GOOGLE_MAPS_API_KEY` | Cloud Functions (backend)  | Google Cloud Console (backend-restricted)        |
+| `FIREBASE_TOKEN`      | CI/CD Deploy               | `firebase login:ci`                              |
+| `STORAGE_BUCKET`      | Cloud Functions (opsional) | Firebase Console                                 |
+| `LOG_LEVEL`           | Cloud Functions (opsional) | `DEBUG`, `INFO`, `WARN`, `ERROR`                 |
+| `KEYSTORE_BASE64`     | Android Build (CI/CD)      | Base64 dari `aro_partner.jks`                    |
+| `KEYSTORE_PASSWORD`   | Android Build (CI/CD)      | Keystore password                                |
+| `KEY_PASSWORD`        | Android Build (CI/CD)      | Key alias password                               |
+| `KEY_ALIAS`           | Android Build (CI/CD)      | Key alias name                                   |
 
 ## 4. Install Dependencies
 
@@ -159,6 +193,7 @@ cd aro-driver-kotlin
 ```
 
 APK akan ada di:
+
 - Release: `app/build/outputs/apk/release/app-release.apk`
 - Debug: `app/build/outputs/apk/debug/app-debug.apk`
 
@@ -190,12 +225,66 @@ npm run serve      # Firebase Emulators
 npm test           # jalankan jest
 ```
 
+#### Firebase Functions `.env.yaml`
+
+Untuk menjalankan Functions emulator dengan secret lokal, buat `functions/.env.yaml`:
+
+```yaml
+FONNTE_TOKEN=your_fonnte_token_here
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+LOG_LEVEL=DEBUG
+```
+
+> **Catatan:** File `.env.yaml` otomatis di-load oleh Firebase Emulator saat `npm run serve`. Jangan commit file ini ke git (pastikan sudah di `.gitignore`).
+
 ## 9. CI/CD
 
 Proyek sudah punya GitHub Actions workflows:
 
-- **`.github/workflows/deploy.yml`** — deploy otomatis ke Firebase setiap push ke `main`
+- **`.github/workflows/deploy.yml`** — test → build → deploy otomatis ke Firebase setiap push ke `main`
 - **`.github/workflows/build-release.yml`** — build APK release + GitHub Release saat tag `v*`
+
+### 9.1 Setup GitHub Secrets
+
+Buka repo di GitHub → **Settings → Secrets and variables → Actions → New repository secret**.
+
+**Untuk Deploy Workflow (`.github/workflows/deploy.yml`):**
+
+| Secret                              | Nilai                          |
+| ----------------------------------- | ------------------------------ |
+| `VITE_FIREBASE_API_KEY`             | Firebase Web API Key           |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | `project.firebaseapp.com`      |
+| `VITE_FIREBASE_PROJECT_ID`          | Project ID                     |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | `project.appspot.com`          |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Sender ID                      |
+| `VITE_FIREBASE_APP_ID`              | App ID                         |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | Measurement ID (opsional)      |
+| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key            |
+| `FIREBASE_TOKEN`                    | Hasil dari `firebase login:ci` |
+
+**Untuk Android Build Workflow (`.github/workflows/build-release.yml`):**
+
+| Secret              | Nilai                        |
+| ------------------- | ---------------------------- |
+| `KEYSTORE_BASE64`   | `base64 -w0 aro_partner.jks` |
+| `KEYSTORE_PASSWORD` | Keystore password            |
+| `KEY_PASSWORD`      | Key alias password           |
+| `KEY_ALIAS`         | Key alias name               |
+
+**Mendapatkan `FIREBASE_TOKEN`:**
+
+```bash
+firebase login:ci
+# Login via browser, lalu copy token yang dihasilkan
+```
+
+### 9.2 Access Levels
+
+| Lingkungan | Frontend Vars        | Backend Vars               | Deploy Token | Keystore |
+| ---------- | -------------------- | -------------------------- | ------------ | -------- |
+| Local dev  | `.env`               | `.env.yaml`                | —            | Manual   |
+| CI/CD      | GitHub Secrets       | GitHub Secrets             | ✅           | ✅       |
+| Production | Firebase Hosting env | Firebase Functions runtime | —            | —        |
 
 ## Struktur Proyek
 
@@ -233,11 +322,11 @@ aro-drive/
 
 ## Troubleshooting
 
-| Masalah | Solusi |
-|---------|--------|
-| `firebase deploy` gagal | Pastikan billing sudah aktif & `firebase use --add` sudah benar |
-| Maps tidak muncul | Cek API key restriction & pastikan `Maps JavaScript API` enabled |
-| Functions timeout | Naikkan timeout di `functions/src/index.js` atau upgrade billing tier |
-| Android build error | Update SDK di `build.gradle`, pastikan Java 17+ terinstall |
-| Google Sign-in error | Tambahkan domain authorized redirect URI di Firebase Console |
-| `@aro/shared` not found | Jalankan `npm install` dari root (monorepo workspace) |
+| Masalah                 | Solusi                                                                |
+| ----------------------- | --------------------------------------------------------------------- |
+| `firebase deploy` gagal | Pastikan billing sudah aktif & `firebase use --add` sudah benar       |
+| Maps tidak muncul       | Cek API key restriction & pastikan `Maps JavaScript API` enabled      |
+| Functions timeout       | Naikkan timeout di `functions/src/index.js` atau upgrade billing tier |
+| Android build error     | Update SDK di `build.gradle`, pastikan Java 17+ terinstall            |
+| Google Sign-in error    | Tambahkan domain authorized redirect URI di Firebase Console          |
+| `@aro/shared` not found | Jalankan `npm install` dari root (monorepo workspace)                 |

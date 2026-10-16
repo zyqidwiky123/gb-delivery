@@ -9,6 +9,10 @@ object ConfigService {
 
     private val defaults: Map<String, Any> = mapOf(
         "maps_api_key" to "",
+        // FASE 3 (mode gratis/OSM): endpoint routing & geocode tanpa API key.
+        // Isi via Firebase Console > Remote Config jika perlu ganti host.
+        "osrm_url" to "https://router.project-osrm.org/route/v1/driving",
+        "nominatim_url" to "https://nominatim.openstreetmap.org",
         "accept_timeout_seconds" to 20L,
         "geofence_radius_meters" to 100L,
         "location_interval_idle_ms" to 30000L,
@@ -36,6 +40,12 @@ object ConfigService {
     }
 
     fun getMapsApiKey(): String = remoteConfig.getString("maps_api_key")
+
+    /** FASE 3: base URL OSRM (default public demo, gratis). */
+    fun getOsrmUrl(): String = remoteConfig.getString("osrm_url")
+
+    /** FASE 3: base URL Nominatim (default public, gratis). */
+    fun getNominatimUrl(): String = remoteConfig.getString("nominatim_url")
 
     fun getAcceptTimeoutMs(): Long = remoteConfig.getLong("accept_timeout_seconds") * 1000
 

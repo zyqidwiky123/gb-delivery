@@ -3,15 +3,27 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    "./mapConfig": "./mapConfig.js",
-    "./LocationPickerModal": "./LocationPickerModal.jsx",
-    "./firebase": "./firebase.js",
-    "./pricing": "./pricing.js",
-    "./utils": "./utils.js"
+    ".": "./dist/index.js",
+    "./mapConfig": "./dist/mapConfig.js",
+    "./mapProvider": "./dist/mapProvider.js",
+    "./LocationPickerModal": "./dist/LocationPickerModal.js",
+    "./firebase": "./dist/firebase.js",
+    "./pricing": "./dist/pricing.js",
+    "./utils": "./dist/utils.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "firebase": ">=12.0.0"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.22",
+    "@types/react": "^19.2.17",
+    "typescript": "^7.0.2"
   }
 }

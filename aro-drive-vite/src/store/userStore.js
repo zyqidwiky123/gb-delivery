@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { db } from '../firebase/config';
+import { db } from '@aro/shared/firebase';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 export const useUserStore = create(
@@ -13,70 +13,76 @@ export const useUserStore = create(
       vouchers: [],
       savedAddresses: [], // [{ id, label, address, lat, lng, type }]
       lastOrderId: null, // Track last order especially for guests
-      
+
       // Actions
-      login: (userData) => set({ user: userData, isAdmin: userData.isAdmin || false, isGuestMode: false }),
-      logout: () => set({ 
-        user: null, 
-        isAdmin: false, 
-        isGuestMode: false, 
-        loyaltyPoints: 0, 
-        vouchers: [],
-        savedAddresses: [] // Clear on logout
-      }),
-      setGuestMode: (status) => set((state) => ({ 
-        isGuestMode: status, 
-        user: null, 
-        isAdmin: false,
-        savedAddresses: status ? [] : state.savedAddresses // Clear if entering Guest Mode
-      })),
+      login: (userData) =>
+        set({ user: userData, isAdmin: userData.isAdmin || false, isGuestMode: false }),
+      logout: () =>
+        set({
+          user: null,
+          isAdmin: false,
+          isGuestMode: false,
+          loyaltyPoints: 0,
+          vouchers: [],
+          savedAddresses: [], // Clear on logout
+        }),
+      setGuestMode: (status) =>
+        set((state) => ({
+          isGuestMode: status,
+          user: null,
+          isAdmin: false,
+          savedAddresses: status ? [] : state.savedAddresses, // Clear if entering Guest Mode
+        })),
       setAdminStatus: (status) => set({ isAdmin: status }),
       setLastOrderId: (id) => set({ lastOrderId: id }),
-      addPoints: (amount) => set((state) => {
-        const newPoints = state.loyaltyPoints + amount;
-        if (state.user?.id) {
-          updateDoc(doc(db, "users", state.user.id), {
-            loyaltyPoints: newPoints
-          }).catch(e => console.error("Sync Error (Points):", e));
-        }
-        return { loyaltyPoints: newPoints };
-      }),
-      redeemVoucher: (cost) => set((state) => {
-        const newPoints = state.loyaltyPoints - cost;
-        const newVoucher = { 
-          id: Date.now(), 
-          type: 'FREE_DELIVERY', 
-          title: 'Gratis Ongkir',
-          createdAt: new Date().toISOString(),
-          used: false
-        };
-        const updatedVouchers = [...state.vouchers, newVoucher];
-        
-        if (state.user?.id) {
-          updateDoc(doc(db, "users", state.user.id), {
+      addPoints: (amount) =>
+        set((state) => {
+          const newPoints = state.loyaltyPoints + amount;
+          if (state.user?.id) {
+            updateDoc(doc(db, 'users', state.user.id), {
+              loyaltyPoints: newPoints,
+            }).catch((e) => console.error('Sync Error (Points):', e));
+          }
+          return { loyaltyPoints: newPoints };
+        }),
+      redeemVoucher: (cost) =>
+        set((state) => {
+          const newPoints = state.loyaltyPoints - cost;
+          const newVoucher = {
+            id: Date.now(),
+            type: 'FREE_DELIVERY',
+            title: 'Gratis Ongkir',
+            createdAt: new Date().toISOString(),
+            used: false,
+          };
+          const updatedVouchers = [...state.vouchers, newVoucher];
+
+          if (state.user?.id) {
+            updateDoc(doc(db, 'users', state.user.id), {
+              loyaltyPoints: newPoints,
+              vouchers: updatedVouchers,
+            }).catch((e) => console.error('Sync Error (Redeem):', e));
+          }
+
+          return {
             loyaltyPoints: newPoints,
-            vouchers: updatedVouchers
-          }).catch(e => console.error("Sync Error (Redeem):", e));
-        }
-        
-        return { 
-          loyaltyPoints: newPoints,
-          vouchers: updatedVouchers
-        };
-      }),
-      useVoucher: (voucherId) => set((state) => {
-        const updatedVouchers = state.vouchers.map(v => 
-          v.id === voucherId ? { ...v, used: true, usedAt: new Date().toISOString() } : v
-        );
-        
-        if (state.user?.id) {
-          updateDoc(doc(db, "users", state.user.id), {
-            vouchers: updatedVouchers
-          }).catch(e => console.error("Sync Error (Use Voucher):", e));
-        }
-        
-        return { vouchers: updatedVouchers };
-      }),
+            vouchers: updatedVouchers,
+          };
+        }),
+      useVoucher: (voucherId) =>
+        set((state) => {
+          const updatedVouchers = state.vouchers.map((v) =>
+            v.id === voucherId ? { ...v, used: true, usedAt: new Date().toISOString() } : v
+          );
+
+          if (state.user?.id) {
+            updateDoc(doc(db, 'users', state.user.id), {
+              vouchers: updatedVouchers,
+            }).catch((e) => console.error('Sync Error (Use Voucher):', e));
+          }
+
+          return { vouchers: updatedVouchers };
+        }),
       addSavedAddress: async (address) => {
         const id = Date.now();
         const newAddr = { id, ...address };
@@ -84,21 +90,21 @@ export const useUserStore = create(
           const updated = [...state.savedAddresses, newAddr];
           // Sync to Firestore if user is logged in
           if (state.user?.id) {
-            updateDoc(doc(db, "users", state.user.id), {
-              savedAddresses: updated
-            }).catch(e => console.error("Sync Error:", e));
+            updateDoc(doc(db, 'users', state.user.id), {
+              savedAddresses: updated,
+            }).catch((e) => console.error('Sync Error:', e));
           }
           return { savedAddresses: updated };
         });
       },
       removeSavedAddress: async (id) => {
         set((state) => {
-          const updated = state.savedAddresses.filter(a => a.id !== id);
+          const updated = state.savedAddresses.filter((a) => a.id !== id);
           // Sync to Firestore if user is logged in
           if (state.user?.id) {
-            updateDoc(doc(db, "users", state.user.id), {
-              savedAddresses: updated
-            }).catch(e => console.error("Sync Error:", e));
+            updateDoc(doc(db, 'users', state.user.id), {
+              savedAddresses: updated,
+            }).catch((e) => console.error('Sync Error:', e));
           }
           return { savedAddresses: updated };
         });
@@ -107,26 +113,27 @@ export const useUserStore = create(
         set((state) => {
           if (!state.user) return state;
           const updatedUser = { ...state.user, ...updates };
-          
+
           // Sync to Firestore
-          updateDoc(doc(db, "users", state.user.id), updates)
-            .catch(e => console.error("Firestore Update Error:", e));
-            
+          updateDoc(doc(db, 'users', state.user.id), updates).catch((e) =>
+            console.error('Firestore Update Error:', e)
+          );
+
           return { user: updatedUser };
         });
       },
       deleteFirestoreUser: async () => {
         const state = useUserStore.getState();
         if (state.user?.id) {
-          await deleteDoc(doc(db, "users", state.user.id));
+          await deleteDoc(doc(db, 'users', state.user.id));
         }
-        set({ 
-          user: null, 
-          isAdmin: false, 
-          isGuestMode: false, 
-          loyaltyPoints: 0, 
+        set({
+          user: null,
+          isAdmin: false,
+          isGuestMode: false,
+          loyaltyPoints: 0,
           vouchers: [],
-          savedAddresses: [] 
+          savedAddresses: [],
         });
       },
     }),
