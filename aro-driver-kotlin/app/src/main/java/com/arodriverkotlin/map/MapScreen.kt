@@ -347,7 +347,7 @@ private fun refreshOverlays(
                 view.overlays.add(
                     Marker(view).apply {
                         position = GeoPoint(pickup.lat!!, pickup.lng!!)
-                        icon = createPickupMarkerIcon(view.context, index + 1, isActive, isDone)
+                        icon = createPickupMarkerIcon(index + 1, isActive, isDone, view.context)
                         title = if (isActive) "Ambil: ${pickup.address}" else "Titik ${index + 1}: ${pickup.address}"
                         snippet = if (isDone) "Sudah dijemput" else if (isActive) "Tujuan anda" else "Menunggu"
                     }
