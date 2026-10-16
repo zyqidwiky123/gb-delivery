@@ -435,12 +435,12 @@ private fun createPickupMarkerIcon(number: Int, isActive: Boolean, isDone: Boole
     return BitmapDrawable(context.resources, bitmap)
 }
 
-private fun createDotMarkerIcon(context: android.content.Context, color: Int): Drawable {
+private fun createDotMarkerIcon(context: android.content.Context, dotColor: Int): Drawable {
     val size = 72
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = color
+        color = dotColor
         style = Paint.Style.FILL
     }
     canvas.drawCircle(size / 2f, size / 2f, size / 2f - 4f, paint)

@@ -22,7 +22,9 @@ object OsmTileSource {
         "https://d.basemaps.cartocdn.com/dark_all/",
     )
 
-    val DARK = XYTileSource("CartoDark", 0, 0, 20, 256, ".png", CARTO_DARK_URLS)
+    // NOTE osmdroid >= 6.1: konstruktor tanpa resourceId
+    // (name, zoomMin, zoomMax, tileSize, ending, baseUrls).
+    val DARK = XYTileSource("CartoDark", 0, 20, 256, ".png", CARTO_DARK_URLS)
 
     /** Wajib dipanggil sekali (mis. di MapScreen) sebelum MapView dipakai. */
     fun init(context: Context) {
