@@ -115,7 +115,13 @@ fun MapScreen(
     val mapView = remember {
         OsmTileSource.init(ctx)
         MapView(ctx).apply {
-            setTileSource(OsmTileSource.DARK)
+            // Tile source bisa diganti jarak jauh via Remote Config `map_tiles`.
+            setTileSource(
+                OsmTileSource.forName(
+                    try { com.arodriverkotlin.service.ConfigService.getMapTiles() }
+                    catch (e: Exception) { "carto_dark" }
+                )
+            )
             setMultiTouchControls(true)
             minZoomLevel = 12.0
             maxZoomLevel = 20.0

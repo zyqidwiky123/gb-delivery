@@ -26,6 +26,22 @@ object OsmTileSource {
     // (name, zoomMin, zoomMax, tileSize, ending, baseUrls).
     val DARK = XYTileSource("CartoDark", 0, 20, 256, ".png", CARTO_DARK_URLS)
 
+    private val OSM_STANDARD_URLS = arrayOf(
+        "https://tile.openstreetmap.org/",
+    )
+
+    val STANDARD = XYTileSource("OSMStandard", 0, 20, 256, ".png", OSM_STANDARD_URLS)
+
+    /**
+     * Pilih tile source by name (diatur via Remote Config `map_tiles` tanpa
+     * perlu update APK — berguna jika salah satu provider bermasalah).
+     * Nilai: "carto_dark" (default) | "osm_standard".
+     */
+    fun forName(name: String) = when (name.trim().lowercase()) {
+        "osm_standard", "standard", "mapnik" -> STANDARD
+        else -> DARK
+    }
+
     /** Wajib dipanggil sekali (mis. di MapScreen) sebelum MapView dipakai. */
     fun init(context: Context) {
         Configuration.getInstance().apply {

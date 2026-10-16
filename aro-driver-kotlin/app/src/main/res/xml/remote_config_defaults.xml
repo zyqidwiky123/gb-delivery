@@ -13,6 +13,10 @@
         <value>https://nominatim.openstreetmap.org</value>
     </entry>
     <entry>
+        <key>map_tiles</key>
+        <value>carto_dark</value>
+    </entry>
+    <entry>
         <key>accept_timeout_seconds</key>
         <value>20</value>
     </entry>

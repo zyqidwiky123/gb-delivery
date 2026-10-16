@@ -13,6 +13,9 @@ object ConfigService {
         // Isi via Firebase Console > Remote Config jika perlu ganti host.
         "osrm_url" to "https://router.project-osrm.org/route/v1/driving",
         "nominatim_url" to "https://nominatim.openstreetmap.org",
+        // Pilihan tile peta driver: "carto_dark" | "osm_standard".
+        // Bisa diubah dari Firebase Console tanpa update APK.
+        "map_tiles" to "carto_dark",
         "accept_timeout_seconds" to 20L,
         "geofence_radius_meters" to 100L,
         "location_interval_idle_ms" to 30000L,
@@ -46,6 +49,9 @@ object ConfigService {
 
     /** FASE 3: base URL Nominatim (default public, gratis). */
     fun getNominatimUrl(): String = remoteConfig.getString("nominatim_url")
+
+    /** FASE 3 fix blank-map: pilihan tile source ("carto_dark" | "osm_standard"). */
+    fun getMapTiles(): String = remoteConfig.getString("map_tiles")
 
     fun getAcceptTimeoutMs(): Long = remoteConfig.getLong("accept_timeout_seconds") * 1000
 
