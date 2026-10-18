@@ -1,6 +1,6 @@
 # ARO DRIVE — Sat Set Blitar!
 
-**ARO DRIVE** adalah platform *on-demand delivery* dan *ride-hailing* lokal untuk kota **Blitar, Jawa Timur** — solusi transportasi, pesan-antar makanan, kirim paket, dan belanja pribadi yang cepat dan terpercaya.
+**ARO DRIVE** adalah platform _on-demand delivery_ dan _ride-hailing_ lokal untuk kota **Blitar, Jawa Timur** — solusi transportasi, pesan-antar makanan, kirim paket, dan belanja pribadi yang cepat dan terpercaya.
 
 > Nama awal proyek ini adalah **GB Delivery**, kemudian di-rebrand menjadi **ARO DRIVE**. Beberapa referensi internal masih menggunakan nama lama.
 
@@ -31,28 +31,28 @@
 
 ## What's Included
 
-| Komponen | Teknologi | Lokasi |
-|----------|-----------|--------|
-| **Customer PWA** — Food, Ride, Send, Shop | React 19 + Vite 6 | `aro-drive-vite/` |
-| **Admin Dashboard** — Manajemen driver, merchant, order, promo, pricing | React 19 + Vite 6 | `aro-admin-vite/` |
-| **Driver Android App** — Real-time tracking, offline queue, multi-service | Kotlin + Jetpack Compose | `aro-driver-kotlin/` |
-| **Firebase Backend** — 9 Cloud Functions modular | Node.js 22 | `functions/src/` |
-| **Shared Package** — Kode bersama (map, pricing, LocationPicker) | JavaScript | `packages/shared/` |
-| **CI/CD** — GitHub Actions auto-deploy + build APK | Firebase CLI + Gradle | `.github/workflows/` |
-| **PWA Support** — Installable, offline-capable, push notifications | vite-plugin-pwa + Workbox | Terintegrasi di tiap app |
+| Komponen                                                                  | Teknologi                 | Lokasi                   |
+| ------------------------------------------------------------------------- | ------------------------- | ------------------------ |
+| **Customer PWA** — Food, Ride, Send, Shop                                 | React 19 + Vite 6         | `aro-drive-vite/`        |
+| **Admin Dashboard** — Manajemen driver, merchant, order, promo, pricing   | React 19 + Vite 6         | `aro-admin-vite/`        |
+| **Driver Android App** — Real-time tracking, offline queue, multi-service | Kotlin + Jetpack Compose  | `aro-driver-kotlin/`     |
+| **Firebase Backend** — 9 Cloud Functions modular                          | Node.js 22                | `functions/src/`         |
+| **Shared Package** — Kode bersama (map, pricing, LocationPicker)          | JavaScript                | `packages/shared/`       |
+| **CI/CD** — GitHub Actions auto-deploy + build APK                        | Firebase CLI + Gradle     | `.github/workflows/`     |
+| **PWA Support** — Installable, offline-capable, push notifications        | vite-plugin-pwa + Workbox | Terintegrasi di tiap app |
 
 ---
 
 ## Layanan
 
-| Layanan | Nama Aplikasi | Deskripsi |
-|---------|---------------|-----------|
-| **ARO FOOD** | Customer PWA | Pesan makanan dari berbagai merchant/restoran di Blitar |
-| **ARO RIDE** (ARO JEK) | Customer PWA | Panggil ojek motor untuk antar jemput |
-| **ARO SEND** | Customer PWA | Kirim paket/dokumen dengan kurir |
-| **ARO SHOP** (ARO TIP) | Customer PWA | *Personal shopping* / jastip — belikan barang dari toko |
-| **Admin Dashboard** | Admin PWA | Monitoring pesanan, manajemen driver, pengaturan sistem |
-| **Driver App** | Android Native (Kotlin) | Terima & kelola pesanan, navigasi, tracking real-time |
+| Layanan                | Nama Aplikasi           | Deskripsi                                               |
+| ---------------------- | ----------------------- | ------------------------------------------------------- |
+| **ARO FOOD**           | Customer PWA            | Pesan makanan dari berbagai merchant/restoran di Blitar |
+| **ARO RIDE** (ARO JEK) | Customer PWA            | Panggil ojek motor untuk antar jemput                   |
+| **ARO SEND**           | Customer PWA            | Kirim paket/dokumen dengan kurir                        |
+| **ARO SHOP** (ARO TIP) | Customer PWA            | _Personal shopping_ / jastip — belikan barang dari toko |
+| **Admin Dashboard**    | Admin PWA               | Monitoring pesanan, manajemen driver, pengaturan sistem |
+| **Driver App**         | Android Native (Kotlin) | Terima & kelola pesanan, navigasi, tracking real-time   |
 
 ---
 
@@ -111,76 +111,76 @@ FIREBASE HOSTING SITES:
 
 ### Customer PWA (`aro-drive-vite`)
 
-| Layer | Teknologi |
-|-------|-----------|
-| Framework | React 19 |
-| Build Tool | Vite 6 |
-| Bahasa | JavaScript (JSX) |
-| Styling | Tailwind CSS 3.4 |
-| State Management | Zustand 5 (persist middleware) |
-| Routing | React Router DOM v7 |
-| Animation | Framer Motion 12 |
-| Maps | @react-google-maps/api v2 |
-| Icons | Lucide React 0.468, Material Symbols |
-| HTTP | Axios 1.15 |
-| Fuzzy Search | Fuse.js 7 |
-| UI Component | Vaul (Drawer/Sheet) 1.1 |
-| PWA | vite-plugin-pwa 0.21 + Workbox |
-| Fonts | Inter, Plus Jakarta Sans, Outfit |
+| Layer            | Teknologi                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| Framework        | React 19                                                                                               |
+| Build Tool       | Vite 6                                                                                                 |
+| Bahasa           | JavaScript (JSX)                                                                                       |
+| Styling          | Tailwind CSS 3.4                                                                                       |
+| State Management | Zustand 5 (persist middleware)                                                                         |
+| Routing          | React Router DOM v7                                                                                    |
+| Animation        | Framer Motion 12                                                                                       |
+| Maps             | Leaflet 1.9 + react-leaflet 5 (OSM/CARTO — default, gratis); @react-google-maps/api v2 (mode rollback) |
+| Icons            | Lucide React 0.468, Material Symbols                                                                   |
+| HTTP             | Axios 1.15                                                                                             |
+| Fuzzy Search     | Fuse.js 7                                                                                              |
+| UI Component     | Vaul (Drawer/Sheet) 1.1                                                                                |
+| PWA              | vite-plugin-pwa 0.21 + Workbox                                                                         |
+| Fonts            | Inter, Plus Jakarta Sans, Outfit                                                                       |
 
 ### Admin Dashboard (`aro-admin-vite`)
 
-| Layer | Teknologi |
-|-------|-----------|
-| Framework | React 19 |
-| Build Tool | Vite 6 |
-| Styling | Tailwind CSS 3.4 |
-| State Management | Zustand 5 |
-| Routing | React Router DOM v7 |
-| Maps | @react-google-maps/api v2 |
-| Icons | Lucide React 0.468 |
+| Layer            | Teknologi                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| Framework        | React 19                                                                                               |
+| Build Tool       | Vite 6                                                                                                 |
+| Styling          | Tailwind CSS 3.4                                                                                       |
+| State Management | Zustand 5                                                                                              |
+| Routing          | React Router DOM v7                                                                                    |
+| Maps             | Leaflet 1.9 + react-leaflet 5 (OSM/CARTO — default, gratis); @react-google-maps/api v2 (mode rollback) |
+| Icons            | Lucide React 0.468                                                                                     |
 
 ### Driver Android App (`aro-driver-kotlin`)
 
-| Layer | Teknologi |
-|-------|-----------|
-| Bahasa | Kotlin 2.0.21 |
-| UI | Jetpack Compose (BOM 2024.10) |
-| Build System | Gradle 8.7.3 |
-| Target SDK | 35 (Android 14+) |
-| Min SDK | 24 (Android 7.0) |
-| Architecture | MVVM (ViewModel + Compose) |
-| Image Loading | Coil Compose 2.7 |
-| HTTP | OkHttp 4.12 |
-| Local DB | Room 2.6.1 |
-| Background Work | WorkManager 2.9.1 |
-| Location | Google Play Services Location 21.3 |
-| Maps | Google Maps Compose 6.4, Maps Utils 3.9 |
-| Firebase | Auth, Firestore, Storage, Messaging, RTDB, Config, Crashlytics, Analytics |
+| Layer           | Teknologi                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| Bahasa          | Kotlin 2.0.21                                                                                            |
+| UI              | Jetpack Compose (BOM 2024.10)                                                                            |
+| Build System    | Gradle 8.7.3                                                                                             |
+| Target SDK      | 35 (Android 14+)                                                                                         |
+| Min SDK         | 24 (Android 7.0)                                                                                         |
+| Architecture    | MVVM (ViewModel + Compose)                                                                               |
+| Image Loading   | Coil Compose 2.7                                                                                         |
+| HTTP            | OkHttp 4.12                                                                                              |
+| Local DB        | Room 2.6.1                                                                                               |
+| Background Work | WorkManager 2.9.1                                                                                        |
+| Location        | Google Play Services Location 21.3                                                                       |
+| Maps            | osmdroid 6.1.20 (OSM — default, gratis) + Maps Utils (polyline); Google Maps Compose 6.4 (mode rollback) |
+| Firebase        | Auth, Firestore, Storage, Messaging, RTDB, Config, Crashlytics, Analytics                                |
 
 ### Firebase Cloud Functions (`functions`)
 
-| Layer | Teknologi |
-|-------|-----------|
-| Runtime | Node.js 22 |
-| Framework | Firebase Functions v7 (v2 API) |
-| Admin SDK | firebase-admin 13.8 |
-| HTTP | Axios 1.7 |
-| Image Processing | Sharp 0.34 |
-| AI/ML | @google-cloud/vision 4.0 |
+| Layer            | Teknologi                      |
+| ---------------- | ------------------------------ |
+| Runtime          | Node.js 22                     |
+| Framework        | Firebase Functions v7 (v2 API) |
+| Admin SDK        | firebase-admin 13.8            |
+| HTTP             | Axios 1.7                      |
+| Image Processing | Sharp 0.34                     |
+| AI/ML            | @google-cloud/vision 4.0       |
 
 ### Backend & Infrastructure
 
-| Komponen | Teknologi |
-|----------|-----------|
-| Database Utama | Firebase Firestore |
-| Real-time Data | Firebase Realtime Database (presence driver, dispatch) |
-| Auth | Firebase Authentication (Google Sign-In + Email/Password) |
-| Storage | Firebase Storage (gambar, QRIS, foto profil) |
-| Push Notification | Firebase Cloud Messaging (FCM) |
-| Hosting | Firebase Hosting (3 sites) |
-| WhatsApp Gateway | Fonnte API |
-| Maps | Google Maps API (Geocoding, Places, Directions, Maps JS) |
+| Komponen          | Teknologi                                                                                                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database Utama    | Firebase Firestore                                                                                                                                                                 |
+| Real-time Data    | Firebase Realtime Database (presence driver, dispatch)                                                                                                                             |
+| Auth              | Firebase Authentication (Google Sign-In + Email/Password)                                                                                                                          |
+| Storage           | Firebase Storage (gambar, QRIS, foto profil)                                                                                                                                       |
+| Push Notification | Firebase Cloud Messaging (FCM)                                                                                                                                                     |
+| Hosting           | Firebase Hosting (3 sites)                                                                                                                                                         |
+| WhatsApp Gateway  | Fonnte API                                                                                                                                                                         |
+| Maps              | OSM stack gratis: Leaflet/react-leaflet (web) + osmdroid (Android) + Photon/Nominatim (search) + OSRM (rute); Google Maps API hanya untuk rollback (billing GCP mati per Okt 2026) |
 
 ---
 
@@ -304,7 +304,7 @@ Sebelum memulai, pastikan Anda telah menginstal:
 - **Firebase CLI** (`npm install -g firebase-tools`)
 - **gcloud CLI** — opsional, untuk Google Cloud Vision API
 - **Android Studio** + Android SDK (untuk driver app)
-- **Google Maps API Key** dengan enabled APIs:
+- **Google Maps API Key** — **opsional** (hanya untuk mode rollback `VITE_MAP_PROVIDER=google`; default sekarang OSM tanpa key):
   - Maps JavaScript API
   - Places API
   - Directions API
@@ -411,11 +411,11 @@ firebase deploy --only hosting:aro-drive-admin
 
 ### Target Firebase Hosting
 
-| Target | Site | Source | Deskripsi |
-|--------|------|--------|-----------|
-| `gb-delivery-41bf6` | `gb-delivery-41bf6.web.app` | `aro-landing-page/` | Landing page |
-| `app` | `aro-drive-user.web.app` | `aro-drive-vite/dist/` | Customer PWA |
-| `admin` | `aro-drive-admin.web.app` | `aro-admin-vite/dist/` | Admin Dashboard |
+| Target              | Site                        | Source                 | Deskripsi       |
+| ------------------- | --------------------------- | ---------------------- | --------------- |
+| `gb-delivery-41bf6` | `gb-delivery-41bf6.web.app` | `aro-landing-page/`    | Landing page    |
+| `app`               | `aro-drive-user.web.app`    | `aro-drive-vite/dist/` | Customer PWA    |
+| `admin`             | `aro-drive-admin.web.app`   | `aro-admin-vite/dist/` | Admin Dashboard |
 
 ---
 
@@ -423,17 +423,17 @@ firebase deploy --only hosting:aro-drive-admin
 
 ### Firestore Collections
 
-| Collection | Deskripsi |
-|------------|-----------|
-| `users` | Data pengguna (customer) |
-| `drivers` | Profil driver |
-| `orders` | Semua pesanan |
-| `merchants` | Data merchant/restoran/toko |
-| `settings` | Konfigurasi platform (harga, komisi, dll) |
-| `banners` | Promo banner |
-| `admins` | Admin credentials |
-| `topup_requests` | Request top-up driver |
-| `diagnostics` | Log diagnosa driver |
+| Collection       | Deskripsi                                 |
+| ---------------- | ----------------------------------------- |
+| `users`          | Data pengguna (customer)                  |
+| `drivers`        | Profil driver                             |
+| `orders`         | Semua pesanan                             |
+| `merchants`      | Data merchant/restoran/toko               |
+| `settings`       | Konfigurasi platform (harga, komisi, dll) |
+| `banners`        | Promo banner                              |
+| `admins`         | Admin credentials                         |
+| `topup_requests` | Request top-up driver                     |
+| `diagnostics`    | Log diagnosa driver                       |
 
 ### Realtime Database
 
@@ -449,22 +449,22 @@ Struktur untuk real-time communication:
 
 ### Firebase Storage
 
-| Path | Kegunaan |
-|------|----------|
-| `qris/{userId}` | QRIS images |
-| `profile_pictures/{userId}` | Foto profil |
-| `merchant_photos/{merchantId}` | Foto merchant |
-| `menu_photos/{merchantId}/{itemId}` | Foto menu |
+| Path                                | Kegunaan      |
+| ----------------------------------- | ------------- |
+| `qris/{userId}`                     | QRIS images   |
+| `profile_pictures/{userId}`         | Foto profil   |
+| `merchant_photos/{merchantId}`      | Foto merchant |
+| `menu_photos/{merchantId}/{itemId}` | Foto menu     |
 
 ### Cloud Functions
 
-| Function | Trigger | Deskripsi |
-|----------|---------|-----------|
-| `onOrderCreated` | Firestore `orders.onCreate` | Dispatch driver, kirim notifikasi |
-| `onOrderUpdate` | Firestore `orders.onUpdate` | Validasi state machine, update rating, poin |
-| `autoOfflineDrivers` | Scheduled (every 3 min) | Auto-offline driver yang inactivity > 5 menit atau > 12 jam |
-| `dailyReset` | Scheduled (midnight) | Reset daily online time driver |
-| `checkDriverPhoto` | Storage `profile_pictures.onCreate` | Verifikasi foto driver via Google Vision AI |
+| Function             | Trigger                             | Deskripsi                                                   |
+| -------------------- | ----------------------------------- | ----------------------------------------------------------- |
+| `onOrderCreated`     | Firestore `orders.onCreate`         | Dispatch driver, kirim notifikasi                           |
+| `onOrderUpdate`      | Firestore `orders.onUpdate`         | Validasi state machine, update rating, poin                 |
+| `autoOfflineDrivers` | Scheduled (every 3 min)             | Auto-offline driver yang inactivity > 5 menit atau > 12 jam |
+| `dailyReset`         | Scheduled (midnight)                | Reset daily online time driver                              |
+| `checkDriverPhoto`   | Storage `profile_pictures.onCreate` | Verifikasi foto driver via Google Vision AI                 |
 
 ---
 
@@ -514,17 +514,17 @@ Struktur untuk real-time communication:
 
 Setiap tipe layanan memiliki state machine yang valid:
 
-| State | Transport | Food | Express | Send | Shop |
-|-------|-----------|------|---------|------|------|
-| `waiting_driver` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `driver_assigned` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `driver_arrived` | ✅ | — | — | — | — |
-| `picking_up` | — | ✅ | ✅ | ✅ | ✅ |
-| `pickup_completed` | — | — | ✅ | ✅ | — |
-| `ordering` | — | — | — | — | ✅ |
-| `delivering` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `completed` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `cancelled` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| State              | Transport | Food | Express | Send | Shop |
+| ------------------ | --------- | ---- | ------- | ---- | ---- |
+| `waiting_driver`   | ✅        | ✅   | ✅      | ✅   | ✅   |
+| `driver_assigned`  | ✅        | ✅   | ✅      | ✅   | ✅   |
+| `driver_arrived`   | ✅        | —    | —       | —    | —    |
+| `picking_up`       | —         | ✅   | ✅      | ✅   | ✅   |
+| `pickup_completed` | —         | —    | ✅      | ✅   | —    |
+| `ordering`         | —         | —    | —       | —    | ✅   |
+| `delivering`       | ✅        | ✅   | ✅      | ✅   | ✅   |
+| `completed`        | ✅        | ✅   | ✅      | ✅   | ✅   |
+| `cancelled`        | ✅        | ✅   | ✅      | ✅   | ✅   |
 
 ---
 
@@ -537,6 +537,7 @@ Setiap tipe layanan memiliki state machine yang valid:
 **Trigger:** Push ke branch `main`
 
 **Steps:**
+
 1. Install dependencies monorepo
 2. Build User App + Admin App
 3. Run tests (functions + user + admin)
@@ -553,12 +554,14 @@ Setiap tipe layanan memiliki state machine yang valid:
 **Trigger:** Push tag `v*`
 
 **Steps:**
+
 1. Setup Java 17 + Gradle
 2. Decode keystore dari secrets
 3. Build APK release
 4. Buat GitHub Release dengan changelog
 
 **Secrets yang dibutuhkan:**
+
 - `KEYSTORE_BASE64` — Keystore file dalam base64
 - `KEYSTORE_PASSWORD` — Password keystore
 - `KEY_PASSWORD` — Password key
@@ -570,22 +573,22 @@ Setiap tipe layanan memiliki state machine yang valid:
 
 ### Data Seeding & Maintenance (`aro-drive-vite/scripts/`)
 
-| Script | Fungsi |
-|--------|--------|
-| `seedSystem.js` | Seeder konfigurasi sistem |
-| `seed-banners.js` | Seeder promo banner |
-| `fetch-food.js` | Fetch data merchant makanan |
-| `fetch_shops.js` | Fetch data merchant toko |
-| `populate-merchant-images.js` | Isi foto merchant |
-| `fill-menu-photos.js` | Isi foto menu |
-| `update-food-photos.js` | Update foto makanan |
-| `update-keywords.js` | Update keywords pencarian |
-| `update-search-names.js` | Update nama pencarian |
-| `massive-populate.js` | Populasi data massal |
-| `smart-populate-menu.js` | Populasi menu pintar |
+| Script                              | Fungsi                           |
+| ----------------------------------- | -------------------------------- |
+| `seedSystem.js`                     | Seeder konfigurasi sistem        |
+| `seed-banners.js`                   | Seeder promo banner              |
+| `fetch-food.js`                     | Fetch data merchant makanan      |
+| `fetch_shops.js`                    | Fetch data merchant toko         |
+| `populate-merchant-images.js`       | Isi foto merchant                |
+| `fill-menu-photos.js`               | Isi foto menu                    |
+| `update-food-photos.js`             | Update foto makanan              |
+| `update-keywords.js`                | Update keywords pencarian        |
+| `update-search-names.js`            | Update nama pencarian            |
+| `massive-populate.js`               | Populasi data massal             |
+| `smart-populate-menu.js`            | Populasi menu pintar             |
 | `auto_onboard_popular_merchants.js` | Auto-onboarding merchant populer |
-| `check-storage-files.js` | Audit file di Storage |
-| `apply-updates-admin.js` | Update dari admin |
+| `check-storage-files.js`            | Audit file di Storage            |
+| `apply-updates-admin.js`            | Update dari admin                |
 
 ---
 
@@ -593,38 +596,41 @@ Setiap tipe layanan memiliki state machine yang valid:
 
 ### Root `.env`
 
-| Variable | Deskripsi |
-|----------|-----------|
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps API Key |
+| Variable                   | Deskripsi                                      |
+| -------------------------- | ---------------------------------------------- |
+| `VITE_MAP_PROVIDER`        | `osm` (default, gratis) \| `google` (rollback) |
+| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps API Key (hanya mode `google`)      |
 
 ### `aro-drive-vite/.env`
 
-| Variable | Deskripsi |
-|----------|-----------|
-| `VITE_FIREBASE_API_KEY` | Firebase Web API Key |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain |
-| `VITE_FIREBASE_DATABASE_URL` | Firebase Realtime Database URL |
-| `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM Sender ID |
-| `VITE_FIREBASE_APP_ID` | Firebase App ID |
-| `VITE_FIREBASE_MEASUREMENT_ID` | Firebase Measurement ID (opsional) |
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps API Key |
+| Variable                            | Deskripsi                                      |
+| ----------------------------------- | ---------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase Web API Key                           |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase Auth Domain                           |
+| `VITE_FIREBASE_DATABASE_URL`        | Firebase Realtime Database URL                 |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase Project ID                            |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase Storage Bucket                        |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM Sender ID                                  |
+| `VITE_FIREBASE_APP_ID`              | Firebase App ID                                |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | Firebase Measurement ID (opsional)             |
+| `VITE_MAP_PROVIDER`                 | `osm` (default, gratis) \| `google` (rollback) |
+| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key (hanya mode `google`)      |
 
 ### `aro-admin-vite/.env`
 
-| Variable | Deskripsi |
-|----------|-----------|
-| `VITE_FIREBASE_API_KEY` | Firebase Web API Key |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth Domain |
-| `VITE_FIREBASE_DATABASE_URL` | Firebase Realtime Database URL |
-| `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage Bucket |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM Sender ID |
-| `VITE_FIREBASE_APP_ID` | Firebase App ID |
-| `VITE_FIREBASE_MEASUREMENT_ID` | Firebase Measurement ID (opsional) |
-| `VITE_USER_APP_URL` | URL Customer App (untuk link dari admin) |
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps API Key |
+| Variable                            | Deskripsi                                      |
+| ----------------------------------- | ---------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase Web API Key                           |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Firebase Auth Domain                           |
+| `VITE_FIREBASE_DATABASE_URL`        | Firebase Realtime Database URL                 |
+| `VITE_FIREBASE_PROJECT_ID`          | Firebase Project ID                            |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Firebase Storage Bucket                        |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | FCM Sender ID                                  |
+| `VITE_FIREBASE_APP_ID`              | Firebase App ID                                |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | Firebase Measurement ID (opsional)             |
+| `VITE_USER_APP_URL`                 | URL Customer App (untuk link dari admin)       |
+| `VITE_MAP_PROVIDER`                 | `osm` (default, gratis) \| `google` (rollback) |
+| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key (hanya mode `google`)      |
 
 ---
 
@@ -636,6 +642,7 @@ Setiap tipe layanan memiliki state machine yang valid:
 - **Driver web app** — Belum dibangun (hanya ada Android native)
 - **Mitra portal** — Belum dibangun (merchant mengelola via admin dashboard)
 - **Offline mode (PWA)** — Terbatas pada halaman yang sudah di-cache
+- **Mode gratis (Spark)** — Billing GCP mati sementara: Cloud Functions tidak di-deploy → dispatch order otomatis & FCM push server belum jalan (rencana Fase 4 di `docs/ALTERNATIF_GRATIS_PLAN.md`); verifikasi foto via Vision/Places dinonaktifkan (upload manual). Peta sudah 100% OSM/Leaflet (tanpa billing).
 
 ---
 

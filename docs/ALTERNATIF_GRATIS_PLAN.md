@@ -1,6 +1,23 @@
 # ARO DRIVE — Plan Migrasi Sementara ke Stack Gratis (Tetap Firestore + RTDB, Ganti Maps / Vision)
 
-> Status: PLAN ONLY — belum ada kode diubah.
+> Status: **FASE 0–3 SELESAI** (18 Okt 2026) — Fase 4–5 pending.
+> Catatan implementasi ada di §0 di bawah. Rencana awal tetap ditampilkan sebagai referensi.
+
+## 0. Status Implementasi (18 Okt 2026)
+
+| Fase                                | Status     | Bukti / Catatan                                                                                                                                                                          |
+| ----------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fase 0 — Feature flag + fondasi OSM | ✅ SELESAI | `VITE_MAP_PROVIDER="osm"` di `.env.example` root + kedua app; `packages/shared/src/mapProvider.ts` (TypeScript, bukan `.js`) berisi tiles OSM/CARTO, Photon/Nominatim, OSRM              |
+| Fase 1 — Unblock Spark              | ✅ SELESAI | Commit `92affe2` — jalur berbayar (Vision/Places) di-guard; cleanup file sampah; rules & auth guard diperbaiki                                                                           |
+| Fase 2 — Web: Leaflet/OSM           | ✅ SELESAI | `leaflet` + `react-leaflet` v5 di kedua app; LocationPicker/Tracking/OrderMap pakai Leaflet; terverifikasi runtime (peta render, tile CARTO, 0 error) — commit `654d4f8` + fix `f2ee4be` |
+| Fase 3 — Driver Kotlin: osmdroid    | ✅ SELESAI | `osmdroid-android:6.1.20` di `aro-driver-kotlin/app/build.gradle`; MapScreen via `AndroidView`; rute OSRM — commit `2740c74`, `3e15af5`                                                  |
+| Fase 4 — Dispatch tanpa Functions   | ⏳ PENDING | `packages/shared/src/dispatchClient.js` + `orderStates.js` belum dibuat; dispatch masih di Cloud Functions (`onOrderCreated`) → order tidak ter-dispatch sampai Functions di-deploy      |
+| Fase 5 — Verifikasi & rollback      | ⏳ PENDING | Sebagian: build + runtime web sudah diverifikasi; uji kuota Spark & checklist rilis final belum                                                                                          |
+
+> Blocker lain yang ditemukan saat verifikasi (18 Okt): root `package.json` sempat punya dependency `@firebase/app` versi salah → 2 instance Firebase → app blank (`Component auth has not been registered yet`). Sudah diperbaiki di commit `f2ee4be` (+ pengaman `resolve.dedupe` `a674a16`).
+
+---
+
 > Keputusan pemilik (16 Okt 2026):
 >
 > - Tetap pakai Firestore + RTDB (Spark gratis), ganti service lain yang butuh billing.
@@ -72,7 +89,7 @@
 
 ## 3. Rencana eksekusi per fase
 
-### FASE 0 — Feature flag + fondasi OSM (estimasi 0.5 hari)
+### FASE 0 — Feature flag + fondasi OSM (estimasi 0.5 hari) — ✅ SELESAI
 
 **Tujuan:** Google dan OSM bisa hidup berdampingan, default `osm`.
 
@@ -87,7 +104,7 @@
 
 **Acceptance:** `npm run dev` kedua app jalan, `getMapProvider()==='osm'`, tidak ada error `google is not defined`.
 
-### FASE 1 — Unblock Spark: matikan jalur berbayar (estimasi 0.5–1 hari)
+### FASE 1 — Unblock Spark: matikan jalur berbayar (estimasi 0.5–1 hari) — ✅ SELESAI
 
 **Tujuan:** `firebase deploy --only firestore,storage,database,hosting` lolos di Spark.
 
@@ -104,7 +121,7 @@
 
 **Acceptance:** deploy rules+hosting sukses tanpa Blaze; tidak ada import Vision/Places yang terpanggil saat `DISABLE_VISION=1`.
 
-### FASE 2 — Web: Google Maps → Leaflet/OSM (estimasi 2–3 hari, prioritas utama)
+### FASE 2 — Web: Google Maps → Leaflet/OSM (estimasi 2–3 hari, prioritas utama) — ✅ SELESAI
 
 **Tujuan:** Customer PWA + Admin bisa pilih lokasi, search alamat, lihat tracking tanpa Google.
 
@@ -129,7 +146,7 @@
 - Tracking order: marker driver bergerak via RTDB, polyline OSRM tergambar; jika OSRM gagal → garis lurus haversine tetap muncul (tidak blank).
 - Tidak ada request ke `maps.googleapis.com` di Network tab saat `VITE_MAP_PROVIDER=osm`.
 
-### FASE 3 — Driver Kotlin: Maps Compose → osmdroid + OSRM (estimasi 2–3 hari)
+### FASE 3 — Driver Kotlin: Maps Compose → osmdroid + OSRM (estimasi 2–3 hari) — ✅ SELESAI
 
 **Tujuan:** Driver app bisa lihat peta + rute + kirim lokasi tanpa Maps API key.
 
@@ -146,7 +163,7 @@
 
 **Acceptance:** APK debug bisa dibuka tanpa API key, peta OSM tampil di Blitar, rute OSRM tergambar, tombol NAVIGASI buka app map, lokasi tetap update ke RTDB tiap 2–5 detik.
 
-### FASE 4 — Dispatch & notifikasi tanpa Functions (estimasi 1–2 hari)
+### FASE 4 — Dispatch & notifikasi tanpa Functions (estimasi 1–2 hari) — ⏳ PENDING
 
 **Tujuan:** Order tetap bisa dari customer → driver tanpa deploy Functions.
 
@@ -158,7 +175,7 @@
 
 **Acceptance:** alur end-to-end manual: Customer checkout → `orders/waiting_driver` → Admin klik “dispatch” → driver terima di `/incoming` → accept → tracking jalan → complete → poin masuk — tanpa Functions ter-deploy.
 
-### FASE 5 — Verifikasi, batas gratis & rollback (estimasi 0.5 hari)
+### FASE 5 — Verifikasi, batas gratis & rollback (estimasi 0.5 hari) — ⏳ SEBAGIAN
 
 - [ ] Test Blitar-only: search `viewbox=111.0,114.6,-6.7,-8.8&bounded=1&countrycodes=id`; pastikan hasil Blitar/Jatim relevan.
 - [ ] Hormati limit: Nominatim 1 req/s (debounce sudah), OSRM jangan polling <5 detik, tiles tambah atribusi OSM/CARTO.

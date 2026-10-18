@@ -19,6 +19,7 @@
    - Cloud Storage
    - Cloud Functions
 4. **Aktifkan billing** (wajib untuk Cloud Functions — cukup Blaze plan)
+   - ⚠️ **Sejak Okt 2026 billing GCP mati sementara** → proyek jalan di **Spark (100% gratis)**: Functions sengaja tidak di-deploy, peta pakai OSM/Leaflet & osmdroid, Vision/Places dinonaktifkan. Lihat `docs/ALTERNATIF_GRATIS_PLAN.md`.
 5. Register web app di Firebase Console:
    - Project Settings → General → Your apps → Add app → Web
    - Copy konfigurasi Firebase (apiKey, authDomain, dll)
@@ -36,7 +37,17 @@ Ini akan deploy rules dari:
 - `storage.rules`
 - `database.rules.json`
 
-## 2. Setup Google Maps API
+## 2. Peta: Mode OSM (default, tanpa billing) & Google Maps (rollback)
+
+**Default sekarang: OSM** — tidak butuh API key sama sekali. Pastikan `VITE_MAP_PROVIDER=osm` di `.env` (sudah default di `.env.example`). Stack: Leaflet + react-leaflet (web), osmdroid (driver Kotlin), tiles OSM/CARTO, search Photon/Nominatim, rute OSRM.
+
+### Rollback ke Google Maps (<30 menit)
+
+1. Set `VITE_MAP_PROVIDER=google` di `aro-drive-vite/.env` dan `aro-admin-vite/.env`.
+2. Isi Google Maps API Key (langkah di bawah) lalu rebuild kedua app.
+3. Kode Google **tidak dihapus** — hanya di-branch lewat flag.
+
+**Setup Google Maps API:**
 
 1. Buka [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Buat **API Key baru**
@@ -70,17 +81,18 @@ cp aro-admin-vite/.env.example aro-admin-vite/.env
 
 **`aro-drive-vite/.env` (User App):**
 
-| Variable                            | Deskripsi                 |
-| ----------------------------------- | ------------------------- |
-| `VITE_FIREBASE_API_KEY`             | Firebase Web API Key      |
-| `VITE_FIREBASE_AUTH_DOMAIN`         | `project.firebaseapp.com` |
-| `VITE_FIREBASE_DATABASE_URL`        | RTDB URL                  |
-| `VITE_FIREBASE_PROJECT_ID`          | Project ID                |
-| `VITE_FIREBASE_STORAGE_BUCKET`      | Storage bucket            |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Sender ID                 |
-| `VITE_FIREBASE_APP_ID`              | App ID                    |
-| `VITE_FIREBASE_MEASUREMENT_ID`      | Measurement ID (opsional) |
-| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key       |
+| Variable                            | Deskripsi                                 |
+| ----------------------------------- | ----------------------------------------- |
+| `VITE_FIREBASE_API_KEY`             | Firebase Web API Key                      |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | `project.firebaseapp.com`                 |
+| `VITE_FIREBASE_DATABASE_URL`        | RTDB URL                                  |
+| `VITE_FIREBASE_PROJECT_ID`          | Project ID                                |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Storage bucket                            |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Sender ID                                 |
+| `VITE_FIREBASE_APP_ID`              | App ID                                    |
+| `VITE_FIREBASE_MEASUREMENT_ID`      | Measurement ID (opsional)                 |
+| `VITE_MAP_PROVIDER`                 | `osm` (default) \| `google` (rollback)    |
+| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key (hanya mode `google`) |
 
 **`aro-admin-vite/.env` (Admin Dashboard):**
 
@@ -95,7 +107,8 @@ cp aro-admin-vite/.env.example aro-admin-vite/.env
 | `VITE_FIREBASE_APP_ID`              | App ID                                         |
 | `VITE_FIREBASE_MEASUREMENT_ID`      | Measurement ID (opsional)                      |
 | `VITE_USER_APP_URL`                 | URL user app (contoh: `http://localhost:5173`) |
-| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key                            |
+| `VITE_MAP_PROVIDER`                 | `osm` (default) \| `google` (rollback)         |
+| `VITE_GOOGLE_MAPS_API_KEY`          | Google Maps API Key (hanya mode `google`)      |
 
 ### 3.1 Klasifikasi Environment Variables
 
@@ -322,11 +335,12 @@ aro-drive/
 
 ## Troubleshooting
 
-| Masalah                 | Solusi                                                                |
-| ----------------------- | --------------------------------------------------------------------- |
-| `firebase deploy` gagal | Pastikan billing sudah aktif & `firebase use --add` sudah benar       |
-| Maps tidak muncul       | Cek API key restriction & pastikan `Maps JavaScript API` enabled      |
-| Functions timeout       | Naikkan timeout di `functions/src/index.js` atau upgrade billing tier |
-| Android build error     | Update SDK di `build.gradle`, pastikan Java 17+ terinstall            |
-| Google Sign-in error    | Tambahkan domain authorized redirect URI di Firebase Console          |
-| `@aro/shared` not found | Jalankan `npm install` dari root (monorepo workspace)                 |
+| Masalah                 | Solusi                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `firebase deploy` gagal | Pastikan billing sudah aktif & `firebase use --add` sudah benar                                                                |
+| Maps tidak muncul       | Mode OSM default tidak butuh key — jika rollback ke `google`, cek API key restriction & pastikan `Maps JavaScript API` enabled |
+| Peta blank padahal OSM  | Cek `VITE_MAP_PROVIDER=osm` dan jangan ada dua instance `@firebase/app` (lihat riwayat fix `f2ee4be`)                          |
+| Functions timeout       | Naikkan timeout di `functions/src/index.js` atau upgrade billing tier                                                          |
+| Android build error     | Update SDK di `build.gradle`, pastikan Java 17+ terinstall                                                                     |
+| Google Sign-in error    | Tambahkan domain authorized redirect URI di Firebase Console                                                                   |
+| `@aro/shared` not found | Jalankan `npm install` dari root (monorepo workspace)                                                                          |
