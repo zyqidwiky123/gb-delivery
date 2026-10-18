@@ -67,6 +67,19 @@ service cloud.firestore {
       }
     }
 
+    // Legacy — path yang masih dibaca client (customer & admin) sampai migrasi
+    // ke settings/public + settings/configs selesai. Jangan dihapus sebelum
+    // semua referensi `settings/platform` & `settings/pricing` di kode dimigrasi.
+    match /settings/platform {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/pricing {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /settings/public/{doc} {
       allow read: if true;
       allow write: if isAdmin();
