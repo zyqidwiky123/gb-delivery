@@ -22,6 +22,11 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    // Kunci anti-regresi: pastikan hanya SATU instance @firebase/app di bundle.
+    // Duplikasi instance → "Component auth has not been registered yet" (app blank).
+    dedupe: ['@firebase/app'],
+  },
   server: {
     port: 5174,
     allowedHosts: true,
